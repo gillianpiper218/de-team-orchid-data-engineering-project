@@ -39,3 +39,27 @@ requirements: create-environment
 	$(call execute_in_env, $(PIP) install pip-tools)
 	$(call execute_in_env, pip-compile requirements.in)
 	$(call execute_in_env, $(PIP) install -r ./requirements.txt)
+
+
+
+
+################################################################################################################
+# Set Up
+## Install bandit
+bandit:
+	$(call execute_in_env, $(PIP) install bandit)
+
+## Install safety
+safety:
+	$(call execute_in_env, $(PIP) install safety)
+
+## Install black
+black:
+	$(call execute_in_env, $(PIP) install black)
+
+## Install coverage
+coverage:
+	$(call execute_in_env, $(PIP) install coverage)
+
+## Set up dev requirements (bandit, safety, black)
+dev-setup: bandit safety black coverage
