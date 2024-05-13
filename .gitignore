@@ -19,4 +19,4 @@ venv/
 terraform/init.sh
 zen.txt
 *.tfstate*
-.env/
+.env

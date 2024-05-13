@@ -1,4 +1,4 @@
 boto3
 pytest
 pytest-cov
-moto[s3]
+moto[ec2,s3,all]
