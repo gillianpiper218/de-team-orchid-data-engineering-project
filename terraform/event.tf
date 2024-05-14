@@ -5,8 +5,6 @@ resource "aws_cloudwatch_event_rule" "scheduler" {
 }
 
 
-
-
 resource "aws_cloudwatch_event_target" "check_every_five_minutes" {
     rule = aws_cloudwatch_event_rule.scheduler.name
     target_id = "ingestion_lambda"
