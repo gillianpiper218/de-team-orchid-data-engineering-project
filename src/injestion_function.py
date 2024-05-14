@@ -69,7 +69,7 @@ def select_all_tables_for_baseline():
     db = connect_to_db()
     cursor = db.cursor()
     name_of_tables = get_table_names()
-    data_dict = {}
+    data_dictionary = {}
     for table_name in name_of_tables:
         cursor.execute(f"SELECT * FROM {table_name[0]};")
         rows = cursor.fetchall()
