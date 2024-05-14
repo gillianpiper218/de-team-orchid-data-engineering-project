@@ -51,7 +51,8 @@ def get_table_names():
         FROM INFORMATION_SCHEMA.TABLES
         WHERE table_type = 'BASE TABLE' 
         AND table_name NOT LIKE 'pg_%'
-        AND table_name NOT LIKE 'sql_%';"""
+        AND table_name NOT LIKE 'sql_%'
+        AND table_name NOT LIKE '_prisma_migrations%';"""
         )
         return table_names
 
@@ -78,15 +79,27 @@ def select_all_tables_for_baseline():
     return data_dictionary
 
 
+def select_all_updated_rows():
+    db = connect_to_db()
+    cursor = db.cursor()
+    name_of_tables = get_table_names()
+    updated_data_dictionary = {}
+    for table_name in name_of_tables:
+        cursor.execute(f"""SELECT * FROM {table_name[0]} WHERE last_updated
+                       > NOW() - interval '20 minutes';
+                       """)
+        rows = cursor.fetchall()
+
+        updated_data_dictionary[table_name[0]] = rows
+    return updated_data_dictionary
+
+
 if __name__ == "__main__":
     # Test database connection
 
     db = connect_to_db()
-    if db:
-        print("Database connection successful")
-    else:
-        print("Database connection failed")
-    select_all_tables_for_baseline()
+    # select_all_tables_for_baseline()
+    select_all_updated_rows()
 
 
 # need a fetch tables function - log error if cant fetch the data - SELECT * FROM {table_name}" - stop injection
