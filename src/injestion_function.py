@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 import pg8000.native
 import logging
 from pg8000.native import literal
-import json
+import pprint
+
 load_dotenv()
 
 logger = logging.getLogger(__name__)
@@ -68,14 +69,14 @@ def select_all_tables_for_baseline():
     db = connect_to_db()
     cursor = db.cursor()
     name_of_tables = get_table_names()
-    empty_dictionary = {}
+    empty_dict = {}
     for table_name in name_of_tables:
-        
-        cursor.execute(f"SELECT * FROM {table_name[0]} LIMIT 5;")
+        print(table_name[0])
+        cursor.execute(f"SELECT * FROM {table_name[0]} LIMIT 1;")
         rows = cursor.fetchall()
-
-        empty_dictionary[table_name] = rows
-        print(empty_dictionary)
+        pprint.pp(rows)
+        empty_dict[table_name[0]] = rows[0]
+        pprint.pp(empty_dict)
 
 
 if __name__ == "__main__":
