@@ -1,3 +1,7 @@
+def lambda_function():
+    pass
+
+
 # Eveything below is from the de-deployment-lambda sprint
 
 # """Defines lambda function to handle creation of S3 text object."""

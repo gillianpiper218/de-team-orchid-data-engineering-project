@@ -1,1 +1,2 @@
-hi
+def exmaple_function():
+    pass
