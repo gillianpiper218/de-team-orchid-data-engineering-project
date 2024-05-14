@@ -5,6 +5,7 @@ from moto import mock_aws
 import os
 import boto3
 from botocore.exceptions import ClientError
+from dotenv import load_dotenv
 
 # from freezegun import freeze_time
 import logging
@@ -17,6 +18,15 @@ from src.injestion_function import (
 )
 
 LOGGER = logging.getLogger(__name__)
+
+load_dotenv()
+
+# Database connection
+DB_HOST = os.environ["DB_HOST"]
+DB_NAME = os.environ["DB_NAME"]
+DB_USER = os.environ["DB_USER"]
+DB_PASSWORD = os.environ["DB_PASSWORD"]
+DB_PORT = os.environ["DB_PORT"]
 
 
 @pytest.fixture(scope="function")
