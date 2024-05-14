@@ -4,30 +4,27 @@ This is a suggestion/proposal for how we structure our S3 ingest bucket and how 
 Create 3 'folder' areas within the ingestion bucket:
 
 1. baseline.  This holds the very first ingest of all of the data, and should be instantly copied to latest to provide the first set of data for processing.
-2. staging.  This holds data that has changed within the last 20 minutes, in a log file
+2. changes_staging.  This holds data that has changed within the last 20 minutes, in a log file.  This will retain a record of historical values
 3. latest.  This holds all of the data in a state that is good for the processing lambda to fetch. 
 
 After the initial full ingest of all data into baseline, the ingest lamda should follow this process for each table, I think we said on a 20 minute schedule:
 
 `Select * from table where last_updated in last 20 mins`
 
-`If table_id NOT IN latest version of the data, then add row to latest for that table`
+`If tablename_id (=primary key for that table) NOT IN latest version of the data, then add row to 'latest' for that table`
 
 This will add any new rows (all columns) to the latest version of the data, no history required as the 'created at' column will already hold this information.  Table-id in this scenario is the primary key id column for each table.
 
 
-`If table_id IN latest version of the data, then write the change to the json.log`
-This will create a record of what has changed in any tables where a change is detected.
+`If tablename_id IN latest version of the data, then write the current/old value to the changelog file for that table in the same json format.
+This will create a record of what the previous version of the record was changed in any tables where a change is detected.  The tablename_id will remain with that record in the changelog, so that the fact table can pick this up later and create a record of it.
 
-Log file in the following format, in the 'staging folder' of S3
+Each table will have its own changelog file in this changes_staging area - although some tables may not need it, ie may never change.
 
-|change_id |table_name |column_name |record_id |last_value |new_value | date/time_of_change |
-|----------|-----------|------------|-----------|----------|----------| --------------------|
-|001|counterparty|commercial_contact |861 |john smith|fred bloggs| 2021-05-19-random-time|
+Once we have a copy of the old value of that record in the change log, then we can add the new version of the record into latest.  I think the process might need to be to remove that record id from latest, add it into change log, add the changed record into latest.
 
-This may be simpler with a separate change log for each table.  Then if we make the log files available to the processing lambda it has a copy of the latest snapshot of the data, plus the change log for each table.  In that case we wouldn't need the table_name column.
 
-The data processing lambda will need to check in the 'latest' folder for the most recent snapshot of all data, plus in the log file for any changes to specific record_id rows.
+The data processing lambda will need to check in the 'latest' folder for the most recent snapshot of all data, plus in the changelog file for any changes to specific record_id rows.  Each of these will require a record in the fact table.
 
 Where a change is detected:
 
