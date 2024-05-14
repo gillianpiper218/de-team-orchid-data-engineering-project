@@ -5,9 +5,18 @@ from moto import mock_aws
 import os
 import boto3
 from botocore.exceptions import ClientError
-from freezegun import freeze_time
+
+# from freezegun import freeze_time
 import logging
 import json
+from src.injestion_function import (
+    connect_to_db,
+    get_table_names,
+    select_all_tables_for_baseline,
+    select_all_updated_rows,
+)
+
+LOGGER = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="function")
@@ -23,7 +32,7 @@ def aws_credentials():
 @pytest.fixture(scope="function")
 def s3(aws_credentials):
     with mock_aws():
-        yield boto3.client("s3", region_name="eu-west-1")
+        yield boto3.client("s3", region_name="eu-west-2")
 
 
 @pytest.fixture
@@ -32,3 +41,11 @@ def bucket(s3):
         Bucket="test_bucket",
         CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
     )
+
+
+class TestConnectToDatabase:
+    @pytest.mark.it("unit test: check connection to database")
+    def test_connect_to_datebase(self, caplog):
+        LOGGER.info("Testing now")
+        connect_to_db()
+        assert "Connected to the database successfully" in caplog.text

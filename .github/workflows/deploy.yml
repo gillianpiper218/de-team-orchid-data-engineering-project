@@ -3,7 +3,7 @@ name: lambda-deployment
 on:
   push:
     branches:
-      - main
+      - testinginjectionlambda
 
 jobs:
   run-tests:
@@ -22,28 +22,28 @@ jobs:
       - name: Run Tests
         run: make all
 
-  deploy-lambda:
-    name: deploy-lambda
-    needs: run-tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-      - name: AWS Creds
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-      - name: Install Terraform
-        uses: hashicorp/setup-terraform@v3
-      - name: Terraform Init
-        working-directory: terraform
-        run: terraform init
-      - name: Terraform Plan
-        working-directory: terraform
-        run: terraform plan
-      - name: Terraform Apply
-        working-directory: terraform
-        run: terraform apply -auto-approve
+  # deploy-lambda:
+  #   name: deploy-lambda
+  #   needs: run-tests
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Repo
+  #       uses: actions/checkout@v4
+  #     - name: AWS Creds
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws-region: ${{ secrets.AWS_REGION }}
+  #     - name: Install Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #     - name: Terraform Init
+  #       working-directory: terraform
+  #       run: terraform init
+  #     - name: Terraform Plan
+  #       working-directory: terraform
+  #       run: terraform plan
+  #     - name: Terraform Apply
+  #       working-directory: terraform
+  #       run: terraform apply -auto-approve
             
