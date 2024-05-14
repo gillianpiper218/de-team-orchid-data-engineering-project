@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import pg8000.native
 import logging
 from pg8000.native import literal
+import json
 load_dotenv()
 
 logger = logging.getLogger(__name__)
@@ -62,11 +63,18 @@ def get_table_names():
             db.close()
 
 
-def select_all_tables():
+def select_all_tables_for_baseline():
     db = connect_to_db()
+    cursor = db.cursor()
     name_of_tables = get_table_names()
+    empty_dictionary = {}
     for table_name in name_of_tables:
-        print(db.run(f"SELECT * FROM {literal(table_name)} LIMIT 5;"))
+
+        cursor.execute(f"SELECT * FROM {table_name[0]} LIMIT 5;")
+        rows = cursor.fetchall()
+
+        empty_dictionary[table_name] = rows
+        print(empty_dictionary)
 
 
 if __name__ == "__main__":
@@ -76,6 +84,8 @@ if __name__ == "__main__":
         print("Database connection successful")
     else:
         print("Database connection failed")
+    select_all_tables_for_baseline()
+
     select_all_tables()
 
 # need a fetch tables function - log error if cant fetch the data - SELECT * FROM {table_name}" - stop injection
