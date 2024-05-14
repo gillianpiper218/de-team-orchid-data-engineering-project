@@ -38,20 +38,20 @@ def connect_to_db():
     except pg8000.exceptions.InterfaceError as e:
         logger.error(f"Error connecting to the database: {e}")
 
+
 def get_table_names():
     db = None
     try:
         db = connect_to_db()
         table_names = db.run(
-                    """SELECT table_name
+            """SELECT table_name
         FROM INFORMATION_SCHEMA.TABLES
         WHERE table_type = 'BASE TABLE' 
         AND table_name NOT LIKE 'pg_%'
         AND table_name NOT LIKE 'sql_%';"""
         )
         return table_names
-        
-    
+
     except pg8000.exceptions.DatabaseError as dbe:
         logger.error(f"Error connecting to database: {e}")
         raise
@@ -60,7 +60,6 @@ def get_table_names():
     finally:
         if db:
             db.close()
-
 
 
 def select_all_tables():
@@ -78,7 +77,6 @@ if __name__ == "__main__":
     else:
         print("Database connection failed")
     select_all_tables()
-    
+
 # need a fetch tables function - log error if cant fetch the data - SELECT * FROM {table_name}" - stop injection
 #  need an upload to s3 function - need boto.client put object into s3 object - need to decide structure, log error if cant upload to s3 bucket, log if successful
-
