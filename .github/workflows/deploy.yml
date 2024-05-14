@@ -19,8 +19,12 @@ jobs:
           python-version: '3.11'
       - name: Install Make
         run: sudo apt install make -y
-      - name: Run Tests
-        run: make all
+      - name: Run Requirements
+        run: make requirements
+      - name: Run Dev Setup
+        run: make dev-setup
+      - name: Run Checks
+        run: make run-checks
 
   # deploy-lambda:
   #   name: deploy-lambda
