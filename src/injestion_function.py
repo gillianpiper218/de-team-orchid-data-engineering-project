@@ -1,4 +1,5 @@
 # connect to the database - need to log an error for if connecting to database fails - get credentials from . env file , close conn afterwards
+import pprint
 import os
 
 import pg8000.exceptions
@@ -7,6 +8,7 @@ import pg8000.native
 import logging
 from pg8000.native import literal
 import json
+import pprint
 load_dotenv()
 
 logger = logging.getLogger(__name__)
@@ -53,7 +55,7 @@ def get_table_names():
         )
         return table_names
 
-    except pg8000.exceptions.DatabaseError as dbe:
+    except pg8000.exceptions.DatabaseError as e:
         logger.error(f"Error connecting to database: {e}")
         raise
     except pg8000.exceptions.InterfaceError as e:
@@ -67,18 +69,18 @@ def select_all_tables_for_baseline():
     db = connect_to_db()
     cursor = db.cursor()
     name_of_tables = get_table_names()
-    empty_dictionary = {}
+    data_dictionary = {}
     for table_name in name_of_tables:
-
-        cursor.execute(f"SELECT * FROM {table_name[0]} LIMIT 5;")
+        cursor.execute(f"SELECT * FROM {table_name[0]};")
         rows = cursor.fetchall()
 
-        empty_dictionary[table_name] = rows
-        print(empty_dictionary)
+        data_dictionary[table_name[0]] = rows
+    return data_dictionary
 
 
 if __name__ == "__main__":
     # Test database connection
+
     db = connect_to_db()
     if db:
         print("Database connection successful")
@@ -86,7 +88,6 @@ if __name__ == "__main__":
         print("Database connection failed")
     select_all_tables_for_baseline()
 
-    select_all_tables()
 
 # need a fetch tables function - log error if cant fetch the data - SELECT * FROM {table_name}" - stop injection
 #  need an upload to s3 function - need boto.client put object into s3 object - need to decide structure, log error if cant upload to s3 bucket, log if successful
