@@ -3,7 +3,7 @@ name: lambda-deployment
 on:
   push:
     branches:
-      - terraformtesting
+      - main
 
 jobs:
   run-tests:
