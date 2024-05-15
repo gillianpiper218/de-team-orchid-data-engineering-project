@@ -1,0 +1,7 @@
+{
+    "currency":[
+        {"currency_id":1, "currency_code":"GDP", "created_at": "2022-11-03 14:20:49.962", "last_updated": "2022-11-03 14:30:41.962"},
+        {"currency_id":2, "currency_code":"USD", "created_at": "2022-11-05 14:20:49.962", "last_updated": "2022-11-07 14:30:41.962"},
+        {"currency_id":3, "currency_code":"EUR", "created_at": "2022-11-06 14:20:49.962", "last_updated": "2022-11-10 14:30:41.962"}
+    ]
+    }
