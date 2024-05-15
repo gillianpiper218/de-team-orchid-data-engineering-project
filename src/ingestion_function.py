@@ -83,18 +83,17 @@ def select_all_tables_for_baseline():
     name_of_tables = get_table_names()
 
     for table_name in name_of_tables:
-        cursor.execute(f"SELECT * FROM {table_name[0]} LIMIT 2;")
+        cursor.execute(f"SELECT * FROM {table_name[0]};")
         result = cursor.fetchall()
         col_names = [elt[0] for elt in cursor.description]
         df = pd.DataFrame(result, columns=col_names)
         json_data = df.to_json(orient='records')
 
-        with open(f"{table_name[0]}_baseline.json", "w"):
-            data = json.dumps(json.loads(json_data))
+        data = json.dumps(json.loads(json_data))
         file_path = f'baseline/{table_name[0]}.json'
         s3.put_object(Body=data, Bucket=S3_BUCKET_NAME,
                       Key=file_path)
-        return {'Result': f'Uploaded file to {file_path}'}
+        logger.info({'Result': f'Uploaded file to {file_path}'})
 
 
 def select_all_updated_rows():
@@ -114,17 +113,11 @@ def select_all_updated_rows():
     return pprint.pp(updated_data_dictionary)
 
 
-# if __name__ == "__main__":
-#     # Test database connection
+if __name__ == "__main__":
+    # Test database connection
 
-#     db = connect_to_db()
-#     # select_all_tables_for_baseline()
-#     select_all_updated_rows()
     db = connect_to_db()
-    # select_all_tables_for_baseline()
-    # get_table_columns()
     select_all_tables_for_baseline()
-    # select_all_updated_rows()
 
 
 # need a fetch tables function - log error if cant fetch the data - SELECT * FROM {table_name}" - stop injection
