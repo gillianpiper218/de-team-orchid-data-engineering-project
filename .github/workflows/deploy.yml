@@ -10,12 +10,6 @@ jobs:
     
     name: run-tests
     runs-on: ubuntu-latest
-    env:
-      DB_USER: ${{ secrets.DB_USER }}
-      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      DB_NAME: ${{ secrets.DB_NAME }}
-      DB_HOST: ${{ secrets.DB_HOST }}
-      DB_PORT: ${{ secrets.DB_USER }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -31,6 +25,12 @@ jobs:
         run: make dev-setup
       - name: Run Checks
         run: make run-checks
+        env:
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_USER }}
 
   # deploy-lambda:
   #   name: deploy-lambda
