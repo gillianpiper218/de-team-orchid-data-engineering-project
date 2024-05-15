@@ -9,6 +9,7 @@ import logging
 from pg8000.native import literal
 import json
 import pprint
+
 load_dotenv()
 
 logger = logging.getLogger(__name__)
@@ -16,11 +17,11 @@ logger.setLevel(logging.INFO)
 
 
 # Database connection
-DB_HOST = os.environ['DB_HOST']
-DB_NAME = os.environ['DB_NAME']
-DB_USER = os.environ['DB_USER']
-DB_PASSWORD = os.environ['DB_PASSWORD']
-DB_PORT = os.environ['DB_PORT']
+DB_HOST = os.environ["DB_HOST"]
+DB_NAME = os.environ["DB_NAME"]
+DB_USER = os.environ["DB_USER"]
+DB_PASSWORD = os.environ["DB_PASSWORD"]
+DB_PORT = os.environ["DB_PORT"]
 
 # S3 injestion bucket
 S3_BUCKET_NAME = "de-team-orchid-totesys-ingestion"
@@ -29,9 +30,13 @@ S3_BUCKET_NAME = "de-team-orchid-totesys-ingestion"
 def connect_to_db():
     try:
         logger.info(f"Connecting to the database {DB_NAME}")
-        conn = pg8000.connect(host=DB_HOST, port=DB_PORT,
-                              database=DB_NAME, user=DB_USER,
-                              password=DB_PASSWORD)
+        conn = pg8000.connect(
+            host=DB_HOST,
+            port=DB_PORT,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+        )
         logger.info("Connected to the database successfully")
 
         return conn
@@ -85,9 +90,11 @@ def select_all_updated_rows():
     name_of_tables = get_table_names()
     updated_data_dictionary = {}
     for table_name in name_of_tables:
-        cursor.execute(f"""SELECT * FROM {table_name[0]} WHERE last_updated
+        cursor.execute(
+            f"""SELECT * FROM {table_name[0]} WHERE last_updated
                        > NOW() - interval '20 minutes';
-                       """)
+                       """
+        )
         rows = cursor.fetchall()
 
         updated_data_dictionary[table_name[0]] = rows
