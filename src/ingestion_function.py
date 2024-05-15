@@ -96,29 +96,44 @@ def select_all_tables_for_baseline():
         logger.info({'Result': f'Uploaded file to {file_path}'})
 
 
-def select_all_updated_rows():
+def initial_data_for_latest():
+    table_names = get_table_names()
+    for table in table_names:
+        s3.copy_object(
+            Bucket=S3_BUCKET_NAME,
+            CopySource=f'{S3_BUCKET_NAME}/baseline/{table[0]}.json',
+            Key=f'latest/{table[0]}.json',)
+
+
+def select_and_write_updated_data():
     db = connect_to_db()
     cursor = db.cursor()
     name_of_tables = get_table_names()
-    updated_data_dictionary = {}
     for table_name in name_of_tables:
         cursor.execute(
             f"""SELECT * FROM {table_name[0]} WHERE last_updated
                        > NOW() - interval '20 minutes';
                        """
         )
-        rows = cursor.fetchall()
+        result = cursor.fetchall()
+        col_names = [elt[0] for elt in cursor.description]
+        df = pd.DataFrame(result, columns=col_names)
+        json_data = df.to_json(orient='records')
 
-        updated_data_dictionary[table_name[0]] = rows
-    return pprint.pp(updated_data_dictionary)
+        data = json.dumps(json.loads(json_data))
+        file_path = f'staging/{table_name[0]}.json'
+        s3.put_object(Body=data, Bucket=S3_BUCKET_NAME,
+                      Key=file_path)
+        logger.info({'Result': f'update to file at {file_path}'})
 
 
 if __name__ == "__main__":
     # Test database connection
 
     db = connect_to_db()
-    select_all_tables_for_baseline()
-
+    # select_all_tables_for_baseline()
+    # initial_data_for_latest()
+    select_and_write_updated_data()
 
 # need a fetch tables function - log error if cant fetch the data - SELECT * FROM {table_name}" - stop injection
 #  need an upload to s3 function - need boto.client put object into s3 object - need to decide structure, log error if cant upload to s3 bucket, log if successful
