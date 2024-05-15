@@ -1,6 +1,7 @@
 # connect to the database - need to log an error for if connecting to database fails - get credentials from . env file , close conn afterwards
 import pprint
 import os
+import pandas as pd
 
 import pg8000.exceptions
 from dotenv import load_dotenv
@@ -9,6 +10,7 @@ import logging
 from pg8000.native import literal
 import json
 import pprint
+import boto3
 
 load_dotenv()
 
@@ -72,17 +74,27 @@ def get_table_names():
             db.close()
 
 
+s3 = boto3.client('s3')
+
+
 def select_all_tables_for_baseline():
     db = connect_to_db()
     cursor = db.cursor()
     name_of_tables = get_table_names()
-    data_dictionary = {}
-    for table_name in name_of_tables:
-        cursor.execute(f"SELECT * FROM {table_name[0]};")
-        rows = cursor.fetchall()
 
-        data_dictionary[table_name[0]] = rows
-    return data_dictionary
+    for table_name in name_of_tables:
+        cursor.execute(f"SELECT * FROM {table_name[0]} LIMIT 2;")
+        result = cursor.fetchall()
+        col_names = [elt[0] for elt in cursor.description]
+        df = pd.DataFrame(result, columns=col_names)
+        json_data = df.to_json(orient='records')
+
+        with open(f"{table_name[0]}_baseline.json", "w"):
+            data = json.dumps(json.loads(json_data))
+        file_path = f'baseline/{table_name[0]}.json'
+        s3.put_object(Body=data, Bucket=S3_BUCKET_NAME,
+                      Key=file_path)
+        return {'Result': f'Uploaded file to {file_path}'}
 
 
 def select_all_updated_rows():
@@ -99,7 +111,7 @@ def select_all_updated_rows():
         rows = cursor.fetchall()
 
         updated_data_dictionary[table_name[0]] = rows
-    return updated_data_dictionary
+    return pprint.pp(updated_data_dictionary)
 
 
 # if __name__ == "__main__":
@@ -108,6 +120,11 @@ def select_all_updated_rows():
 #     db = connect_to_db()
 #     # select_all_tables_for_baseline()
 #     select_all_updated_rows()
+    db = connect_to_db()
+    # select_all_tables_for_baseline()
+    # get_table_columns()
+    select_all_tables_for_baseline()
+    # select_all_updated_rows()
 
 
 # need a fetch tables function - log error if cant fetch the data - SELECT * FROM {table_name}" - stop injection
