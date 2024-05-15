@@ -10,6 +10,7 @@ import logging
 from pg8000.native import literal
 import json
 import pprint
+import boto3
 
 load_dotenv()
 
@@ -72,52 +73,7 @@ def get_table_names():
             db.close()
 
 
-
-
-
-# def get_table_columns():
-#     db = connect_to_db()
-#     cursor = db.cursor()
-#     name_of_tables = get_table_names()
-  
-#     testing_list = []
-
-#     for table_name in name_of_tables:
-     
-#         cursor.execute(
-#             f"""SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS
-# 	WHERE table_Schema = 'public'
-# 	AND table_name = '{table_name[0]}'; """
-#         )
-#         # pprint.pp(table_name)
-
-#         column_names = cursor.fetchall()
-#         testing_list.append(column_names)
-
-#     # pprint.pp(testing_list)
-
-       
-
-        # columns_names = [row[0] for row in cursor.fetchall()]
-    # pprint.pp(columns_names)
-    
-
-
-
-
-# db = connect_to_db()
-# cursor = db.cursor()
-
-# cursor.execute('SELECT * FROM address;')
-# result = cursor.fetchall()
-
-# # Extract the column names from the cursor description
-# col_names = [elt[0] for elt in cursor.description]
-# df = pd.DataFrame(result, columns=col_names)
-
-# pprint.pp(df)
-# df.to_json('address.json')
-
+s3 = boto3.client('s3')
 
 
 def select_all_tables_for_baseline():
@@ -125,25 +81,19 @@ def select_all_tables_for_baseline():
     cursor = db.cursor()
     name_of_tables = get_table_names()
 
-    
-    # data_dictionary = {}
     for table_name in name_of_tables:
-        cursor.execute(f"SELECT * FROM {table_name[0]} limit 2;")
+        cursor.execute(f"SELECT * FROM {table_name[0]} LIMIT 2;")
         result = cursor.fetchall()
         col_names = [elt[0] for elt in cursor.description]
-        df = pd.DataFrame(result[0], columns=col_names)
+        df = pd.DataFrame(result, columns=col_names)
+        json_data = df.to_json(orient='records')
 
-        # pprint.pp(df)
-        df.to_json(f'{table_name[0]}'.json)
-
-    #     cursor.execute(f"SELECT * FROM {table_name[0]} limit 2;")
-    #     rows = cursor.fetchall()
-
-    #     data_dictionary[table_name[0]] = rows
-   
-    # return pprint.pp(data_dictionary)
-
-
+        with open(f"{table_name[0]}_baseline.json", "w"):
+            data = json.dumps(json.loads(json_data))
+        file_path = f'baseline/{table_name[0]}.json'
+        s3.put_object(Body=data, Bucket=S3_BUCKET_NAME,
+                      Key=file_path)
+        return {'Result': f'Uploaded file to {file_path}'}
 
 
 def select_all_updated_rows():
