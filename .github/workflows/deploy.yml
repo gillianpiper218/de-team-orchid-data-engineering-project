@@ -3,7 +3,7 @@ name: lambda-deployment
 on:
   push:
     branches:
-      - testinginjectionlambda
+      - testingdeployyml
 
 jobs:
   run-tests:
