@@ -1,0 +1,9 @@
+{
+    "staff_id": [
+        {"staff_id":1, "first_name:":"Joe", "last_name":"Bloggs", "created_at": "blah", "last_updated":"blah blah"},
+        {"staff_id":2, "first_name":"Bob", "last_name":"Uncle", "created_at": "blah", "last_updated":"blah blah"},
+        {"staff_id":3, "first_name":"Fanny", "last_name":"Aunt", "created_at": "blah", "last_updated":"blah blah"},
+        {"staff_id":4, "first_name":"Jack", "last_name":"Hackett", "created_at": "blah", "last_updated":"blah blah"},
+        {"staff_id":5, "first_name":"Dave", "last_name":"Lister", "created_at": "blah", "last_updated":"blah blah"}
+    ]
+}

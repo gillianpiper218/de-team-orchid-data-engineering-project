@@ -47,6 +47,7 @@ def connect_to_db():
         raise
     except pg8000.exceptions.InterfaceError as e:
         logger.error(f"Error connecting to the database: {e}")
+        raise
 
 
 def get_table_names():
@@ -113,9 +114,12 @@ def select_all_updated_rows():
     return pprint.pp(updated_data_dictionary)
 
 
-if __name__ == "__main__":
-    # Test database connection
+# if __name__ == "__main__":
+#     # Test database connection
 
+#     db = connect_to_db()
+#     # select_all_tables_for_baseline()
+#     select_all_updated_rows()
     db = connect_to_db()
     # select_all_tables_for_baseline()
     # get_table_columns()
