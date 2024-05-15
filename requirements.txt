@@ -101,6 +101,8 @@ multipart==0.2.4
     # via moto
 networkx==3.3
     # via cfn-lint
+numpy==1.26.4
+    # via pandas
 openapi-schema-validator==0.6.2
     # via openapi-spec-validator
 openapi-spec-validator==0.7.1
@@ -109,6 +111,8 @@ packaging==24.0
     # via
     #   docker
     #   pytest
+pandas==2.2.2
+    # via -r requirements.in
 pathable==0.4.3
     # via jsonschema-path
 pbr==6.0.0
@@ -144,9 +148,12 @@ python-dateutil==2.9.0.post0
     # via
     #   botocore
     #   moto
+    #   pandas
     #   pg8000
 python-dotenv==1.0.1
     # via -r requirements.in
+pytz==2024.1
+    # via pandas
 pyyaml==6.0.1
     # via
     #   cfn-lint
@@ -192,6 +199,8 @@ typing-extensions==4.11.0
     #   aws-sam-translator
     #   pydantic
     #   pydantic-core
+tzdata==2024.1
+    # via pandas
 urllib3==2.2.1
     # via
     #   botocore
