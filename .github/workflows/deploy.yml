@@ -11,11 +11,11 @@ jobs:
     name: run-tests
     runs-on: ubuntu-latest
     env:
-      DB_USER: project_team_1
-      DB_PASSWORD: dwFoAby3oy54ITE1
-      DB_NAME: totesys
-      DB_HOST: nc-data-eng-totesys-production.chpsczt8h1nu.eu-west-2.rds.amazonaws.com
-      DB_PORT: 5432
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: ${{ secrets.DB_PORT }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
