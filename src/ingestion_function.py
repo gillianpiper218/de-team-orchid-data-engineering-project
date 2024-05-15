@@ -71,17 +71,40 @@ def get_table_names():
             db.close()
 
 
+
+
+
+def get_table_columns():
+    db = connect_to_db()
+    cursor = db.cursor()
+    name_of_tables = get_table_names()
+    for table_name in name_of_tables:
+        cursor.execute(
+        f"""SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = N'{table_name[0]}';"""
+    )
+        columns_names = [row[0] for row in cursor.fetchall()]
+    pprint.pp(columns_names)
+    
+
+
+
+
+
 def select_all_tables_for_baseline():
     db = connect_to_db()
     cursor = db.cursor()
     name_of_tables = get_table_names()
     data_dictionary = {}
     for table_name in name_of_tables:
-        cursor.execute(f"SELECT * FROM {table_name[0]};")
+
+        cursor.execute(f"SELECT * FROM {table_name[0]} limit 2;")
         rows = cursor.fetchall()
 
         data_dictionary[table_name[0]] = rows
-    return data_dictionary
+   
+    return pprint.pp(data_dictionary)
+
+
 
 
 def select_all_updated_rows():
@@ -98,7 +121,7 @@ def select_all_updated_rows():
         rows = cursor.fetchall()
 
         updated_data_dictionary[table_name[0]] = rows
-    return updated_data_dictionary
+    return pprint.pp(updated_data_dictionary)
 
 
 if __name__ == "__main__":
@@ -106,7 +129,9 @@ if __name__ == "__main__":
 
     db = connect_to_db()
     # select_all_tables_for_baseline()
-    select_all_updated_rows()
+    get_table_columns()
+    # select_all_tables_for_baseline()
+    # select_all_updated_rows()
 
 
 # need a fetch tables function - log error if cant fetch the data - SELECT * FROM {table_name}" - stop injection
