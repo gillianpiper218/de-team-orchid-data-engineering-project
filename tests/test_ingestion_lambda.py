@@ -108,7 +108,7 @@ class TestGetTableNames:
             get_table_names()
             assert (
                 "Error connecting to the database: Connection timed out" in caplog.text
-            )       
+            )
 
 
 class TestSelectAllTablesBaseline:
@@ -125,6 +125,7 @@ class TestSelectAllTablesBaseline:
     def test_dict_values(self):
         pass
 
+
 class TestSelectAllUpdatedRows:
 
     @pytest.mark.it("unit test: function returns a dictionary")
@@ -138,4 +139,3 @@ class TestSelectAllUpdatedRows:
     @pytest.mark.it("unit test: correct data types for values")
     def test_updated_dict_values(self):
         pass
-
