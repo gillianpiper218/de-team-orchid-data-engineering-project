@@ -74,7 +74,7 @@ class TestConnectToDatabase:
 class TestGetTableNames:
 
     @pytest.mark.it("unit test: check function returns all tables names")
-    def test_function_returns_table_names(self):
+    def test_returns_table_names(self):
         result = get_table_names()
         table_name_list = [item[0] for item in result]
         assert "address" in table_name_list
@@ -90,7 +90,7 @@ class TestGetTableNames:
         assert "payment_type" in table_name_list
 
     @pytest.mark.it("unit test: raises DatabaseError")
-    def test_function_raises_DatabaseError(self, caplog):
+    def test_raises_DatabaseError(self, caplog):
         LOGGER.info("Testing now")
         with patch("pg8000.connect") as mock_connection:
             mock_connection.side_effect = DatabaseError("Connection timed out")
@@ -100,7 +100,7 @@ class TestGetTableNames:
 
     # may need looking at
     @pytest.mark.it("unit test: raises InterfaceError")
-    def test_function_raises_InterfaceError(self, caplog):
+    def test_raises_InterfaceError(self, caplog):
         LOGGER.info("Testing now")
         with patch("src.ingestion_function.connect_to_db") as mock_connection:
             mock_connection.side_effect = InterfaceError("Connection timed out")
@@ -108,13 +108,34 @@ class TestGetTableNames:
             get_table_names()
             assert (
                 "Error connecting to the database: Connection timed out" in caplog.text
-            )
+            )       
 
-    # @pytest.mark.it("unit test: raises InterfaceError")
-    # def test_function_raises_InterfaceError(self, caplog):
-    #     LOGGER.info("Testing now")
-    #     with patch("pg8000.connect") as mock_connection:
-    #         mock_connection.side_effect = InterfaceError("Connection timed out")
-    #         with pytest.raises(InterfaceError):
-    #             get_table_names()
-    #     assert "Error connecting to the database: Connection timed out" in caplog.text
+
+class TestSelectAllTablesBaseline:
+
+    @pytest.mark.it("unit test: function returns a dictionary")
+    def test_returns_a_dictionary(self):
+        pass
+
+    @pytest.mark.it("unit test: dict contains correct keys")
+    def test_dict_keys(self):
+        pass
+
+    @pytest.mark.it("unit test: correct data types for values")
+    def test_dict_values(self):
+        pass
+
+class TestSelectAllUpdatedRows:
+
+    @pytest.mark.it("unit test: function returns a dictionary")
+    def test_returns_updated_dictionary(self):
+        pass
+
+    @pytest.mark.it("unit test: dict contains correct keys")
+    def test_updated_dict_keys(self):
+        pass
+
+    @pytest.mark.it("unit test: correct data types for values")
+    def test_updated_dict_values(self):
+        pass
+
