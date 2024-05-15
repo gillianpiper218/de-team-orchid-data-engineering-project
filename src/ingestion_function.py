@@ -78,9 +78,10 @@ def get_table_columns():
     db = connect_to_db()
     cursor = db.cursor()
     name_of_tables = get_table_names()
+    pprint.pp(name_of_tables)
     for table_name in name_of_tables:
         cursor.execute(
-        f"""SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = N'{table_name[0]}';"""
+        f"""SELECT table_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema = 'public';"""
     )
         columns_names = [row[0] for row in cursor.fetchall()]
     pprint.pp(columns_names)
