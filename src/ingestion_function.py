@@ -1,6 +1,7 @@
 # connect to the database - need to log an error for if connecting to database fails - get credentials from . env file , close conn afterwards
 import pprint
 import os
+import pandas as pd
 
 import pg8000.exceptions
 from dotenv import load_dotenv
@@ -74,20 +75,48 @@ def get_table_names():
 
 
 
-def get_table_columns():
-    db = connect_to_db()
-    cursor = db.cursor()
-    name_of_tables = get_table_names()
-    pprint.pp(name_of_tables)
-    for table_name in name_of_tables:
-        cursor.execute(
-        f"""SELECT table_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema = 'public';"""
-    )
-        columns_names = [row[0] for row in cursor.fetchall()]
-    pprint.pp(columns_names)
+# def get_table_columns():
+#     db = connect_to_db()
+#     cursor = db.cursor()
+#     name_of_tables = get_table_names()
+  
+#     testing_list = []
+
+#     for table_name in name_of_tables:
+     
+#         cursor.execute(
+#             f"""SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS
+# 	WHERE table_Schema = 'public'
+# 	AND table_name = '{table_name[0]}'; """
+#         )
+#         # pprint.pp(table_name)
+
+#         column_names = cursor.fetchall()
+#         testing_list.append(column_names)
+
+#     # pprint.pp(testing_list)
+
+       
+
+        # columns_names = [row[0] for row in cursor.fetchall()]
+    # pprint.pp(columns_names)
     
 
 
+
+
+# db = connect_to_db()
+# cursor = db.cursor()
+
+# cursor.execute('SELECT * FROM address;')
+# result = cursor.fetchall()
+
+# # Extract the column names from the cursor description
+# col_names = [elt[0] for elt in cursor.description]
+# df = pd.DataFrame(result, columns=col_names)
+
+# pprint.pp(df)
+# df.to_json('address.json')
 
 
 
@@ -95,15 +124,24 @@ def select_all_tables_for_baseline():
     db = connect_to_db()
     cursor = db.cursor()
     name_of_tables = get_table_names()
-    data_dictionary = {}
+
+    
+    # data_dictionary = {}
     for table_name in name_of_tables:
-
         cursor.execute(f"SELECT * FROM {table_name[0]} limit 2;")
-        rows = cursor.fetchall()
+        result = cursor.fetchall()
+        col_names = [elt[0] for elt in cursor.description]
+        df = pd.DataFrame(result[0], columns=col_names)
 
-        data_dictionary[table_name[0]] = rows
+        # pprint.pp(df)
+        df.to_json(f'{table_name[0]}'.json)
+
+    #     cursor.execute(f"SELECT * FROM {table_name[0]} limit 2;")
+    #     rows = cursor.fetchall()
+
+    #     data_dictionary[table_name[0]] = rows
    
-    return pprint.pp(data_dictionary)
+    # return pprint.pp(data_dictionary)
 
 
 
@@ -130,8 +168,8 @@ if __name__ == "__main__":
 
     db = connect_to_db()
     # select_all_tables_for_baseline()
-    get_table_columns()
-    # select_all_tables_for_baseline()
+    # get_table_columns()
+    select_all_tables_for_baseline()
     # select_all_updated_rows()
 
 
