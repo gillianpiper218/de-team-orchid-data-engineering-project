@@ -6,7 +6,7 @@ import os
 import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
-from pg8000 import DatabaseError
+from pg8000 import DatabaseError, InterfaceError
 
 # from freezegun import freeze_time
 import logging
@@ -60,3 +60,61 @@ class TestConnectToDatabase:
             with pytest.raises(DatabaseError):
                 connect_to_db()
         assert "Error connecting to database: Connection timed out" in caplog.text
+
+    @pytest.mark.it("unit test: check InterfaceError exception")
+    def test_interface_error_exception(self, caplog):
+        LOGGER.info("Testing now")
+        with patch("pg8000.connect") as mock_connection:
+            mock_connection.side_effect = InterfaceError("Connection timed out")
+            with pytest.raises(InterfaceError):
+                connect_to_db()
+        assert "Error connecting to the database: Connection timed out" in caplog.text
+
+
+class TestGetTableNames:
+
+    @pytest.mark.it("unit test: check function returns all tables names")
+    def test_function_returns_table_names(self):
+        result = get_table_names()
+        table_name_list = [item[0] for item in result]
+        assert "address" in table_name_list
+        assert "staff" in table_name_list
+        assert "currency" in table_name_list
+        assert "payment" in table_name_list
+        assert "department" in table_name_list
+        assert "transaction" in table_name_list
+        assert "design" in table_name_list
+        assert "sales_order" in table_name_list
+        assert "counterparty" in table_name_list
+        assert "purchase_order" in table_name_list
+        assert "payment_type" in table_name_list
+
+    @pytest.mark.it("unit test: raises DatabaseError")
+    def test_function_raises_DatabaseError(self, caplog):
+        LOGGER.info("Testing now")
+        with patch("pg8000.connect") as mock_connection:
+            mock_connection.side_effect = DatabaseError("Connection timed out")
+            with pytest.raises(DatabaseError):
+                get_table_names()
+        assert "Error connecting to database: Connection timed out" in caplog.text
+
+    # may need looking at
+    @pytest.mark.it("unit test: raises InterfaceError")
+    def test_function_raises_InterfaceError(self, caplog):
+        LOGGER.info("Testing now")
+        with patch("src.ingestion_function.connect_to_db") as mock_connection:
+            mock_connection.side_effect = InterfaceError("Connection timed out")
+            # with pytest.raises(InterfaceError):
+            get_table_names()
+            assert (
+                "Error connecting to the database: Connection timed out" in caplog.text
+            )
+
+    # @pytest.mark.it("unit test: raises InterfaceError")
+    # def test_function_raises_InterfaceError(self, caplog):
+    #     LOGGER.info("Testing now")
+    #     with patch("pg8000.connect") as mock_connection:
+    #         mock_connection.side_effect = InterfaceError("Connection timed out")
+    #         with pytest.raises(InterfaceError):
+    #             get_table_names()
+    #     assert "Error connecting to the database: Connection timed out" in caplog.text
