@@ -6,6 +6,7 @@ import os
 import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
+from pg8000 import DatabaseError
 
 # from freezegun import freeze_time
 import logging
@@ -18,15 +19,6 @@ from src.ingestion_function import (
 )
 
 LOGGER = logging.getLogger(__name__)
-
-load_dotenv()
-
-# Database connection
-DB_HOST = os.environ["DB_HOST"]
-DB_NAME = os.environ["DB_NAME"]
-DB_USER = os.environ["DB_USER"]
-DB_PASSWORD = os.environ["DB_PASSWORD"]
-DB_PORT = os.environ["DB_PORT"]
 
 
 @pytest.fixture(scope="function")
@@ -59,9 +51,12 @@ class TestConnectToDatabase:
         LOGGER.info("Testing now")
         connect_to_db()
         assert "Connected to the database successfully" in caplog.text
-    
+
     @pytest.mark.it("unit test: check DatabaseError exception")
     def test_database_error_exception(self, caplog):
         LOGGER.info("Testing now")
-        connect_to_db()
-        assert "Connected to the database successfully" in caplog.text
+        with patch("pg8000.connect") as mock_connection:
+            mock_connection.side_effect = DatabaseError("Connection timed out")
+            with pytest.raises(DatabaseError):
+                connect_to_db()
+        assert "Error connecting to database: Connection timed out" in caplog.text
