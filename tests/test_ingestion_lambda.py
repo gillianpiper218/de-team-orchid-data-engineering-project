@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 # from freezegun import freeze_time
 import logging
 import json
-from src.injestion_function import (
+from src.ingestion_function import (
     connect_to_db,
     get_table_names,
     select_all_tables_for_baseline,
@@ -56,6 +56,12 @@ def bucket(s3):
 class TestConnectToDatabase:
     @pytest.mark.it("unit test: check connection to database")
     def test_connect_to_datebase(self, caplog):
+        LOGGER.info("Testing now")
+        connect_to_db()
+        assert "Connected to the database successfully" in caplog.text
+    
+    @pytest.mark.it("unit test: check DatabaseError exception")
+    def test_database_error_exception(self, caplog):
         LOGGER.info("Testing now")
         connect_to_db()
         assert "Connected to the database successfully" in caplog.text
