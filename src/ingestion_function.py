@@ -61,7 +61,7 @@ def get_table_names():
         table_names = db.run(
             """SELECT table_name
         FROM INFORMATION_SCHEMA.TABLES
-        WHERE table_type = 'BASE TABLE' 
+        WHERE table_type = 'BASE TABLE'
         AND table_name NOT LIKE 'pg_%'
         AND table_name NOT LIKE 'sql_%'
         AND table_name NOT LIKE '_prisma_migrations%';"""
@@ -122,6 +122,7 @@ def initial_data_for_latest(table_names=get_table_names(), bucket_name=S3_BUCKET
 
 def select_and_write_updated_data(
         db=connect_to_db(), name_of_tables=get_table_names(), bucket_name=S3_BUCKET_NAME, **kwargs):
+        db = connect_to_db(), name_of_tables = get_table_names(), bucket_name = S3_BUCKET_NAME, **kwargs):
     cursor = db.cursor()
     for table_name in name_of_tables:
         cursor.execute(
@@ -143,6 +144,7 @@ def select_and_write_updated_data(
 
 def delete_empty_s3_files():
     try:
+        response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix="staging/")
         response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix="staging/")
         if 'Contents' in response:
             print("There are objects in the 'staging/' folder.")
