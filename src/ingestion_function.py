@@ -11,6 +11,7 @@ from pg8000.native import literal
 import json
 from pprint import pprint
 import boto3
+import re
 
 load_dotenv()
 
@@ -27,6 +28,9 @@ DB_PORT = os.environ["DB_PORT"]
 
 # S3 ingestion bucket
 S3_BUCKET_NAME = "de-team-orchid-totesys-ingestion"
+
+# S3 client
+s3 = boto3.client("s3")
 
 
 def connect_to_db():
@@ -76,6 +80,7 @@ def get_table_names():
             db.close()
 
 
+
 s3 = boto3.client("s3")
 
 
@@ -99,16 +104,20 @@ def select_all_tables_for_baseline(
         json_data = df.to_json(orient="records")
 
         data = json.dumps(json.loads(json_data))
+
         s3_bucket_key = f"baseline/{table_name[0]}.json"
         s3.put_object(Body=data, Bucket=bucket_name, Key=s3_bucket_key)
         logger.info({"Result": f"Uploaded file to {s3_bucket_key}"})
 
 
+
 def initial_data_for_latest(table_names=get_table_names(), bucket_name=S3_BUCKET_NAME):
     for table in table_names:
         s3.copy_object(
+
             Bucket=bucket_name,
             CopySource=f"{bucket_name}/baseline/{table[0]}.json",
+
             Key=f"latest/{table[0]}.json",
         )
 
@@ -130,8 +139,11 @@ def select_and_write_updated_data(
 
         data = json.dumps(json.loads(json_data))
         file_path = f"staging/{table_name[0]}.json"
+
         s3.put_object(Body=data, Bucket=bucket_name, Key=file_path)
+
         logger.info({"Result": f"update to file at {file_path}"})
+
 
 
 
@@ -179,8 +191,8 @@ if __name__ == "__main__":
     db = connect_to_db()
     delete_empty_s3_files()
     # select_all_tables_for_baseline()
-    # initial_data_for_latest()
-    # select_and_write_updated_data()
+
+
 
 # need a fetch tables function - log error if cant fetch the data - SELECT * FROM {table_name}" - stop injection
 #  need an upload to s3 function - need boto.client put object into s3 object - need to decide structure, log error if cant upload to s3 bucket, log if successful
