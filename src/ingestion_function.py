@@ -153,46 +153,28 @@ def update_latest_with_new_record():
         for l_item in latest_response["Contents"]:
             if l_item["Key"][7:] in list_of_staging_files:
                 list_of_latest_files.append(l_item["Key"][7:])
-        #pprint.pp(list_of_latest_files)
-
 
         for item in list_of_staging_files:
             staging_data = get_s3_object_data(f'staging/{item}')
             latest_data = get_s3_object_data(f'latest/{item}')
-  
+
             col_id_name = re.sub(r'\.json', '_id', item)
             biggest_id_dict = max(latest_data, key=lambda x: x[col_id_name])
 
 
-            pprint.pp(biggest_id_dict)
-            print(">>>>>>>>>>>>>>>>>>>>>>>>>>")
+            #pprint.pp(biggest_id_dict)
+            #print(">>>>>>>>>>>>>>>>>>>>>>>>>>")
             for el in staging_data:
+                pprint.pp(el)
                 if el[col_id_name] > biggest_id_dict[col_id_name]:
-                    
+                    latest_data.append(el)
+                    logger.info("new record added to latest")
+            data = json.dumps(latest_data)
+            file_path = f"latest/{item}"
+            s3.put_object(Body=data, Bucket=S3_BUCKET_NAME, Key=file_path)
 
 
-                    #append el to lastet 
-            # print("staging_data")
-            # pprint.pp(staging_data)
 
-    
-            # for key, value in staging_data.items():
-            #     if key == f"{item}_id":
-                    
-            
-        #pprint.pp(staging_data)
-        #pprint.pp(latest_data)
-   
-#inside staging data and latest data, find column where column name = f"{item}_id"
-#find largest id inside latest data, compare this with all of staging data records
-#if the staging data id is larger than the largest latest data id, append/copy (no deletion) this staging record to latest data
-    
-
-    
-# for each file in staging that is not empty
-# fetch the biggest ID number from the equivalent file in latest
-# if the id number in staging is bigger than the biggest id number in latest
-# append the row of data for that id into the latest file
 
 
 if __name__ == "__main__":
