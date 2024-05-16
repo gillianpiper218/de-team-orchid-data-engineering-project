@@ -145,8 +145,13 @@ def select_and_write_updated_data(db=connect_to_db(),
     select_all_tables_for_baseline()
     # select_all_updated_rows()
 
-    # db = connect_to_db()
+    db = connect_to_db()
+
+    # select_all_tables_for_baseline()
+== == == == =
+# db = connect_to_db()
 select_all_tables_for_baseline()
+>>>>>>>> > Temporary merge branch 2
 # initial_data_for_latest()
 # select_and_write_updated_data()
 
