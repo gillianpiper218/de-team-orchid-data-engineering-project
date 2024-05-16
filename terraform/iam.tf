@@ -1,5 +1,5 @@
 resource "aws_iam_role" "ingestion_function_role" {
-    name_prefix = "role-${var.ingestion_function}"
+    name_prefix = "role-${var.ingestion_function_name}"
     assume_role_policy = data.aws_iam_policy_document.trust_policy.json
 }
 
@@ -75,7 +75,7 @@ data "aws_iam_policy_document" "cw_document" {
     actions = [ "logs:CreateLogGroup" ]
 
     resources = [
-      "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.ingestion_function}:*"
+      "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.ingestion_function_name}:*"
     ]
   }
 
@@ -84,13 +84,13 @@ data "aws_iam_policy_document" "cw_document" {
     actions = [ "logs:CreateLogStream", "logs:PutLogEvents" ]
 
     resources = [
-      "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.ingestion_function}:*"
+      "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.ingestion_function_name}:*"
     ]
   }
 }
 
 resource "aws_iam_policy" "cw_policy" {
-    name_prefix = "cw-policy-${var.ingestion_function}"
+    name_prefix = "cw-policy-${var.ingestion_function_name}"
     policy = data.aws_iam_policy_document.cw_document.json
 }
 
