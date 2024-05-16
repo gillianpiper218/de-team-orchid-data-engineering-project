@@ -9,7 +9,7 @@ import pg8000.native
 import logging
 from pg8000.native import literal
 import json
-import pprint
+from pprint import pprint
 import boto3
 
 load_dotenv()
@@ -133,7 +133,7 @@ def select_and_write_updated_data(db=connect_to_db(),
         logger.info({'Result': f'update to file at {file_path}'})
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     # Test database connection
 
     #     db = connect_to_db()
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     db = connect_to_db()
     # select_all_tables_for_baseline()
     # initial_data_for_latest()
-    select_and_write_updated_data()
+    # select_and_write_updated_data()
 
 # need a fetch tables function - log error if cant fetch the data - SELECT * FROM {table_name}" - stop injection
 #  need an upload to s3 function - need boto.client put object into s3 object - need to decide structure, log error if cant upload to s3 bucket, log if successful
