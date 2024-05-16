@@ -1,9 +1,9 @@
-import boto3
-import json
+# import boto3
+# import json
 
 
-def ingest_to_baseline():
-    pass
+# def ingest_to_baseline():
+#     pass
 
 
 # 1 create a function for the first ingestion to puts all the data in the baseline

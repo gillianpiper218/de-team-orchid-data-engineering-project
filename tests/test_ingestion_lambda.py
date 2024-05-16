@@ -138,7 +138,39 @@ class TestSelectAllTablesBaseline:
             )
 
     @pytest.mark.it("unit test: correct data types in s3")
-    def test_data_types(self, s3):
+    def test_data_types_of_id(self, s3):
+        test_bucket_name = "test_bucket"
+        name_of_tables = get_table_names()
+        s3.create_bucket(
+            Bucket=test_bucket_name,
+            CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
+        )
+        select_all_tables_for_baseline(
+            bucket_name=test_bucket_name,
+            query_limit="2",
+            db=connect_to_db(),
+        )
+        list_of_ids = []
+        list_of_time_created = []
+        for table in name_of_tables:
+            response = s3.get_object(
+                Bucket=test_bucket_name, Key=f"baseline/{table[0]}.json"
+            )
+            contents = response["Body"].read().decode("utf-8")
+            data = json.loads(contents)
+            created_at_values = [d["created_at"] for d in data]
+            list_of_time_created.append(created_at_values)
+        for dictionary in data:
+            list_of_ids.append(next(iter(dictionary.values())))
+        assert all(isinstance(id_, int) for id_ in list_of_ids)
+        assert all(
+            len(str(num)) == 13 for sublist in list_of_time_created for num in sublist
+        )
+
+    @pytest.mark.it(
+        "unit test: check every table has create at and last updated columns"
+    )
+    def test_data_required_columns(self, s3):
         test_bucket_name = "test_bucket"
         name_of_tables = get_table_names()
         s3.create_bucket(
@@ -154,9 +186,11 @@ class TestSelectAllTablesBaseline:
             response = s3.get_object(
                 Bucket=test_bucket_name, Key=f"baseline/{table[0]}.json"
             )
-            object_content = response["Body"].read().decode("utf-8")
-            # print(object_content + '\n')
-            print(object_content)
+            contents = response["Body"].read().decode("utf-8")
+            data = json.loads(contents)
+            for dictionary in data:
+                assert "created_at" in dictionary
+                assert "last_updated" in dictionary
 
 
 class TestSelectAllUpdatedRows:
