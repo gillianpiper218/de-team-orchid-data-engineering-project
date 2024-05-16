@@ -96,6 +96,7 @@ def select_all_tables_for_baseline(
         json_data = df.to_json(orient='records')
 
         data = json.dumps(json.loads(json_data))
+        print(data)
         s3_bucket_key = f'baseline/{table_name[0]}.json'
         s3.put_object(Body=data, Bucket=bucket_name,
                       Key=s3_bucket_key)

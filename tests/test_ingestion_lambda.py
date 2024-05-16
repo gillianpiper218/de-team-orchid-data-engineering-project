@@ -7,7 +7,8 @@ import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from pg8000 import DatabaseError, InterfaceError
-from data.test_data.test_db import mock_table_name_list
+from data.test_data.mock_db import mock_table_name_list
+from pprint import pprint
 
 # from freezegun import freeze_time
 import logging
@@ -16,7 +17,8 @@ from src.ingestion_function import (
     connect_to_db,
     get_table_names,
     select_all_tables_for_baseline,
-    select_all_updated_rows,
+    initial_data_for_latest,
+    select_and_write_updated_data
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -114,19 +116,22 @@ class TestGetTableNames:
 
 class TestSelectAllTablesBaseline:
 
-    @patch('src.ingestion_function.get_table_names')
-    @pytest.mark.it("unit test: function returns a dictionary")
-    def test_returns_a_dictionary(self, mock_get_table_names):
-        mock_get_table_names.return_value = mock_table_name_list
-
-    @pytest.mark.it("unit test: dict contains correct keys")
-    def test_dict_keys(self):
-        pass
-
-    @pytest.mark.it("unit test: correct data types for values")
-    def test_dict_values(self):
-        pass
-
+    @pytest.mark.it("unit test: function writes data to s3 bucket")
+    def test_returns_a_dictionary(self, s3):
+        bucket_name = 'test_bucket'
+        s3.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={'LocationConstraint': 'eu-west-2'})
+        select_all_tables_for_baseline(bucket_name=bucket_name,
+                                       name_of_tables=mock_table_name_list,
+                                       query_limit='2',
+                                       db=connect_to_db())
+        pprint(mock_table_name_list)
+        response = s3.list_objects_v2(
+            Bucket='test_bucket',
+            Prefix='Baseline')
+        pprint(response)
+        assert response['KeyCount'] == 11
+        for i in range(len(response['Contents'])):
+            assert response['Contents'][i]['Key'] == f'baseline/{mock_table_name_list[i][0]}.json'
 
 class TestSelectAllUpdatedRows:
 

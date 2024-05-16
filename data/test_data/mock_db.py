@@ -50,4 +50,3 @@ mock_db_data.append(sales_order_dict)
 mock_db_data.append(staff_dict)
 mock_db_data.append(transaction_dict)
 
-pprint(mock_db_data)
