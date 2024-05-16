@@ -146,9 +146,14 @@ def select_and_write_updated_data(
     # select_all_updated_rows()
 
     db = connect_to_db()
+
     # select_all_tables_for_baseline()
-    # initial_data_for_latest()
-    # select_and_write_updated_data()
+== == == == =
+# db = connect_to_db()
+select_all_tables_for_baseline()
+>>>>>>>> > Temporary merge branch 2
+# initial_data_for_latest()
+# select_and_write_updated_data()
 
 
 # need a fetch tables function - log error if cant fetch the data - SELECT * FROM {table_name}" - stop injection
