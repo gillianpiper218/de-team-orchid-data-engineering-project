@@ -95,6 +95,6 @@ resource "aws_iam_policy" "cw_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_cw_policy_attachment" {
-    role = aws_iam_role.ingestion_function_role.name_prefix
+    role = aws_iam_role.ingestion_function_role.name
     policy_arn = aws_iam_policy.cw_policy.arn
 }
