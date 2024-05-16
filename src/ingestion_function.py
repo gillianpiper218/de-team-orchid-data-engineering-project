@@ -28,6 +28,9 @@ DB_PORT = os.environ["DB_PORT"]
 # S3 injestion bucket
 S3_BUCKET_NAME = "de-team-orchid-totesys-ingestion"
 
+# S3 client
+s3 = boto3.client("s3")
+
 
 def connect_to_db():
     try:
@@ -74,9 +77,6 @@ def get_table_names():
             db.close()
 
 
-s3 = boto3.client('s3')
-
-
 def select_all_tables_for_baseline():
     db = connect_to_db()
     cursor = db.cursor()
@@ -87,13 +87,12 @@ def select_all_tables_for_baseline():
         result = cursor.fetchall()
         col_names = [elt[0] for elt in cursor.description]
         df = pd.DataFrame(result, columns=col_names)
-        json_data = df.to_json(orient='records')
+        json_data = df.to_json(orient="records")
 
         data = json.dumps(json.loads(json_data))
-        file_path = f'baseline/{table_name[0]}.json'
-        s3.put_object(Body=data, Bucket=S3_BUCKET_NAME,
-                      Key=file_path)
-        logger.info({'Result': f'Uploaded file to {file_path}'})
+        file_path = f"baseline/{table_name[0]}.json"
+        s3.put_object(Body=data, Bucket=S3_BUCKET_NAME, Key=file_path)
+        logger.info({"Result": f"Uploaded file to {file_path}"})
 
 
 def initial_data_for_latest():
@@ -101,8 +100,9 @@ def initial_data_for_latest():
     for table in table_names:
         s3.copy_object(
             Bucket=S3_BUCKET_NAME,
-            CopySource=f'{S3_BUCKET_NAME}/baseline/{table[0]}.json',
-            Key=f'latest/{table[0]}.json',)
+            CopySource=f"{S3_BUCKET_NAME}/baseline/{table[0]}.json",
+            Key=f"latest/{table[0]}.json",
+        )
 
 
 def select_and_write_updated_data():
@@ -118,13 +118,35 @@ def select_and_write_updated_data():
         result = cursor.fetchall()
         col_names = [elt[0] for elt in cursor.description]
         df = pd.DataFrame(result, columns=col_names)
-        json_data = df.to_json(orient='records')
+        json_data = df.to_json(orient="records")
 
         data = json.dumps(json.loads(json_data))
-        file_path = f'staging/{table_name[0]}.json'
-        s3.put_object(Body=data, Bucket=S3_BUCKET_NAME,
-                      Key=file_path)
-        logger.info({'Result': f'update to file at {file_path}'})
+        file_path = f"staging/{table_name[0]}.json"
+        s3.put_object(Body=data, Bucket=S3_BUCKET_NAME, Key=file_path)
+        logger.info({"Result": f"update to file at {file_path}"})
+
+
+def get_s3_object_data(key):
+    response = s3.get_object(bucket=S3_BUCKET_NAME, Key=key)
+    data = json.loads(response["Body"].read().decode("utf-8"))
+    return data
+
+
+def update_latest_with_new_record():
+    response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix="staging/")
+    list_of_files = []
+    for item in response["Contents"]:
+        if item["Size"] > 2:
+            list_of_files.append(item["Key"])
+            pprint.pp(list_of_files)
+    # latest_key = f'staging/{table_name}.json'
+    # latest_data = get_s3_object_data()
+
+
+# for each file in staging that is not empty
+# fetch the biggest ID number from the equivalent file in latest
+# if the id number in staging is bigger than the biggest id number in latest
+# append the row of data for that id into the latest file
 
 
 if __name__ == "__main__":
@@ -134,6 +156,7 @@ if __name__ == "__main__":
     # select_all_tables_for_baseline()
     # initial_data_for_latest()
     select_and_write_updated_data()
+    update_latest_with_new_record()
 
 # need a fetch tables function - log error if cant fetch the data - SELECT * FROM {table_name}" - stop injection
 #  need an upload to s3 function - need boto.client put object into s3 object - need to decide structure, log error if cant upload to s3 bucket, log if successful
