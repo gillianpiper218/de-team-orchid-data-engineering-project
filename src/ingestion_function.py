@@ -114,8 +114,7 @@ def initial_data_for_latest(table_names=get_table_names(), bucket_name=S3_BUCKET
 
 
 def select_and_write_updated_data(
-    db=connect_to_db(), name_of_tables=get_table_names(), bucket_name=S3_BUCKET_NAME
-):
+    db=connect_to_db(), name_of_tables=get_table_names(), bucket_name=S3_BUCKET_NAME, **kwargs):
     cursor = db.cursor()
     for table_name in name_of_tables:
         cursor.execute(
@@ -130,6 +129,7 @@ def select_and_write_updated_data(
 
         data = json.dumps(json.loads(json_data))
         file_path = f"staging/{table_name[0]}.json"
+        print(bucket_name)
         s3.put_object(Body=data, Bucket=bucket_name, Key=file_path)
         logger.info({"Result": f"update to file at {file_path}"})
 

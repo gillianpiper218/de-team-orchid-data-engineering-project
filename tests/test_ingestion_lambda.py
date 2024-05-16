@@ -193,16 +193,73 @@ class TestSelectAllTablesBaseline:
                 assert "last_updated" in dictionary
 
 
-class TestSelectAllUpdatedRows:
+class TestInitialDataForLatest:
 
-    @pytest.mark.it("unit test: function returns a dictionary")
-    def test_returns_updated_dictionary(self):
-        pass
+    @pytest.mark.it("unit test: baseline contents copied into latest")
+    def test_copies_from_baseline(self, s3):
+        table_names = get_table_names()
+        test_bucket_name = "test_bucket"
 
-    @pytest.mark.it("unit test: dict contains correct keys")
-    def test_updated_dict_keys(self):
-        pass
+        s3.create_bucket(
+            Bucket=test_bucket_name,
+            CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
+        )
+        test_body = "hello"
+        for table in table_names:
+            s3.put_object(
+                Bucket=test_bucket_name, Key=f"baseline/{table[0]}.json", Body=test_body
+            )
 
-    @pytest.mark.it("unit test: correct data types for values")
-    def test_updated_dict_values(self):
-        pass
+        initial_data_for_latest(
+            bucket_name=test_bucket_name, table_names=get_table_names()
+        )
+
+        for table in table_names:
+            response = s3.get_object(
+                Bucket=test_bucket_name, Key=f"latest/{table[0]}.json"
+            )
+            assert response["Body"].read().decode("utf-8") == "hello"
+
+    @pytest.mark.it("unit test: check the keys in latest match to table names")
+    def test_correct_keys_in_latest(self, s3):
+        table_names = get_table_names()
+        test_bucket_name = "test_bucket"
+
+        s3.create_bucket(
+            Bucket=test_bucket_name,
+            CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
+        )
+        test_body = "hello"
+        for table in table_names:
+            s3.put_object(
+                Bucket=test_bucket_name, Key=f"baseline/{table[0]}.json", Body=test_body
+            )
+
+        initial_data_for_latest(
+            bucket_name=test_bucket_name, table_names=get_table_names()
+        )
+
+        response = s3.list_objects_v2(Bucket=test_bucket_name, Prefix="latest")
+
+        for i in range(len(response["Contents"])):
+            assert response["Contents"][i]["Key"] == f"latest/{table_names[i][0]}.json"
+
+class TestSelectAndWriteUpdatedData:
+
+    @pytest.mark.it("unit test: check last updated is within the last 20 minutes")
+    def test_data_within_20_mins(self, s3):
+        table_names = get_table_names()
+        test_bucket_name = "test_bucket"
+        s3.create_bucket(
+            Bucket='test_bucket',
+            CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
+        )
+
+        select_and_write_updated_data(name_of_tables=get_table_names(), bucket_name='test_bucket')
+
+        for table in table_names:
+            response = s3.get_object(
+                Bucket=test_bucket_name, Key=f"staging/{table[0]}.json"
+            )
+            print(response)
+            assert response["Body"].read().decode("utf-8") == "hello"
