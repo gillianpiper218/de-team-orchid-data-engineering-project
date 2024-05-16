@@ -9,7 +9,7 @@ import pg8000.native
 import logging
 from pg8000.native import literal
 import json
-import pprint
+from pprint import pprint
 import boto3
 
 load_dotenv()
@@ -83,13 +83,14 @@ def select_all_tables_for_baseline():
     name_of_tables = get_table_names()
 
     for table_name in name_of_tables:
-        cursor.execute(f"SELECT * FROM {table_name[0]};")
+        cursor.execute(f"SELECT * FROM {table_name[0]} LIMIT 2;")
         result = cursor.fetchall()
         col_names = [elt[0] for elt in cursor.description]
         df = pd.DataFrame(result, columns=col_names)
         json_data = df.to_json(orient='records')
 
         data = json.dumps(json.loads(json_data))
+        pprint(data)
         file_path = f'baseline/{table_name[0]}.json'
         s3.put_object(Body=data, Bucket=S3_BUCKET_NAME,
                       Key=file_path)
@@ -127,13 +128,13 @@ def select_and_write_updated_data():
         logger.info({'Result': f'update to file at {file_path}'})
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     # Test database connection
 
-    db = connect_to_db()
-    # select_all_tables_for_baseline()
+    # db = connect_to_db()
+select_all_tables_for_baseline()
     # initial_data_for_latest()
-    select_and_write_updated_data()
+    # select_and_write_updated_data()
 
 # need a fetch tables function - log error if cant fetch the data - SELECT * FROM {table_name}" - stop injection
 #  need an upload to s3 function - need boto.client put object into s3 object - need to decide structure, log error if cant upload to s3 bucket, log if successful
