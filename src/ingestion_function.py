@@ -77,38 +77,44 @@ def get_table_names():
 s3 = boto3.client('s3')
 
 
-def select_all_tables_for_baseline():
-    db = connect_to_db()
+def select_all_tables_for_baseline(
+        bucket_name=S3_BUCKET_NAME,
+        name_of_tables=get_table_names(),
+        db=connect_to_db(),
+        query_limit='',
+        **kwargs):
+
     cursor = db.cursor()
-    name_of_tables = get_table_names()
+    if not query_limit == '':
+        query_limit = 'LIMIT 2'
 
     for table_name in name_of_tables:
-        cursor.execute(f"SELECT * FROM {table_name[0]};")
+        cursor.execute(f"SELECT * FROM {table_name[0]} {query_limit};")
         result = cursor.fetchall()
         col_names = [elt[0] for elt in cursor.description]
         df = pd.DataFrame(result, columns=col_names)
         json_data = df.to_json(orient='records')
 
         data = json.dumps(json.loads(json_data))
-        file_path = f'baseline/{table_name[0]}.json'
-        s3.put_object(Body=data, Bucket=S3_BUCKET_NAME,
-                      Key=file_path)
-        logger.info({'Result': f'Uploaded file to {file_path}'})
+        s3_bucket_key = f'baseline/{table_name[0]}.json'
+        s3.put_object(Body=data, Bucket=bucket_name,
+                      Key=s3_bucket_key)
+        logger.info({'Result': f'Uploaded file to {s3_bucket_key}'})
 
 
-def initial_data_for_latest():
-    table_names = get_table_names()
+def initial_data_for_latest(table_names=get_table_names(),
+                            bucket_name=S3_BUCKET_NAME):
     for table in table_names:
         s3.copy_object(
-            Bucket=S3_BUCKET_NAME,
-            CopySource=f'{S3_BUCKET_NAME}/baseline/{table[0]}.json',
+            Bucket=bucket_name,
+            CopySource=f'{bucket_name}/baseline/{table[0]}.json',
             Key=f'latest/{table[0]}.json',)
 
 
-def select_and_write_updated_data():
-    db = connect_to_db()
+def select_and_write_updated_data(db=connect_to_db(),
+                                  name_of_tables=get_table_names(),
+                                  bucket_name=S3_BUCKET_NAME):
     cursor = db.cursor()
-    name_of_tables = get_table_names()
     for table_name in name_of_tables:
         cursor.execute(
             f"""SELECT * FROM {table_name[0]} WHERE last_updated
@@ -122,7 +128,7 @@ def select_and_write_updated_data():
 
         data = json.dumps(json.loads(json_data))
         file_path = f'staging/{table_name[0]}.json'
-        s3.put_object(Body=data, Bucket=S3_BUCKET_NAME,
+        s3.put_object(Body=data, Bucket=bucket_name,
                       Key=file_path)
         logger.info({'Result': f'update to file at {file_path}'})
 
