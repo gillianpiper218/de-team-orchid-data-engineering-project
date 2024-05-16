@@ -127,22 +127,54 @@ def select_and_write_updated_data():
 
 
 def get_s3_object_data(key):
-    response = s3.get_object(bucket=S3_BUCKET_NAME, Key=key)
+    # try:
+    response = s3.get_object(Bucket=S3_BUCKET_NAME, Key=key)
     data = json.loads(response["Body"].read().decode("utf-8"))
     return data
+    # except s3.exceptions.NoSuchKey:
+     
 
 
 def update_latest_with_new_record():
-    response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix="staging/")
-    list_of_files = []
-    for item in response["Contents"]:
+    staging_response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix="staging/")
+    list_of_staging_files = []
+    for item in staging_response["Contents"]:
         if item["Size"] > 2:
-            list_of_files.append(item["Key"])
-            pprint.pp(list_of_files)
-    # latest_key = f'staging/{table_name}.json'
-    # latest_data = get_s3_object_data()
+            list_of_staging_files.append(item["Key"][8:])
+        pprint.pp(list_of_staging_files)
+    if list_of_staging_files == []:
+        logger.info("No new files")
+        print("No new files")
+        pprint.pp(list_of_staging_files)
+    else:
+        latest_response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix="latest/")
+        list_of_latest_files = []
+        for l_item in latest_response["Contents"]:
+            if l_item["Key"][7:] in list_of_staging_files:
+                list_of_latest_files.append(l_item["Key"][7:])
+        #pprint.pp(list_of_latest_files)
 
+        for item in list_of_staging_files:
+            staging_data = get_s3_object_data(f'staging/{item}')
+            latest_data = get_s3_object_data(f'latest/{item}')
 
+            
+            biggest_latest_id = max(latest_data.values())
+            pprint.pp(biggest_latest_id)
+
+            # for key, value in staging_data.items():
+            #     if key == f"{item}_id":
+                    
+            
+        #pprint.pp(staging_data)
+        #pprint.pp(latest_data)
+   
+#inside staging data and latest data, find column where column name = f"{item}_id"
+#find largest id inside latest data, compare this with all of staging data records
+#if the staging data id is larger than the largest latest data id, append/copy (no deletion) this staging record to latest data
+    
+
+    
 # for each file in staging that is not empty
 # fetch the biggest ID number from the equivalent file in latest
 # if the id number in staging is bigger than the biggest id number in latest
