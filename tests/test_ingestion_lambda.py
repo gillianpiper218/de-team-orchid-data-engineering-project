@@ -7,6 +7,7 @@ import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from pg8000 import DatabaseError, InterfaceError
+from data.test_data.test_db import mock_table_name_list
 
 # from freezegun import freeze_time
 import logging
@@ -113,9 +114,10 @@ class TestGetTableNames:
 
 class TestSelectAllTablesBaseline:
 
+    @patch('src.ingestion_function.get_table_names')
     @pytest.mark.it("unit test: function returns a dictionary")
-    def test_returns_a_dictionary(self):
-        pass
+    def test_returns_a_dictionary(self, mock_get_table_names):
+        mock_get_table_names.return_value = mock_table_name_list
 
     @pytest.mark.it("unit test: dict contains correct keys")
     def test_dict_keys(self):
