@@ -7,7 +7,8 @@ import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from pg8000 import DatabaseError, InterfaceError
-from data.test_data.test_db import mock_table_name_list
+from data.test_data.mock_db import mock_table_name_list
+from pprint import pprint
 
 # from freezegun import freeze_time
 import logging
@@ -16,7 +17,8 @@ from src.ingestion_function import (
     connect_to_db,
     get_table_names,
     select_all_tables_for_baseline,
-    select_all_updated_rows,
+    initial_data_for_latest,
+    select_and_write_updated_data,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -114,18 +116,81 @@ class TestGetTableNames:
 
 class TestSelectAllTablesBaseline:
 
-    @patch('src.ingestion_function.get_table_names')
-    @pytest.mark.it("unit test: function returns a dictionary")
-    def test_returns_a_dictionary(self, mock_get_table_names):
-        mock_get_table_names.return_value = mock_table_name_list
+    @pytest.mark.it("unit test: function writes data to s3 bucket")
+    def test_writes_to_s3(self, s3):
+        test_bucket_name = "test_bucket"
+        name_of_tables = get_table_names()
+        s3.create_bucket(
+            Bucket=test_bucket_name,
+            CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
+        )
+        select_all_tables_for_baseline(
+            bucket_name=test_bucket_name,
+            query_limit="2",
+            db=connect_to_db(),
+        )
+        response = s3.list_objects_v2(Bucket="test_bucket", Prefix="baseline")
+        assert response["KeyCount"] == len(name_of_tables)
+        for i in range(len(name_of_tables)):
+            assert (
+                response["Contents"][i]["Key"]
+                == f"baseline/{name_of_tables[i][0]}.json"
+            )
 
-    @pytest.mark.it("unit test: dict contains correct keys")
-    def test_dict_keys(self):
-        pass
+    @pytest.mark.it("unit test: correct data types in s3")
+    def test_data_types_of_id(self, s3):
+        test_bucket_name = "test_bucket"
+        name_of_tables = get_table_names()
+        s3.create_bucket(
+            Bucket=test_bucket_name,
+            CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
+        )
+        select_all_tables_for_baseline(
+            bucket_name=test_bucket_name,
+            query_limit="2",
+            db=connect_to_db(),
+        )
+        list_of_ids = []
+        list_of_time_created = []
+        for table in name_of_tables:
+            response = s3.get_object(
+                Bucket=test_bucket_name, Key=f"baseline/{table[0]}.json"
+            )
+            contents = response["Body"].read().decode("utf-8")
+            data = json.loads(contents)
+            created_at_values = [d["created_at"] for d in data]
+            list_of_time_created.append(created_at_values)
+        for dictionary in data:
+            list_of_ids.append(next(iter(dictionary.values())))
+        assert all(isinstance(id_, int) for id_ in list_of_ids)
+        assert all(
+            len(str(num)) == 13 for sublist in list_of_time_created for num in sublist
+        )
 
-    @pytest.mark.it("unit test: correct data types for values")
-    def test_dict_values(self):
-        pass
+    @pytest.mark.it(
+        "unit test: check every table has create at and last updated columns"
+    )
+    def test_data_required_columns(self, s3):
+        test_bucket_name = "test_bucket"
+        name_of_tables = get_table_names()
+        s3.create_bucket(
+            Bucket=test_bucket_name,
+            CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
+        )
+        select_all_tables_for_baseline(
+            bucket_name=test_bucket_name,
+            query_limit="2",
+            db=connect_to_db(),
+        )
+        for table in name_of_tables:
+            response = s3.get_object(
+                Bucket=test_bucket_name, Key=f"baseline/{table[0]}.json"
+            )
+            contents = response["Body"].read().decode("utf-8")
+            data = json.loads(contents)
+            for dictionary in data:
+                assert "created_at" in dictionary
+                assert "last_updated" in dictionary
 
 
 class TestSelectAllUpdatedRows:
