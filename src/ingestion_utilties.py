@@ -1,10 +1,3 @@
-import boto3
-import json
-
-
-def ingest_to_baseline():
-    pass
-
 
 # 1 create a function for the first ingestion to puts all the data in the baseline
 # 2 creat a function to copy basline into latest
@@ -15,6 +8,7 @@ def ingest_to_baseline():
 # 5.2 write the copy to the change log
 # 5.3 add the updated record to the latest
 # format of the data files of the bucket
+
 
 def get_s3_object_data(key):
     # try:
@@ -61,3 +55,4 @@ def update_latest_with_new_record():
             data = json.dumps(latest_data)
             file_path = f"latest/{item}"
             s3.put_object(Body=data, Bucket=S3_BUCKET_NAME, Key=file_path)
+

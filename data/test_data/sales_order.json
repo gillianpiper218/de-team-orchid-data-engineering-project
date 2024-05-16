@@ -1,5 +1,5 @@
 {
-    "sales_order_id": [
+    "sales_order": [
         {"sales_order_id":1, "created_at":"blah", "last_updated":"blah blah", "units_sold":10, "unit_price":20},
         {"sales_order_id":2, "created_at":"blah", "last_updated":"blah blah", "units_sold":9, "unit_price":19},
         {"sales_order_id":3, "created_at":"blah", "last_updated":"blah blah", "units_sold":8, "unit_price":18},
