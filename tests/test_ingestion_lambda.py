@@ -18,7 +18,7 @@ from src.ingestion_function import (
     get_table_names,
     select_all_tables_for_baseline,
     initial_data_for_latest,
-    select_and_write_updated_data
+    select_and_write_updated_data,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -117,21 +117,47 @@ class TestGetTableNames:
 class TestSelectAllTablesBaseline:
 
     @pytest.mark.it("unit test: function writes data to s3 bucket")
-    def test_returns_a_dictionary(self, s3):
-        bucket_name = 'test_bucket'
-        s3.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={'LocationConstraint': 'eu-west-2'})
-        select_all_tables_for_baseline(bucket_name=bucket_name,
-                                       name_of_tables=mock_table_name_list,
-                                       query_limit='2',
-                                       db=connect_to_db())
-        pprint(mock_table_name_list)
-        response = s3.list_objects_v2(
-            Bucket='test_bucket',
-            Prefix='Baseline')
-        pprint(response)
-        assert response['KeyCount'] == 11
-        for i in range(len(response['Contents'])):
-            assert response['Contents'][i]['Key'] == f'baseline/{mock_table_name_list[i][0]}.json'
+    def test_writes_to_s3(self, s3):
+        test_bucket_name = "test_bucket"
+        name_of_tables = get_table_names()
+        s3.create_bucket(
+            Bucket=test_bucket_name,
+            CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
+        )
+        select_all_tables_for_baseline(
+            bucket_name=test_bucket_name,
+            query_limit="2",
+            db=connect_to_db(),
+        )
+        response = s3.list_objects_v2(Bucket="test_bucket", Prefix="baseline")
+        assert response["KeyCount"] == len(name_of_tables)
+        for i in range(len(name_of_tables)):
+            assert (
+                response["Contents"][i]["Key"]
+                == f"baseline/{name_of_tables[i][0]}.json"
+            )
+
+    @pytest.mark.it("unit test: correct data types in s3")
+    def test_data_types(self, s3):
+        test_bucket_name = "test_bucket"
+        name_of_tables = get_table_names()
+        s3.create_bucket(
+            Bucket=test_bucket_name,
+            CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
+        )
+        select_all_tables_for_baseline(
+            bucket_name=test_bucket_name,
+            query_limit="2",
+            db=connect_to_db(),
+        )
+        for table in name_of_tables:
+            response = s3.get_object(
+                Bucket=test_bucket_name, Key=f"baseline/{table[0]}.json"
+            )
+            object_content = response["Body"].read().decode("utf-8")
+            # print(object_content + '\n')
+            print(object_content)
+
 
 class TestSelectAllUpdatedRows:
 
