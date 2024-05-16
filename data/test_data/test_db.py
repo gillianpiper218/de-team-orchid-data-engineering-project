@@ -1,7 +1,7 @@
 import json
 from pprint import pprint
 
-mock_table_name_list = ["address", "counterparty", "currency", "department", "design", "payment", "payment_type", "purchase_order", "sales_order", "staff", "transaction"]
+mock_table_name_list = (["address"], ["counterparty"], ["currency"], ["department"], ["design"], ["payment"], ["payment_type"], ["purchase_order"], ["sales_order"], ["staff"], ["transaction"])
 
 with open('data/test_data/address.json', encoding='utf-8') as address_file:
     address_dict = json.load(address_file)
