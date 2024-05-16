@@ -80,7 +80,6 @@ def get_table_names():
             db.close()
 
 
-
 s3 = boto3.client("s3")
 
 
@@ -110,7 +109,6 @@ def select_all_tables_for_baseline(
         logger.info({"Result": f"Uploaded file to {s3_bucket_key}"})
 
 
-
 def initial_data_for_latest(table_names=get_table_names(), bucket_name=S3_BUCKET_NAME):
     for table in table_names:
         s3.copy_object(
@@ -123,7 +121,7 @@ def initial_data_for_latest(table_names=get_table_names(), bucket_name=S3_BUCKET
 
 
 def select_and_write_updated_data(
-    db=connect_to_db(), name_of_tables=get_table_names(), bucket_name=S3_BUCKET_NAME, **kwargs):
+        db=connect_to_db(), name_of_tables=get_table_names(), bucket_name=S3_BUCKET_NAME, **kwargs):
     cursor = db.cursor()
     for table_name in name_of_tables:
         cursor.execute(
@@ -143,23 +141,20 @@ def select_and_write_updated_data(
         logger.info({"Result": f"update to file at {file_path}"})
 
 
-
-
-
-
 def delete_empty_s3_files():
     try:
-        response=s3.list_objects_v2(Bucket=S3_BUCKET_NAME,Prefix="staging/")
+        response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix="staging/")
         if 'Contents' in response:
             print("There are objects in the 'staging/' folder.")
             for obj in response['Contents']:
-                obj_size=obj['Size']
+                obj_size = obj['Size']
                 if obj_size == 0:
-                    s3_delete_object(Bucket=S3_BUCKET_NAME , Key=file_path)
+                    s3_delete_object(Bucket=S3_BUCKET_NAME, Key=file_path)
                     logger.info(f"Delete empty s3 file: {file_path}")
 
     except:
         logger.error(f"Error deleting empty files")
+
 
 
 def get_s3_object_data(key):
@@ -218,6 +213,7 @@ def update_latest_with_new_record():
 
 
 
+
 if __name__ == "__main__":
     # Test database connection
 
@@ -231,9 +227,11 @@ if __name__ == "__main__":
     # select_all_updated_rows()
 
     db = connect_to_db()
+
     delete_empty_s3_files()
     # select_all_tables_for_baseline()
-
+    # initial_data_for_latest()
+    # select_and_write_updated_data()
 
 
 # need a fetch tables function - log error if cant fetch the data - SELECT * FROM {table_name}" - stop injection
