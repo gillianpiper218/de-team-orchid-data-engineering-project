@@ -206,7 +206,6 @@ class TestSelectAndWriteUpdatedData:
         select_and_write_updated_data(
             name_of_tables=get_table_names(), bucket_name="test_bucket"
         )
-        list_of_last_updated = []
         for table in table_names:
             response = s3.get_object(
                 Bucket=test_bucket_name, Key=f"staging/{table[0]}.json"
