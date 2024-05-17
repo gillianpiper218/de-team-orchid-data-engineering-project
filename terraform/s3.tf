@@ -8,6 +8,7 @@ resource "aws_s3_bucket" "ingestion_s3_bucket" {
 resource "aws_s3_bucket_lifecycle_configuration" "bucket-lifecycle" {
   bucket = aws_s3_bucket.ingestion_s3_bucket.id
 
+
   rule {
     status = "Enabled"
     id = "file-lifespan"
