@@ -7,7 +7,6 @@ import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from pg8000 import DatabaseError, InterfaceError
-from data.test_data.mock_db import mock_table_name_list
 from pprint import pprint
 from datetime import datetime
 import logging
@@ -16,7 +15,6 @@ from src.ingestion_function import (
     connect_to_db,
     get_table_names,
     select_all_tables_for_baseline,
-    initial_data_for_latest,
     select_and_write_updated_data,
 )
 
@@ -67,7 +65,8 @@ class TestConnectToDatabase:
     def test_interface_error_exception(self, caplog):
         LOGGER.info("Testing now")
         with patch("pg8000.connect") as mock_connection:
-            mock_connection.side_effect = InterfaceError("Connection timed out")
+            mock_connection.side_effect = InterfaceError(
+                "Connection timed out")
             with pytest.raises(InterfaceError):
                 connect_to_db()
         assert "Error connecting to the database: Connection timed out" in caplog.text
@@ -105,7 +104,8 @@ class TestGetTableNames:
     def test_raises_InterfaceError(self, caplog):
         LOGGER.info("Testing now")
         with patch("src.ingestion_function.connect_to_db") as mock_connection:
-            mock_connection.side_effect = InterfaceError("Connection timed out")
+            mock_connection.side_effect = InterfaceError(
+                "Connection timed out")
             # with pytest.raises(InterfaceError):
             get_table_names()
             assert (
@@ -206,7 +206,6 @@ class TestSelectAndWriteUpdatedData:
         select_and_write_updated_data(
             name_of_tables=get_table_names(), bucket_name="test_bucket"
         )
-        list_of_last_updated = []
         for table in table_names:
             response = s3.get_object(
                 Bucket=test_bucket_name, Key=f"staging/{table[0]}.json"
@@ -219,5 +218,5 @@ class TestSelectAndWriteUpdatedData:
                 formatted_time = datetime.fromtimestamp(epoch_time)
                 current_time = datetime.now()
                 difference = current_time - formatted_time
-                twenty_mins = difference.total_seconds() / 60
-                print(twenty_mins < 20)
+                differene_mins = difference.total_seconds() / 60
+                assert differene_mins < 20

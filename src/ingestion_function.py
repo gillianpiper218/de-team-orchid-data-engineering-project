@@ -2,7 +2,7 @@
 import pprint
 import os
 import pandas as pd
-
+from datetime import datetime
 import pg8000.exceptions
 from dotenv import load_dotenv
 import pg8000.native
@@ -14,6 +14,9 @@ import boto3
 import re
 
 load_dotenv()
+
+# timestamp for now
+current_time = datetime.now()
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -103,7 +106,7 @@ def select_all_tables_for_baseline(
 
         data = json.dumps(json.loads(json_data))
 
-        s3_bucket_key = f"baseline/{table_name[0]}.json"
+        s3_bucket_key = f"baseline/{table_name[0]}-{current_time}.json"
         s3.put_object(Body=data, Bucket=bucket_name, Key=s3_bucket_key)
         logger.info({"Result": f"Uploaded file to {s3_bucket_key}"})
 
@@ -127,7 +130,7 @@ def select_and_write_updated_data(
         json_data = df.to_json(orient="records")
 
         data = json.dumps(json.loads(json_data))
-        file_path = f"staging/{table_name[0]}.json"
+        file_path = f"updated/{table_name[0]}-{current_time}.json"
         s3.put_object(Body=data, Bucket=bucket_name, Key=file_path)
 
         logger.info({"Result": f"update to file at {file_path}"})
@@ -149,11 +152,9 @@ def delete_empty_s3_files():
         logger.error(f"Error deleting empty files")
 
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
 
-#     db = connect_to_db()
-#     select_all_tables_for_baseline()
-#     delete_empty_s3_files()
-
+    db = connect_to_db()
+    select_and_write_updated_data()
 # need a fetch tables function - log error if cant fetch the data - SELECT * FROM {table_name}" - stop injection
 #  need an upload to s3 function - need boto.client put object into s3 object - need to decide structure, log error if cant upload to s3 bucket, log if successful

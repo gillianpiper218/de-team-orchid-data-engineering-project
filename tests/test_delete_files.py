@@ -14,7 +14,6 @@ from src.ingestion_function import delete_empty_s3_files
 LOGGER = logging.getLogger(__name__)
 
 
-
 @pytest.fixture(scope="function")
 def aws_credentials():
     """Mocked AWS Credentials for moto."""
@@ -41,32 +40,14 @@ def bucket(s3):
 
 class TestDeleteFiles():
 
-
     @pytest.mark.it("unit test: Delete empty s3 files")
-    def test_delete_empty_files(self,caplog):
+    def test_delete_empty_files(self, caplog):
         LOGGER.info("Testing now")
         # response = s3.list_objects_v2(Bucket="test_bucket", Prefix="staging/")
         s3_mock = Mock()
         s3_mock.list_objects_v2.return_value = {
-            
+
         }
 
-
-
-
-
-
-
-
-
-
-
-
-   
     @pytest.mark.it("unit test: No empty files")
-
-
-
-
-
     @pytest.mark.it("unit test: Error deleting empty files")
