@@ -18,7 +18,6 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-
 # Database connection
 DB_HOST = os.environ["DB_HOST"]
 DB_NAME = os.environ["DB_NAME"]
@@ -109,15 +108,6 @@ def select_all_tables_for_baseline(
         logger.info({"Result": f"Uploaded file to {s3_bucket_key}"})
 
 
-def initial_data_for_latest(table_names=get_table_names(), bucket_name=S3_BUCKET_NAME):
-    for table in table_names:
-        s3.copy_object(
-            Bucket=bucket_name,
-            CopySource=f"{bucket_name}/baseline/{table[0]}.json",
-            Key=f"latest/{table[0]}.json",
-        )
-
-
 def select_and_write_updated_data(
     db=connect_to_db(),
     name_of_tables=get_table_names(),
@@ -128,7 +118,7 @@ def select_and_write_updated_data(
     for table_name in name_of_tables:
         cursor.execute(
             f"""SELECT * FROM {table_name[0]} WHERE last_updated
-                       > NOW() - interval '50 minutes';
+                       > NOW() - interval '20 minutes';
                        """
         )
         result = cursor.fetchall()
@@ -159,110 +149,11 @@ def delete_empty_s3_files():
         logger.error(f"Error deleting empty files")
 
 
-def get_s3_object_data(key):
-    # try:
-        response = s3.get_object(Bucket=S3_BUCKET_NAME, Key=key)
-        data = json.loads(response["Body"].read().decode("utf-8"))
-        return data
-    #except:
+# if __name__ == "__main__":
 
-
-
-def update_latest_with_new_record():
-    staging_response = s3.list_objects_v2(
-        Bucket=S3_BUCKET_NAME, Prefix="staging/")
-    list_of_staging_files = []
-    for s_item in staging_response["Contents"]:
-        if s_item["Size"] > 2:
-            list_of_staging_files.append(s_item["Key"][8:])
-        # pprint.pp(list_of_staging_files)
-
-    if list_of_staging_files == []:
-        logger.info("No new files")
-        # print("No new files")
-        # pprint.pp(list_of_staging_files)
-    else:
-        latest_response = s3.list_objects_v2(
-            Bucket=S3_BUCKET_NAME, Prefix="latest/")
-        list_of_latest_files = []
-        for l_item in latest_response["Contents"]:
-            if l_item["Key"][7:] in list_of_staging_files:
-                list_of_latest_files.append(l_item["Key"][7:])
-
-        for item in list_of_staging_files:
-            staging_data = get_s3_object_data(f"staging/{item}")
-            latest_data = get_s3_object_data(f"latest/{item}")
-
-            col_id_name = re.sub(r"\.json", "_id", item)
-            biggest_id_dict = max(latest_data, key=lambda x: x[col_id_name])
-
-            # pprint.pp(biggest_id_dict)
-            # print(">>>>>>>>>>>>>>>>>>>>>>>>>>")
-            for el in staging_data:
-                pprint.pp(el)
-                if el[col_id_name] > biggest_id_dict[col_id_name]:
-                    latest_data.append(el)
-                    logger.info("new record added to latest")
-            data = json.dumps(latest_data)
-            file_path = f"latest/{item}"
-            s3.put_object(Body=data, Bucket=S3_BUCKET_NAME, Key=file_path)
-
-
-
-
-
-
-def delete_empty_s3_files():
-    try:
-        response=s3.list_objects_v2(Bucket=S3_BUCKET_NAME,Prefix="staging/")
-        
-        if 'Contents' in response:
-            print(f"there are objects in the files")
-            for obj in response['Contents']:
-                obj_size=obj['Size']
-                file_path = obj['Key']
-                if obj_size == 0:
-                    s3.delete_object(Bucket=S3_BUCKET_NAME , Key=file_path)
-                    logger.info(f"Delete empty s3 file: {file_path}")
-
-    except Exception as e:
-        logger.error(f"Error deleting empty files: {e}")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-if __name__ == "__main__":
-    # Test database connection
-
-    #     db = connect_to_db()
-    #     # select_all_tables_for_baseline()
-    #     select_all_updated_rows()
-    db = connect_to_db()
-    # select_all_tables_for_baseline()
-    # get_table_columns()
-    select_all_tables_for_baseline()
-    # select_all_updated_rows()
-
-    db = connect_to_db()
-
-    delete_empty_s3_files()
-    # select_all_tables_for_baseline()
-    delete_empty_s3_files()
-    # initial_data_for_latest()
-    # select_and_write_updated_data()
+#     db = connect_to_db()
+#     select_all_tables_for_baseline()
+#     delete_empty_s3_files()
 
 # need a fetch tables function - log error if cant fetch the data - SELECT * FROM {table_name}" - stop injection
 #  need an upload to s3 function - need boto.client put object into s3 object - need to decide structure, log error if cant upload to s3 bucket, log if successful
