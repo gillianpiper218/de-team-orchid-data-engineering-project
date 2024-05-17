@@ -1,10 +1,20 @@
 resource "aws_s3_bucket" "ingestion_s3_bucket" {
     bucket = "${var.ingestion_s3_bucket_name}"
+    lifecycle {
+    prevent_destroy = true
+}
 }
 
-# attribute of resource called life-cycle
-# if terraform destroy, don't get rid of historical data
+resource "aws_s3_bucket_lifecycle_configuration" "bucket-lifecycle" {
+  bucket = aws_s3_bucket.ingestion_s3_bucket.id
 
-resource "aws_s3_bucket" "ingestion-lambda-requirements-layer" {
-    bucket = "ingestion-lambda-requirements-orchid786"
+
+  rule {
+    status = "Enabled"
+    id = "file-lifespan"
+
+    expiration {
+      days = 90
+    }
+  }
 }
