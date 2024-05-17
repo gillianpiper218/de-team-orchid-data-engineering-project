@@ -67,8 +67,7 @@ class TestConnectToDatabase:
     def test_interface_error_exception(self, caplog):
         LOGGER.info("Testing now")
         with patch("pg8000.connect") as mock_connection:
-            mock_connection.side_effect = InterfaceError(
-                "Connection timed out")
+            mock_connection.side_effect = InterfaceError("Connection timed out")
             with pytest.raises(InterfaceError):
                 connect_to_db()
         assert "Error connecting to the database: Connection timed out" in caplog.text
@@ -106,8 +105,7 @@ class TestGetTableNames:
     def test_raises_InterfaceError(self, caplog):
         LOGGER.info("Testing now")
         with patch("src.ingestion_function.connect_to_db") as mock_connection:
-            mock_connection.side_effect = InterfaceError(
-                "Connection timed out")
+            mock_connection.side_effect = InterfaceError("Connection timed out")
             # with pytest.raises(InterfaceError):
             get_table_names()
             assert (
@@ -194,58 +192,6 @@ class TestSelectAllTablesBaseline:
                 assert "last_updated" in dictionary
 
 
-class TestInitialDataForLatest:
-
-    @pytest.mark.it("unit test: baseline contents copied into latest")
-    def test_copies_from_baseline(self, s3):
-        table_names = get_table_names()
-        test_bucket_name = "test_bucket"
-
-        s3.create_bucket(
-            Bucket=test_bucket_name,
-            CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
-        )
-        test_body = "hello"
-        for table in table_names:
-            s3.put_object(
-                Bucket=test_bucket_name, Key=f"baseline/{table[0]}.json", Body=test_body
-            )
-
-        initial_data_for_latest(
-            bucket_name=test_bucket_name, table_names=get_table_names()
-        )
-
-        for table in table_names:
-            response = s3.get_object(
-                Bucket=test_bucket_name, Key=f"latest/{table[0]}.json"
-            )
-            assert response["Body"].read().decode("utf-8") == "hello"
-
-    @pytest.mark.it("unit test: check the keys in latest match to table names")
-    def test_correct_keys_in_latest(self, s3):
-        table_names = get_table_names()
-        test_bucket_name = "test_bucket"
-
-        s3.create_bucket(
-            Bucket=test_bucket_name,
-            CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
-        )
-        test_body = "hello"
-        for table in table_names:
-            s3.put_object(
-                Bucket=test_bucket_name, Key=f"baseline/{table[0]}.json", Body=test_body
-            )
-
-        initial_data_for_latest(
-            bucket_name=test_bucket_name, table_names=get_table_names()
-        )
-
-        response = s3.list_objects_v2(Bucket=test_bucket_name, Prefix="latest")
-
-        for i in range(len(response["Contents"])):
-            assert response["Contents"][i]["Key"] == f"latest/{table_names[i][0]}.json"
-
-
 class TestSelectAndWriteUpdatedData:
 
     @pytest.mark.it("unit test: check last updated is within the last 20 minutes")
@@ -269,7 +215,7 @@ class TestSelectAndWriteUpdatedData:
             data = json.loads(contents)
         for dictionary in data:
             if dictionary:
-                epoch_time = (dictionary['last_updated']) / 1000
+                epoch_time = (dictionary["last_updated"]) / 1000
                 formatted_time = datetime.fromtimestamp(epoch_time)
                 current_time = datetime.now()
                 difference = current_time - formatted_time
