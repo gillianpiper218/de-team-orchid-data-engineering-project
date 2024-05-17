@@ -155,7 +155,5 @@ def delete_empty_s3_files():
 #     select_all_tables_for_baseline()
 #     delete_empty_s3_files()
 
-
-
 # need a fetch tables function - log error if cant fetch the data - SELECT * FROM {table_name}" - stop injection
 #  need an upload to s3 function - need boto.client put object into s3 object - need to decide structure, log error if cant upload to s3 bucket, log if successful
