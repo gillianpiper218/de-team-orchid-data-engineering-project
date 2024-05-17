@@ -128,7 +128,7 @@ def select_and_write_updated_data(
     for table_name in name_of_tables:
         cursor.execute(
             f"""SELECT * FROM {table_name[0]} WHERE last_updated
-                       > NOW() - interval '20 minutes';
+                       > NOW() - interval '50 minutes';
                        """
         )
         result = cursor.fetchall()
@@ -168,7 +168,8 @@ def get_s3_object_data(key):
 
 
 def update_latest_with_new_record():
-    staging_response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix="staging/")
+    staging_response = s3.list_objects_v2(
+        Bucket=S3_BUCKET_NAME, Prefix="staging/")
     list_of_staging_files = []
     for s_item in staging_response["Contents"]:
         if s_item["Size"] > 2:
@@ -180,7 +181,8 @@ def update_latest_with_new_record():
         # print("No new files")
         # pprint.pp(list_of_staging_files)
     else:
-        latest_response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix="latest/")
+        latest_response = s3.list_objects_v2(
+            Bucket=S3_BUCKET_NAME, Prefix="latest/")
         list_of_latest_files = []
         for l_item in latest_response["Contents"]:
             if l_item["Key"][7:] in list_of_staging_files:
