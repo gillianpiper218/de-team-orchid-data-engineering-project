@@ -112,16 +112,18 @@ def select_all_tables_for_baseline(
 def initial_data_for_latest(table_names=get_table_names(), bucket_name=S3_BUCKET_NAME):
     for table in table_names:
         s3.copy_object(
-
             Bucket=bucket_name,
             CopySource=f"{bucket_name}/baseline/{table[0]}.json",
-
             Key=f"latest/{table[0]}.json",
         )
 
 
 def select_and_write_updated_data(
-        db=connect_to_db(), name_of_tables=get_table_names(), bucket_name=S3_BUCKET_NAME, **kwargs):
+    db=connect_to_db(),
+    name_of_tables=get_table_names(),
+    bucket_name=S3_BUCKET_NAME,
+    **kwargs,
+):
     cursor = db.cursor()
     for table_name in name_of_tables:
         cursor.execute(
@@ -144,20 +146,17 @@ def select_and_write_updated_data(
 def delete_empty_s3_files():
     try:
         response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix="staging/")
-        if 'Contents' in response:
+        if "Contents" in response:
             print("There are objects in the 'staging/' folder.")
-            for obj in response['Contents']:
-                obj_size = obj['Size']
+            for obj in response["Contents"]:
+                obj_size = obj["Size"]
+                file_path = ""
                 if obj_size == 0:
-                    s3_delete_object(Bucket=S3_BUCKET_NAME, Key=file_path)
+                    s3.delete_object(Bucket=S3_BUCKET_NAME, Key=file_path)
                     logger.info(f"Delete empty s3 file: {file_path}")
 
     except:
         logger.error(f"Error deleting empty files")
-
-
-<< << << << < Temporary merge branch 1
-== == == == =
 
 
 def get_s3_object_data(key):
@@ -169,8 +168,7 @@ def get_s3_object_data(key):
 
 
 def update_latest_with_new_record():
-    staging_response = s3.list_objects_v2(
-        Bucket=S3_BUCKET_NAME, Prefix="staging/")
+    staging_response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix="staging/")
     list_of_staging_files = []
     for s_item in staging_response["Contents"]:
         if s_item["Size"] > 2:
@@ -182,18 +180,17 @@ def update_latest_with_new_record():
         # print("No new files")
         # pprint.pp(list_of_staging_files)
     else:
-        latest_response = s3.list_objects_v2(
-            Bucket=S3_BUCKET_NAME, Prefix="latest/")
+        latest_response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix="latest/")
         list_of_latest_files = []
         for l_item in latest_response["Contents"]:
             if l_item["Key"][7:] in list_of_staging_files:
                 list_of_latest_files.append(l_item["Key"][7:])
 
         for item in list_of_staging_files:
-            staging_data = get_s3_object_data(f'staging/{item}')
-            latest_data = get_s3_object_data(f'latest/{item}')
+            staging_data = get_s3_object_data(f"staging/{item}")
+            latest_data = get_s3_object_data(f"latest/{item}")
 
-            col_id_name = re.sub(r'\.json', '_id', item)
+            col_id_name = re.sub(r"\.json", "_id", item)
             biggest_id_dict = max(latest_data, key=lambda x: x[col_id_name])
 
             # pprint.pp(biggest_id_dict)
@@ -208,7 +205,6 @@ def update_latest_with_new_record():
             s3.put_object(Body=data, Bucket=S3_BUCKET_NAME, Key=file_path)
 
 
->>>>>>>> > Temporary merge branch 2
 if __name__ == "__main__":
     # Test database connection
 
