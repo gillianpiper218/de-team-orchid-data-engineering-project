@@ -1,6 +1,6 @@
 
 resource "aws_lambda_function" "ingestion_function" {
-    function_name = "${var.ingestion_function_name}"
+    function_name = var.ingestion_function_name
     filename = data.archive_file.lambda.output_path
     role = aws_iam_role.ingestion_function_role.arn
     handler = "ingestion_function.lambda_handler"

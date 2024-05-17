@@ -2,7 +2,7 @@
 import pprint
 import os
 import pandas as pd
-
+from botocore.exceptions import ClientError
 import pg8000.exceptions
 from dotenv import load_dotenv
 import pg8000.native
@@ -133,27 +133,28 @@ def select_and_write_updated_data(
         logger.info({"Result": f"update to file at {file_path}"})
 
 
-def delete_empty_s3_files():
+def delete_empty_s3_files(bucket_name=S3_BUCKET_NAME):
     try:
-        response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix="staging/")
+        response = s3.list_objects_v2(Bucket=bucket_name, Prefix="updated/")
         if "Contents" in response:
-            print("There are objects in the 'staging/' folder.")
             for obj in response["Contents"]:
                 obj_size = obj["Size"]
-                file_path = ""
-                if obj_size == 0:
-                    s3.delete_object(Bucket=S3_BUCKET_NAME, Key=file_path)
+                file_path = obj["Key"]
+                if obj_size <= 2:
+                    s3.delete_object(Bucket=bucket_name, Key=file_path)
                     logger.info(f"Delete empty s3 file: {file_path}")
 
-    except:
-        logger.error(f"Error deleting empty files")
+    except ClientError as ex:
+        if ex.response["Error"]["Code"] == "NoSuchBucket":
+            logger.info("No bucket found")
+            raise
 
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
 
-#     db = connect_to_db()
-#     select_all_tables_for_baseline()
-#     delete_empty_s3_files()
+    db = connect_to_db()
+    #     select_all_tables_for_baseline()
+    delete_empty_s3_files()
 
 # need a fetch tables function - log error if cant fetch the data - SELECT * FROM {table_name}" - stop injection
 #  need an upload to s3 function - need boto.client put object into s3 object - need to decide structure, log error if cant upload to s3 bucket, log if successful
