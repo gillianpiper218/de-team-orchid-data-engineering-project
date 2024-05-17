@@ -25,4 +25,12 @@ The aim of this project is to extract operational sales data of totebag designs 
 
 6. Apply Terraform changes:
 
+7. Terraform destroy:
+    The S3 ingestion bucket is configured to be ommitted from terraform destroy.  To run the destroy without destroying the S3 bucket you can do the following, where 'resource' is the S3 bucket'
+    - terraform plan | grep <resource> | grep id 
+    - terraform state rm <resource>
+    - terraform destroy
+    - terraform import <resource> <ID>
+
+
 
