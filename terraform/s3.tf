@@ -18,3 +18,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "bucket-lifecycle" {
     }
   }
 }
+
+
+resource "aws_s3_bucket" "processed_s3_bucket" {
+    bucket = "${var.processed_s3_bucket_name}"
+}
