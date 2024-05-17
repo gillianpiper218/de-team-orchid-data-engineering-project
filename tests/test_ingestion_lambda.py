@@ -65,8 +65,7 @@ class TestConnectToDatabase:
     def test_interface_error_exception(self, caplog):
         LOGGER.info("Testing now")
         with patch("pg8000.connect") as mock_connection:
-            mock_connection.side_effect = InterfaceError(
-                "Connection timed out")
+            mock_connection.side_effect = InterfaceError("Connection timed out")
             with pytest.raises(InterfaceError):
                 connect_to_db()
         assert "Error connecting to the database: Connection timed out" in caplog.text
@@ -104,8 +103,7 @@ class TestGetTableNames:
     def test_raises_InterfaceError(self, caplog):
         LOGGER.info("Testing now")
         with patch("src.ingestion_function.connect_to_db") as mock_connection:
-            mock_connection.side_effect = InterfaceError(
-                "Connection timed out")
+            mock_connection.side_effect = InterfaceError("Connection timed out")
             # with pytest.raises(InterfaceError):
             get_table_names()
             assert (
