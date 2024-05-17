@@ -161,10 +161,11 @@ def delete_empty_s3_files():
 
 def get_s3_object_data(key):
     # try:
-    response = s3.get_object(Bucket=S3_BUCKET_NAME, Key=key)
-    data = json.loads(response["Body"].read().decode("utf-8"))
-    return data
-    # except s3.exceptions.NoSuchKey:
+        response = s3.get_object(Bucket=S3_BUCKET_NAME, Key=key)
+        data = json.loads(response["Body"].read().decode("utf-8"))
+        return data
+    #except:
+
 
 
 def update_latest_with_new_record():
