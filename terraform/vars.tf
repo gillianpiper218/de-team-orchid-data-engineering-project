@@ -1,6 +1,6 @@
 variable "ingestion_function_name" {
     type = string
-    default = "ingestion_function"
+    default = "lambda-ellen"
 }
 
 
