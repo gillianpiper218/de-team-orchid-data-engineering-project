@@ -134,16 +134,18 @@ def select_and_write_updated_data():
 def delete_empty_s3_files():
     try:
         response=s3.list_objects_v2(Bucket=S3_BUCKET_NAME,Prefix="staging/")
+        
         if 'Contents' in response:
-            print("There are objects in the 'staging/' folder.")
+            print(f"there are objects in the files")
             for obj in response['Contents']:
                 obj_size=obj['Size']
+                file_path = obj['Key']
                 if obj_size == 0:
-                    s3_delete_object(Bucket=S3_BUCKET_NAME , Key=file_path)
+                    s3.delete_object(Bucket=S3_BUCKET_NAME , Key=file_path)
                     logger.info(f"Delete empty s3 file: {file_path}")
 
-    except:
-        logger.error(f"Error deleting empty files")
+    except Exception as e:
+        logger.error(f"Error deleting empty files: {e}")
 
 
 
