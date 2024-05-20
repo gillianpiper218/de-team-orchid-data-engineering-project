@@ -26,5 +26,3 @@ variable "sns_alert_topic_name" {
     type = string
     default = "LambdaErrors"
 }
-
-

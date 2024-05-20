@@ -16,8 +16,6 @@ data "archive_file" "lambda" {
 }
 
 
-
-
 resource "aws_lambda_permission" "allow_eventbridge" {
   action = "lambda:InvokeFunction"
   function_name = aws_lambda_function.ingestion_function.function_name

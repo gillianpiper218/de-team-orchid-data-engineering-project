@@ -10,7 +10,7 @@ resource "aws_lambda_function" "processing_function" {
 
 
 
-data "archive_file" "lambda" {
+data "archive_file" "processing_lambda" {
   type        = "zip"
   source_file = "${path.module}/../src/lambda-ellen.py"//later for the function to be created
   output_path = "${path.module}/../function.zip"
@@ -46,6 +46,3 @@ resource "aws_cloudwatch_log_group" "processing_function_log_group" {
     prevent_destroy = false
   }
 }
-
-
-

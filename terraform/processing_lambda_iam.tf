@@ -19,7 +19,7 @@ data "aws_iam_policy_document" "trust_policy" {
 
 resource "aws_iam_role_policy_attachment" "processing_lambda_get_policy_attachment" {
     role = aws_iam_role.processing_function_role.name
-    policy_arn = aws_iam_policy.s3_processed_get_policy.arn 
+    policy_arn = aws_iam_policy.s3_ingestion_get_policy.arn 
 }
 
 

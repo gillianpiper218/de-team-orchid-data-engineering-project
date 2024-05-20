@@ -28,4 +28,3 @@ resource "aws_sns_topic_subscription" "lambda_error_subs" {
   endpoint =local.emails[count.index]
   topic_arn = aws_sns_topic.sns_alerts.arn 
 }
-
