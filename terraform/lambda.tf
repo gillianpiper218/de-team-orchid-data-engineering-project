@@ -5,8 +5,13 @@ resource "aws_lambda_function" "ingestion_function" {
     role = aws_iam_role.ingestion_function_role.arn
     handler = "lambda-ellen.lambda_handler"
     depends_on    = [aws_cloudwatch_log_group.ingestion_function_log_group]
-
-    runtime = "python3.11"
+    layers = [
+    aws_lambda_layer_version.pandas_layer.arn,
+    aws_lambda_layer_version.pg8000_layer.arn,
+    aws_lambda_layer_version.python_dotenv_layer.arn,
+    aws_lambda_layer_version.boto3_layer.arn,
+  ]
+    runtime = "python3.9"
   }
 
 data "archive_file" "lambda" {
@@ -16,7 +21,37 @@ data "archive_file" "lambda" {
 }
 
 
+resource "aws_lambda_layer_version" "pandas_layer" {
+  filename   = "${path.module}/../pandas-layer.zip"
+  layer_name = "pandas_layer"
+  compatible_runtimes = ["python3.9"]
 
+  source_code_hash = filebase64sha256("${path.module}/../pandas-layer.zip")
+}
+
+resource "aws_lambda_layer_version" "pg8000_layer" {
+  filename   = "${path.module}/../pg8000-layer.zip"
+  layer_name = "pg8000_layer"
+  compatible_runtimes = ["python3.9"]
+
+  source_code_hash = filebase64sha256("${path.module}/../pg8000-layer.zip")
+}
+
+resource "aws_lambda_layer_version" "python_dotenv_layer" {
+  filename   = "${path.module}/../python-dotenv-layer.zip"
+  layer_name = "python_dotenv_layer"
+  compatible_runtimes = ["python3.9"]
+
+  source_code_hash = filebase64sha256("${path.module}/../python-dotenv-layer.zip")
+}
+
+resource "aws_lambda_layer_version" "boto3_layer" {
+  filename   = "${path.module}/../boto3-layer.zip"
+  layer_name = "boto3_layer"
+  compatible_runtimes = ["python3.9"]
+
+  source_code_hash = filebase64sha256("${path.module}/../pg8000-layer.zip")
+} 
 
 resource "aws_lambda_permission" "allow_eventbridge" {
   action = "lambda:InvokeFunction"
@@ -28,3 +63,39 @@ resource "aws_lambda_permission" "allow_eventbridge" {
 
 
 
+resource "aws_iam_policy" "lambda_layer_policy" {
+  name        = "LambdaLayerPolicy"
+  description = "Policy to allow Lambda function access to Lambda layers"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect   = "Allow",
+      Action   = [
+        "lambda:GetLayerVersion",
+        "lambda:GetLayerVersionPolicy",
+        "lambda:ListLayerVersions"
+      ],
+      Resource = "*"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_layer_policy_attachment" {
+  role       = aws_iam_role.lambda_exec_role.name
+  policy_arn = aws_iam_policy.lambda_layer_policy.arn
+}
+
+resource "aws_iam_role" "lambda_exec_role" {
+  name               = "lambda_exec_role"
+  assume_role_policy = jsonencode({
+    Version   = "2012-10-17",
+    Statement = [{
+      Effect    = "Allow",
+      Principal = {
+        Service = "lambda.amazonaws.com"
+      },
+      Action    = "sts:AssumeRole"
+    }]
+  })
+}
