@@ -1,4 +1,3 @@
-
 resource "aws_lambda_function" "ingestion_function" {
     function_name = var.ingestion_function_name
     filename = data.archive_file.lambda.output_path
@@ -15,7 +14,6 @@ data "archive_file" "lambda" {
   output_path = "${path.module}/../function.zip"
 }
 
-
 resource "aws_lambda_permission" "allow_eventbridge" {
   action = "lambda:InvokeFunction"
   function_name = aws_lambda_function.ingestion_function.function_name
@@ -23,6 +21,3 @@ resource "aws_lambda_permission" "allow_eventbridge" {
   source_arn = aws_cloudwatch_event_rule.scheduler.arn
   source_account = data.aws_caller_identity.current.account_id
 }
-
-
-

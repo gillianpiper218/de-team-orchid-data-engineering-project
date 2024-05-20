@@ -24,5 +24,5 @@ variable "processing_function_name" {
 
 variable "sns_alert_topic_name" {
     type = string
-    default = "LambdaErrors"
+    default = "sns-alert-topic"
 }

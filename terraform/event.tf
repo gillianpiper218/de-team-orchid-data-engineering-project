@@ -19,6 +19,11 @@ resource "aws_cloudwatch_log_group" "ingestion_function_log_group" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "processing_function_log_group" {
+  name              = "/aws/lambda/${var.processing_function_name}"
+  retention_in_days = 7
+  lifecycle {
+    prevent_destroy = false
+  }
+}
 # re-run
-
-
