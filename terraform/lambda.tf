@@ -3,7 +3,7 @@ resource "aws_lambda_function" "ingestion_function" {
     function_name = var.ingestion_function_name
     filename = data.archive_file.lambda.output_path
     role = aws_iam_role.ingestion_function_role.arn
-    handler = "lambda-ellen.lambda_handler"
+    handler = "lambda_ellen.lambda_handler"
     depends_on    = [aws_cloudwatch_log_group.ingestion_function_log_group]
     layers = [
     "arn:aws:lambda:eu-west-2:770693421928:layer:Klayers-p311-boto3:10",
@@ -16,7 +16,7 @@ resource "aws_lambda_function" "ingestion_function" {
 
 data "archive_file" "lambda" {
   type        = "zip"
-  source_file = "${path.module}/../src/lambda-ellen.py"
+  source_file = "${path.module}/../src/lambda_ellen.py"
   output_path = "${path.module}/../function.zip"
 }
 
