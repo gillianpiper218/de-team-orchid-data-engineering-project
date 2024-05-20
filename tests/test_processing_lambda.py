@@ -70,3 +70,150 @@ class TestRemoveCreatedAtAndLastUpdated:
     def test_remove_last_updated(self, s3):
         pass
 
+
+class TestProcessFactSalesOrder():
+    @pytest.mark.it("Unit test: created_date and created_time keys exist")
+    def test_created_date_and_time_existed(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: last_updated_date and last_updated_time keys exist")
+    def test_last_updated_date_and_time_existed(self, s3):
+        pass
+    
+    @pytest.mark.it("Unit test: created_at key removed")
+    def test_remove_created_at(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: last_updated key removed")
+    def test_remove_last_updated(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: check correct column names")
+    def test_check_correct_columns_names(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: check correct data type for columns")
+    def test_check_correct_data_type(self, s3):
+        pass
+
+
+class TestProcessDimCounterparty():
+    @pytest.mark.it("Unit test: commercial_contact key removed")
+    def test_remove_commercial_contact(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: delivery_contact key removed")
+    def test_remove_delivery_contact(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: created_at key removed")
+    def test_remove_created_at(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: last_updated key removed")
+    def test_remove_last_updated(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: check correct column names")
+    def test_check_correct_columns_names(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: check correct data type for columns")
+    def test_check_correct_data_type(self, s3):
+        pass
+
+
+class TestProcessDimCurrency():
+    @pytest.mark.it("Unit test: create currency_name column ")
+    def test_currency_name_created(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: created_at key removed")
+    def test_remove_created_at(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: last_updated key removed")
+    def test_remove_last_updated(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: check correct column names")
+    def test_check_correct_columns_names(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: check correct data type for columns")
+    def test_check_correct_data_type(self, s3):
+        pass
+        
+
+class TestProcessDimDate():
+    @pytest.mark.it("Unit test: check correct column names")
+    def test_check_correct_columns_names(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: check correct data type for columns")
+    def test_check_correct_data_type(self, s3):
+        pass
+
+
+class TestProcessDimDesign():
+    @pytest.mark.it("Unit test: created_at key removed")
+    def test_remove_created_at(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: last_updated key removed")
+    def test_remove_last_updated(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: check correct column names")
+    def test_check_correct_columns_names(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: check correct data type for columns")
+    def test_check_correct_data_type(self, s3):
+        pass
+
+    
+class TestProcessDimLocation():
+    @pytest.mark.it("Unit test: rename address_id key to location_id")
+    def test_rename_address_id(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: created_at key removed")
+    def test_remove_created_at(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: last_updated key removed")
+    def test_remove_last_updated(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: check correct column names")
+    def test_check_correct_columns_names(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: check correct data type for columns")
+    def test_check_correct_data_type(self, s3):
+        pass
+
+
+class TestProcessDimStaff():
+    @pytest.mark.it("Unit test: created_at key removed")
+    def test_remove_created_at(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: last_updated key removed")
+    def test_remove_last_updated(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: check correct column names")
+    def test_check_correct_columns_names(self, s3):
+        pass
+
+    @pytest.mark.it("Unit test: check correct data type for columns")
+    def test_check_correct_data_type(self, s3):
+        pass
+
+
+class TestConvertJsonToParquet():
+    @pytest.mark.it("Unit test: check returned object is in parquet form")
+    def test_check_returned_object(self, s3):
+        pass
