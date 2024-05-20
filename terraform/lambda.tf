@@ -6,7 +6,11 @@ resource "aws_lambda_function" "ingestion_function" {
     handler = "lambda-ellen.lambda_handler"
     depends_on    = [aws_cloudwatch_log_group.ingestion_function_log_group]
     layers = [
-    aws_lambda_layer_version.dependancies.arn,]
+    "arn:aws:lambda:eu-west-2:770693421928:layer:Klayers-p311-boto3:10",
+    "arn:aws:lambda:eu-west-2:770693421928:layer:Klayers-p311-numpy:6",
+    "arn:aws:lambda:eu-west-2:770693421928:layer:Klayers-p311-pandas:10",
+    aws_lambda_layer_version.modules.arn
+]
     runtime = "python3.11"
   }
 
@@ -25,20 +29,29 @@ data "archive_file" "lambda" {
 #   source_code_hash = filebase64sha256("${path.module}/../pandas-layer.zip")
 # }
 
-# resource "aws_lambda_layer_version" "pg8000_layer" {
-#   filename   = "${path.module}/../pg8000-layer.zip"
-#   layer_name = "pg8000_layer"
-#   compatible_runtimes = ["python3.9"]
+resource "aws_lambda_layer_version" "modules" {
+  filename   = "${path.module}/../modules.zip"
+  layer_name = "modules"
+  compatible_runtimes = ["python3.11"]
 
-#   source_code_hash = filebase64sha256("${path.module}/../pg8000-layer.zip")
+  source_code_hash = filebase64sha256("${path.module}/../modules.zip")
+}
+
+
+# resource "aws_lambda_layer_version" "pg8000_layer" {
+#   filename   = "${path.module}/../pg8000.zip"
+#   layer_name = "pg8000_layer"
+#   compatible_runtimes = ["python3.11"]
+
+#   source_code_hash = filebase64sha256("${path.module}/../pg8000.zip")
 # }
 
 # resource "aws_lambda_layer_version" "python_dotenv_layer" {
-#   filename   = "${path.module}/../python-dotenv-layer.zip"
+#   filename   = "${path.module}/../dotenv.zip"
 #   layer_name = "python_dotenv_layer"
-#   compatible_runtimes = ["python3.9"]
+#   compatible_runtimes = ["python3.11"]
 
-#   source_code_hash = filebase64sha256("${path.module}/../python-dotenv-layer.zip")
+#   source_code_hash = filebase64sha256("${path.module}/../dotenv.zip")
 # }
 
 # resource "aws_lambda_layer_version" "boto3_layer" {

@@ -156,11 +156,9 @@ def delete_empty_s3_files(bucket_name=S3_BUCKET_NAME):
 
 if __name__ == "__main__":
 
-
     db = connect_to_db()
     #     select_all_tables_for_baseline()
     delete_empty_s3_files()
-
 
     db = connect_to_db()
     select_and_write_updated_data()

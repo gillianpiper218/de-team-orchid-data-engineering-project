@@ -17,7 +17,7 @@ load_dotenv()
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-s3 = boto3.client('s3')
+s3 = boto3.client("s3")
 
 current_time = datetime.now()
 
@@ -151,14 +151,13 @@ def select_and_write_updated_data(
 
 def check_baseline_exists():
     response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix="baseline/")
-    return 'Contents' in response
+    return "Contents" in response
 
 
 def lambda_handler(event, context):
     try:
         if not check_baseline_exists():
-            logger.info(
-                "Baseline does not exist. Running baseline data extraction.")
+            logger.info("Baseline does not exist. Running baseline data extraction.")
             select_all_tables_for_baseline()
         else:
             logger.info("Baseline exists. Running updated data extraction.")
