@@ -6,12 +6,8 @@ resource "aws_lambda_function" "ingestion_function" {
     handler = "lambda-ellen.lambda_handler"
     depends_on    = [aws_cloudwatch_log_group.ingestion_function_log_group]
     layers = [
-    aws_lambda_layer_version.pandas_layer.arn,
-    aws_lambda_layer_version.pg8000_layer.arn,
-    aws_lambda_layer_version.python_dotenv_layer.arn,
-    aws_lambda_layer_version.boto3_layer.arn,
-  ]
-    runtime = "python3.9"
+    aws_lambda_layer_version.dependancies.arn,]
+    runtime = "python3.11"
   }
 
 data "archive_file" "lambda" {
@@ -21,37 +17,37 @@ data "archive_file" "lambda" {
 }
 
 
-resource "aws_lambda_layer_version" "pandas_layer" {
-  filename   = "${path.module}/../pandas-layer.zip"
-  layer_name = "pandas_layer"
-  compatible_runtimes = ["python3.9"]
+# resource "aws_lambda_layer_version" "pandas_layer" {
+#   filename   = "${path.module}/../pandas-layer.zip"
+#   layer_name = "pandas_layer"
+#   compatible_runtimes = ["python3.9"]
 
-  source_code_hash = filebase64sha256("${path.module}/../pandas-layer.zip")
-}
+#   source_code_hash = filebase64sha256("${path.module}/../pandas-layer.zip")
+# }
 
-resource "aws_lambda_layer_version" "pg8000_layer" {
-  filename   = "${path.module}/../pg8000-layer.zip"
-  layer_name = "pg8000_layer"
-  compatible_runtimes = ["python3.9"]
+# resource "aws_lambda_layer_version" "pg8000_layer" {
+#   filename   = "${path.module}/../pg8000-layer.zip"
+#   layer_name = "pg8000_layer"
+#   compatible_runtimes = ["python3.9"]
 
-  source_code_hash = filebase64sha256("${path.module}/../pg8000-layer.zip")
-}
+#   source_code_hash = filebase64sha256("${path.module}/../pg8000-layer.zip")
+# }
 
-resource "aws_lambda_layer_version" "python_dotenv_layer" {
-  filename   = "${path.module}/../python-dotenv-layer.zip"
-  layer_name = "python_dotenv_layer"
-  compatible_runtimes = ["python3.9"]
+# resource "aws_lambda_layer_version" "python_dotenv_layer" {
+#   filename   = "${path.module}/../python-dotenv-layer.zip"
+#   layer_name = "python_dotenv_layer"
+#   compatible_runtimes = ["python3.9"]
 
-  source_code_hash = filebase64sha256("${path.module}/../python-dotenv-layer.zip")
-}
+#   source_code_hash = filebase64sha256("${path.module}/../python-dotenv-layer.zip")
+# }
 
-resource "aws_lambda_layer_version" "boto3_layer" {
-  filename   = "${path.module}/../boto3-layer.zip"
-  layer_name = "boto3_layer"
-  compatible_runtimes = ["python3.9"]
+# resource "aws_lambda_layer_version" "boto3_layer" {
+#   filename   = "${path.module}/../boto3-layer.zip"
+#   layer_name = "boto3_layer"
+#   compatible_runtimes = ["python3.9"]
 
-  source_code_hash = filebase64sha256("${path.module}/../pg8000-layer.zip")
-} 
+#   source_code_hash = filebase64sha256("${path.module}/../pg8000-layer.zip")
+# } 
 
 resource "aws_lambda_permission" "allow_eventbridge" {
   action = "lambda:InvokeFunction"
