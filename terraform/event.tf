@@ -20,3 +20,5 @@ resource "aws_cloudwatch_log_group" "ingestion_function_log_group" {
 }
 
 # re-run
+#this is events for processing lambda
+
