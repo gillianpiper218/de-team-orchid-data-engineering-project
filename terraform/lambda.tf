@@ -21,13 +21,6 @@ data "archive_file" "lambda" {
 }
 
 
-# resource "aws_lambda_layer_version" "pandas_layer" {
-#   filename   = "${path.module}/../pandas-layer.zip"
-#   layer_name = "pandas_layer"
-#   compatible_runtimes = ["python3.9"]
-
-#   source_code_hash = filebase64sha256("${path.module}/../pandas-layer.zip")
-# }
 
 resource "aws_lambda_layer_version" "modules" {
   filename   = "${path.module}/../modules.zip"
@@ -38,29 +31,7 @@ resource "aws_lambda_layer_version" "modules" {
 }
 
 
-# resource "aws_lambda_layer_version" "pg8000_layer" {
-#   filename   = "${path.module}/../pg8000.zip"
-#   layer_name = "pg8000_layer"
-#   compatible_runtimes = ["python3.11"]
 
-#   source_code_hash = filebase64sha256("${path.module}/../pg8000.zip")
-# }
-
-# resource "aws_lambda_layer_version" "python_dotenv_layer" {
-#   filename   = "${path.module}/../dotenv.zip"
-#   layer_name = "python_dotenv_layer"
-#   compatible_runtimes = ["python3.11"]
-
-#   source_code_hash = filebase64sha256("${path.module}/../dotenv.zip")
-# }
-
-# resource "aws_lambda_layer_version" "boto3_layer" {
-#   filename   = "${path.module}/../boto3-layer.zip"
-#   layer_name = "boto3_layer"
-#   compatible_runtimes = ["python3.9"]
-
-#   source_code_hash = filebase64sha256("${path.module}/../pg8000-layer.zip")
-# } 
 
 resource "aws_lambda_permission" "allow_eventbridge" {
   action = "lambda:InvokeFunction"
@@ -108,3 +79,78 @@ resource "aws_iam_role" "lambda_exec_role" {
     }]
   })
 }
+
+resource "aws_iam_policy" "secret_manager_policy" {
+  name = "sm_access_permissions"
+  description = "policy to allow lambda to retrieve secret"
+ 
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "secretsmanager:GetSecretValue",
+        ]
+        Effect   = "Allow"
+        Resource = "arn:aws:secretsmanager:eu-west-2:851725259107:secret:totesys_environment-P0d7hT"
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "secret_manager_policy_attachment" {
+  role       = aws_iam_role.lambda_exec_role.name
+  policy_arn = aws_iam_policy.secret_manager_policy.arn
+}
+
+# resource "aws_iam_role_policy" "secret_manager_policy" {
+#   name = "sm_access_permissions"
+#   role = aws_iam_role.lambda_exec_role.id
+
+#   policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Action = [
+#           "secretsmanager:GetSecretValue",
+#         ]
+#         Effect   = "Allow"
+#         Resource = "arn:aws:secretsmanager:eu-west-2:851725259107:secret:totesys_environment-P0d7hT"
+#       },
+#     ]
+#   })
+# }
+
+# resource "aws_lambda_layer_version" "pandas_layer" {
+#   filename   = "${path.module}/../pandas-layer.zip"
+#   layer_name = "pandas_layer"
+#   compatible_runtimes = ["python3.9"]
+
+#   source_code_hash = filebase64sha256("${path.module}/../pandas-layer.zip")
+# }
+
+
+# resource "aws_lambda_layer_version" "pg8000_layer" {
+#   filename   = "${path.module}/../pg8000.zip"
+#   layer_name = "pg8000_layer"
+#   compatible_runtimes = ["python3.11"]
+
+#   source_code_hash = filebase64sha256("${path.module}/../pg8000.zip")
+# }
+
+# resource "aws_lambda_layer_version" "python_dotenv_layer" {
+#   filename   = "${path.module}/../dotenv.zip"
+#   layer_name = "python_dotenv_layer"
+#   compatible_runtimes = ["python3.11"]
+
+#   source_code_hash = filebase64sha256("${path.module}/../dotenv.zip")
+# }
+
+# resource "aws_lambda_layer_version" "boto3_layer" {
+#   filename   = "${path.module}/../boto3-layer.zip"
+#   layer_name = "boto3_layer"
+#   compatible_runtimes = ["python3.9"]
+
+#   source_code_hash = filebase64sha256("${path.module}/../pg8000-layer.zip")
+# } 
