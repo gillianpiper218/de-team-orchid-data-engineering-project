@@ -34,11 +34,11 @@ def get_object_key(
     
     return table_files[0]
 
-def remove_created_at_and_last_updated():
+def remove_created_at_and_last_updated(df):
     # remove created_at and last_updated keys function
     # Assuming df is your DataFrame
-    # df.drop('column_name', axis=1, inplace=True)
-    pass
+    df.drop(['created_at', 'last_updated'], axis=1, inplace=True)
+    return df
 
 
 def process_fact_sales_order():

@@ -7,6 +7,7 @@ from pprint import pprint
 from datetime import datetime
 import logging
 import json
+import pandas as pd
 from src.processing_lambda import (
     get_object_key,
     remove_created_at_and_last_updated,
@@ -71,15 +72,24 @@ class TestGetObjectKey:
         with pytest.raises(AttributeError):
             get_object_key(table_name="wrong_table_name", prefix="updated/", bucket="test_bucket")
 
-@pytest.mark.skip
 class TestRemoveCreatedAtAndLastUpdated:
     @pytest.mark.it("Unit test: created_at key removed")
-    def test_remove_created_at(self, s3):
-        pass
+    def test_remove_created_at(self):
+        df = pd.DataFrame({"address_id":[1], 
+                           "city":["London"], 
+                           "created_at": ["2022-11-03 14:20:49.962"], "last_updated": ["2022-11-03 14:30:41.962"]})
+        result = remove_created_at_and_last_updated(df)
+        assert "created_at" not in result
+        
 
     @pytest.mark.it("Unit test: last_updated key removed")
     def test_remove_last_updated(self, s3):
-        pass
+        df = pd.DataFrame({"address_id":[1], 
+                           "city":["London"], 
+                           "created_at": ["2022-11-03 14:20:49.962"], "last_updated": ["2022-11-03 14:30:41.962"]})
+        result = remove_created_at_and_last_updated(df)
+        assert "last_updated" not in result
+        
 
 @pytest.mark.skip
 class TestProcessFactSalesOrder:
