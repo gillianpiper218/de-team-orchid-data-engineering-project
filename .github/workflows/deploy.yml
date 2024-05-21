@@ -3,7 +3,7 @@ name: lambda-deployment
 on:
   push:
     branches:
-      - fix-deploy
+      - main
 
 jobs:
   run-tests:
