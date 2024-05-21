@@ -45,22 +45,33 @@ def bucket(s3):
         Bucket="test_bucket",
         CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
     )
-
+    return s3
 
 class TestGetObjectKey:
     @pytest.mark.it("Unit test: returns object key form specified table in s3")
-    def test_return_object_key(self, s3):
-        pass
+    def test_return_object_key(self, s3, bucket):
+        test_body = "hello"
+        bucket.put_object(Bucket="test_bucket", Key="updated/counterparty_test_file_1.json", Body=test_body)
+        key = get_object_key(table_name="counterparty", prefix="updated/", bucket="test_bucket")
+        assert key == "updated/counterparty_test_file_1.json"
 
     @pytest.mark.it("Unit test: raises exception for incorrect prefix")
-    def test_incorrect_prefix(self, s3):
-        pass
+    def test_incorrect_prefix(self, s3, bucket):
+        test_body = "hello"
+        bucket.put_object(Bucket="test_bucket", Key="updated/counterparty_test_file_1.json", Body=test_body)
+
+        with pytest.raises(AttributeError):
+            get_object_key(table_name="counterparty", prefix="wrong_prefix/", bucket="test_bucket")
 
     @pytest.mark.it("Unit test: raises exception for incorrect table name")
-    def test_incorrect_table_name(self, s3):
-        pass
+    def test_incorrect_table_name(self, s3, bucket):
+        test_body = "hello"
+        bucket.put_object(Bucket="test_bucket", Key="updated/counterparty_test_file_1.json", Body=test_body)
 
+        with pytest.raises(AttributeError):
+            get_object_key(table_name="wrong_table_name", prefix="updated/", bucket="test_bucket")
 
+@pytest.mark.skip
 class TestRemoveCreatedAtAndLastUpdated:
     @pytest.mark.it("Unit test: created_at key removed")
     def test_remove_created_at(self, s3):
@@ -70,7 +81,7 @@ class TestRemoveCreatedAtAndLastUpdated:
     def test_remove_last_updated(self, s3):
         pass
 
-
+@pytest.mark.skip
 class TestProcessFactSalesOrder:
     @pytest.mark.it("Unit test: created_date and created_time keys exist")
     def test_created_date_and_time_existed(self, s3):
@@ -96,7 +107,7 @@ class TestProcessFactSalesOrder:
     def test_check_correct_data_type(self, s3):
         pass
 
-
+@pytest.mark.skip
 class TestProcessDimCounterparty:
     @pytest.mark.it("Unit test: commercial_contact key removed")
     def test_remove_commercial_contact(self, s3):
@@ -122,7 +133,7 @@ class TestProcessDimCounterparty:
     def test_check_correct_data_type(self, s3):
         pass
 
-
+@pytest.mark.skip
 class TestProcessDimCurrency:
     @pytest.mark.it("Unit test: create currency_name column ")
     def test_currency_name_created(self, s3):
@@ -144,7 +155,7 @@ class TestProcessDimCurrency:
     def test_check_correct_data_type(self, s3):
         pass
 
-
+@pytest.mark.skip
 class TestProcessDimDate:
     @pytest.mark.it("Unit test: check correct column names")
     def test_check_correct_columns_names(self, s3):
@@ -154,7 +165,7 @@ class TestProcessDimDate:
     def test_check_correct_data_type(self, s3):
         pass
 
-
+@pytest.mark.skip
 class TestProcessDimDesign:
     @pytest.mark.it("Unit test: created_at key removed")
     def test_remove_created_at(self, s3):
@@ -172,7 +183,7 @@ class TestProcessDimDesign:
     def test_check_correct_data_type(self, s3):
         pass
 
-
+@pytest.mark.skip
 class TestProcessDimLocation:
     @pytest.mark.it("Unit test: rename address_id key to location_id")
     def test_rename_address_id(self, s3):
@@ -194,7 +205,7 @@ class TestProcessDimLocation:
     def test_check_correct_data_type(self, s3):
         pass
 
-
+@pytest.mark.skip
 class TestProcessDimStaff:
     @pytest.mark.it("Unit test: created_at key removed")
     def test_remove_created_at(self, s3):
@@ -212,7 +223,7 @@ class TestProcessDimStaff:
     def test_check_correct_data_type(self, s3):
         pass
 
-
+@pytest.mark.skip
 class TestConvertJsonToParquet:
     @pytest.mark.it("Unit test: check returned object is in parquet form")
     def test_check_returned_object(self, s3):

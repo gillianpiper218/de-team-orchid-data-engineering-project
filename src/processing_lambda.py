@@ -17,12 +17,22 @@ PROCESSED_S3_BUCKET_NAME = "de-team-orchid-totesys-processed"
 
 
 def get_object_key(
-    table_name: str, prefix: str = None, bucket=INGESTION_S3_BUCKET_NAME
+    table_name: str, prefix: str=None, bucket=INGESTION_S3_BUCKET_NAME
 ) -> str:
     # look in the given bucket with the prefix and get the object
     # response = s3.list_objects_v2(**kwargs)
-    pass
+    response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
+    all_objects = response.get('Contents', [])
+    table_files = []
+    for obj in all_objects:
+        if table_name in obj['Key']:
+            table_files.append(obj['Key'])
 
+    if not table_files:
+        logger.error(f"No files found for table {table_name}")
+        raise AttributeError
+    
+    return table_files[0]
 
 def remove_created_at_and_last_updated():
     # remove created_at and last_updated keys function
@@ -92,3 +102,7 @@ def convert_json_to_parquet():
     # # Write Arrow Table to Parquet file
     # pq.write_table(table, 'output.parquet')
     pass
+
+if __name__== '__main__':
+
+    get_object_key( table_name="currency", prefix="wrong")
