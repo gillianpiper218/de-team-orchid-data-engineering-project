@@ -91,11 +91,19 @@ class TestRemoveCreatedAtAndLastUpdated:
         assert "last_updated" not in result
         
 
-@pytest.mark.skip
 class TestProcessFactSalesOrder:
     @pytest.mark.it("Unit test: created_date and created_time keys exist")
     def test_created_date_and_time_existed(self, s3):
-        pass
+        sales_order_data = {"sales_order_id":1, 
+                            "created_at":"blah", 
+                            "last_updated":"blah blah", 
+                            "units_sold":10, 
+                            "unit_price":20}
+        df = pd.DataFrame([sales_order_data])
+        fact_sales_order = process_fact_sales_order(df)
+        remove_created_at_and_last_updated(df)
+        assert 'created_date' in fact_sales_order
+        assert 'created_time' in fact_sales_order
 
     @pytest.mark.it("Unit test: last_updated_date and last_updated_time keys exist")
     def test_last_updated_date_and_time_existed(self, s3):

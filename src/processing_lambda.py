@@ -41,10 +41,14 @@ def remove_created_at_and_last_updated(df):
     return df
 
 
-def process_fact_sales_order():
+def process_fact_sales_order(df):
     # split created at date into created_date and created_time keys
     # split last updated into last_updated_date and last_updated_time keys
-    remove_created_at_and_last_updated()
+    key = get_object_key(table_name='sales_order',
+                         prefix='updated', bucket=INGESTION_S3_BUCKET_NAME)
+    
+    obj = s3.get_object(Bucket=INGESTION_S3_BUCKET_NAME, Key=key)
+    #remove_created_at_and_last_updated(df)
     pass
 
 
