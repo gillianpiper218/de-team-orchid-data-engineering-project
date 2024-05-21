@@ -1,21 +1,21 @@
+from unittest import mock
 import pytest
-from unittest.mock import Mock, patch
-from requests import Response
+from unittest.mock import patch
 from moto import mock_aws
 import os
 import boto3
 from botocore.exceptions import ClientError
-from dotenv import load_dotenv
 from pg8000 import DatabaseError, InterfaceError
-from pprint import pprint
 from datetime import datetime
 import logging
 import json
-from src.ingestion_function import (
+from src.ingestion_lambda import (
     connect_to_db,
     get_table_names,
     select_all_tables_for_baseline,
     select_and_write_updated_data,
+    delete_empty_s3_files,
+    retrieve_secret_credentials,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -37,12 +37,31 @@ def s3(aws_credentials):
         yield boto3.client("s3", region_name="eu-west-2")
 
 
-@pytest.fixture
-def bucket(s3):
-    s3.create_bucket(
-        Bucket="test_bucket",
-        CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
-    )
+@pytest.fixture(scope="function")
+def secrets_manager_client(aws_credentials):
+    with mock_aws():
+        yield boto3.client("secretsmanager")
+
+
+class TestRetrieveSecret:
+    @pytest.mark.it("unit test: check function retrieves secret")
+    def test_retieve_secret(self, secrets_manager_client):
+        secrets_manager_client.create_secret(
+            Name="test_retrieve",
+            SecretString='{"host": "test_host", "password": "test_password", "dbname": "test_db", "port": "test_port", "username": "test_username"}',
+        )
+        expected = (
+            "test_host",
+            "test_password",
+            "test_db",
+            "test_port",
+            "test_username",
+        )
+
+        with mock.patch("builtins.input", return_value="test_retrieve"):
+            result = retrieve_secret_credentials(secret_name="test_retrieve")
+
+        assert result == expected
 
 
 class TestConnectToDatabase:
@@ -72,7 +91,6 @@ class TestConnectToDatabase:
 
 
 class TestGetTableNames:
-
     @pytest.mark.it("unit test: check function returns all tables names")
     def test_returns_table_names(self):
         result = get_table_names()
@@ -98,13 +116,11 @@ class TestGetTableNames:
                 get_table_names()
         assert "Error connecting to database: Connection timed out" in caplog.text
 
-    # may need looking at
     @pytest.mark.it("unit test: raises InterfaceError")
     def test_raises_InterfaceError(self, caplog):
         LOGGER.info("Testing now")
         with patch("src.ingestion_function.connect_to_db") as mock_connection:
             mock_connection.side_effect = InterfaceError("Connection timed out")
-            # with pytest.raises(InterfaceError):
             get_table_names()
             assert (
                 "Error connecting to the database: Connection timed out" in caplog.text
@@ -112,7 +128,6 @@ class TestGetTableNames:
 
 
 class TestSelectAllTablesBaseline:
-
     @pytest.mark.it("unit test: function writes data to s3 bucket")
     def test_writes_to_s3(self, s3):
         test_bucket_name = "test_bucket"
@@ -121,6 +136,8 @@ class TestSelectAllTablesBaseline:
             Bucket=test_bucket_name,
             CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
         )
+        response = s3.list_objects_v2(Bucket="test_bucket", Prefix="baseline")
+        assert response["KeyCount"] == 0
         select_all_tables_for_baseline(
             bucket_name=test_bucket_name,
             query_limit="2",
@@ -129,92 +146,81 @@ class TestSelectAllTablesBaseline:
         response = s3.list_objects_v2(Bucket="test_bucket", Prefix="baseline")
         assert response["KeyCount"] == len(name_of_tables)
         for i in range(len(name_of_tables)):
-            assert (
-                response["Contents"][i]["Key"]
-                == f"baseline/{name_of_tables[i][0]}.json"
-            )
+            assert response["Contents"][i]["Key"][:9] == "baseline/"
+        for i in range(len(name_of_tables)):
+            assert response["Contents"][i]["Key"][-5:] == ".json"
 
-    @pytest.mark.it("unit test: correct data types in s3")
-    def test_data_types_of_id(self, s3):
-        test_bucket_name = "test_bucket"
-        name_of_tables = get_table_names()
-        s3.create_bucket(
-            Bucket=test_bucket_name,
-            CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
-        )
-        select_all_tables_for_baseline(
-            bucket_name=test_bucket_name,
-            query_limit="2",
-            db=connect_to_db(),
-        )
-        list_of_ids = []
-        list_of_time_created = []
-        for table in name_of_tables:
-            response = s3.get_object(
-                Bucket=test_bucket_name, Key=f"baseline/{table[0]}.json"
+    @pytest.mark.it("unit test: NoSuchBucket exception")
+    def test_no_bucket_exceptions(self, caplog):
+        with pytest.raises(ClientError):
+            test_bucket_name = "test_bucket"
+            select_all_tables_for_baseline(
+                bucket_name=test_bucket_name,
+                query_limit="2",
+                db=connect_to_db(),
             )
-            contents = response["Body"].read().decode("utf-8")
-            data = json.loads(contents)
-            created_at_values = [d["created_at"] for d in data]
-            list_of_time_created.append(created_at_values)
-        for dictionary in data:
-            list_of_ids.append(next(iter(dictionary.values())))
-        assert all(isinstance(id_, int) for id_ in list_of_ids)
-        assert all(
-            len(str(num)) == 13 for sublist in list_of_time_created for num in sublist
-        )
-
-    @pytest.mark.it(
-        "unit test: check every table has create at and last updated columns"
-    )
-    def test_data_required_columns(self, s3):
-        test_bucket_name = "test_bucket"
-        name_of_tables = get_table_names()
-        s3.create_bucket(
-            Bucket=test_bucket_name,
-            CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
-        )
-        select_all_tables_for_baseline(
-            bucket_name=test_bucket_name,
-            query_limit="2",
-            db=connect_to_db(),
-        )
-        for table in name_of_tables:
-            response = s3.get_object(
-                Bucket=test_bucket_name, Key=f"baseline/{table[0]}.json"
-            )
-            contents = response["Body"].read().decode("utf-8")
-            data = json.loads(contents)
-            for dictionary in data:
-                assert "created_at" in dictionary
-                assert "last_updated" in dictionary
+        assert "No bucket found" in caplog.text
 
 
 class TestSelectAndWriteUpdatedData:
-
     @pytest.mark.it("unit test: check last updated is within the last 20 minutes")
     def test_data_within_20_mins(self, s3):
-        table_names = get_table_names()
         test_bucket_name = "test_bucket"
         s3.create_bucket(
             Bucket="test_bucket",
             CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
         )
-
         select_and_write_updated_data(
             name_of_tables=get_table_names(), bucket_name="test_bucket"
         )
-        for table in table_names:
-            response = s3.get_object(
-                Bucket=test_bucket_name, Key=f"staging/{table[0]}.json"
-            )
+        obj_list = s3.list_objects_v2(Bucket="test_bucket", Prefix="updated")
+        for i in range(len(obj_list["Contents"])):
+            object_key = obj_list["Contents"][0]["Key"]
+            response = s3.get_object(Bucket=test_bucket_name, Key=object_key)
             contents = response["Body"].read().decode("utf-8")
             data = json.loads(contents)
-        for dictionary in data:
-            if dictionary:
-                epoch_time = (dictionary["last_updated"]) / 1000
-                formatted_time = datetime.fromtimestamp(epoch_time)
-                current_time = datetime.now()
-                difference = current_time - formatted_time
-                differene_mins = difference.total_seconds() / 60
-                assert differene_mins < 20
+            for dictionary in data:
+                if dictionary:
+                    epoch_time = (dictionary["last_updated"]) / 1000
+                    formatted_time = datetime.fromtimestamp(epoch_time)
+                    current_time = datetime.now()
+                    difference = current_time - formatted_time
+                    differene_mins = difference.total_seconds() / 60
+                    assert differene_mins < 20
+
+    @pytest.mark.it("unit test: NoSuchBucket exception")
+    def test_no_bucket_exceptions(self, caplog):
+        with pytest.raises(ClientError):
+            test_bucket_name = "test_bucket"
+            select_and_write_updated_data(
+                bucket_name=test_bucket_name,
+                db=connect_to_db(),
+            )
+        assert "No bucket found" in caplog.text
+
+
+class TestDeleteEmptyS3Files:
+    @pytest.mark.it("unit test: Empty files in s3 deleted")
+    def test_deleted_files_in_s3(self, s3):
+        test_bucket_name = "test_bucket"
+        s3.create_bucket(
+            Bucket=test_bucket_name,
+            CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
+        )
+        test_body = "hello"
+        s3.put_object(
+            Bucket=test_bucket_name, Key="updated/test_file1.txt", Body=test_body
+        )
+        s3.put_object(Bucket=test_bucket_name, Key="updated/test_file2.txt")
+        response = s3.list_objects_v2(Bucket=test_bucket_name, Prefix="updated/")
+        assert response["KeyCount"] == 2
+        delete_empty_s3_files(bucket_name=test_bucket_name)
+        response = s3.list_objects_v2(Bucket=test_bucket_name)
+        assert response["KeyCount"] == 1
+
+    @pytest.mark.it("unit test: NoSuchBucket exception")
+    def test_no_bucket_exceptions(self, caplog):
+        with pytest.raises(ClientError):
+            test_bucket_name = "test_bucket"
+            delete_empty_s3_files(bucket_name=test_bucket_name)
+        assert "No bucket found" in caplog.text

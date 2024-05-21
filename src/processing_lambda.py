@@ -9,13 +9,16 @@ import boto3
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-s3 = boto3.client('s3')
+s3 = boto3.client("s3")
 current_time = datetime.now()
 
 INGESTION_S3_BUCKET_NAME = "de-team-orchid-totesys-ingestion"
 PROCESSED_S3_BUCKET_NAME = "de-team-orchid-totesys-processed"
 
-def get_object_key(prefix: str = None, table_name: str, bucket=INGESTION_S3_BUCKET_NAME) -> str:
+
+def get_object_key(
+    table_name: str, prefix: str = None, bucket=INGESTION_S3_BUCKET_NAME
+) -> str:
     # look in the given bucket with the prefix and get the object
     # response = s3.list_objects_v2(**kwargs)
     pass
@@ -66,7 +69,7 @@ def process_dim_design():
 
 def process_dim_location():
     # change address_id key into location_id
-    # Or rename the existing DataFrame (rather than creating a copy) 
+    # Or rename the existing DataFrame (rather than creating a copy)
     # df.rename(columns={'oldName1': 'newName1', 'oldName2': 'newName2'}, inplace=True)
     remove_created_at_and_last_updated()
     pass

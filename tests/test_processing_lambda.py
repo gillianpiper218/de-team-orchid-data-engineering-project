@@ -17,7 +17,7 @@ from src.processing_lambda import (
     process_dim_design,
     process_dim_location,
     process_dim_staff,
-    convert_json_to_parquet
+    convert_json_to_parquet,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -71,7 +71,7 @@ class TestRemoveCreatedAtAndLastUpdated:
         pass
 
 
-class TestProcessFactSalesOrder():
+class TestProcessFactSalesOrder:
     @pytest.mark.it("Unit test: created_date and created_time keys exist")
     def test_created_date_and_time_existed(self, s3):
         pass
@@ -79,7 +79,7 @@ class TestProcessFactSalesOrder():
     @pytest.mark.it("Unit test: last_updated_date and last_updated_time keys exist")
     def test_last_updated_date_and_time_existed(self, s3):
         pass
-    
+
     @pytest.mark.it("Unit test: created_at key removed")
     def test_remove_created_at(self, s3):
         pass
@@ -97,7 +97,7 @@ class TestProcessFactSalesOrder():
         pass
 
 
-class TestProcessDimCounterparty():
+class TestProcessDimCounterparty:
     @pytest.mark.it("Unit test: commercial_contact key removed")
     def test_remove_commercial_contact(self, s3):
         pass
@@ -123,7 +123,7 @@ class TestProcessDimCounterparty():
         pass
 
 
-class TestProcessDimCurrency():
+class TestProcessDimCurrency:
     @pytest.mark.it("Unit test: create currency_name column ")
     def test_currency_name_created(self, s3):
         pass
@@ -143,9 +143,9 @@ class TestProcessDimCurrency():
     @pytest.mark.it("Unit test: check correct data type for columns")
     def test_check_correct_data_type(self, s3):
         pass
-        
 
-class TestProcessDimDate():
+
+class TestProcessDimDate:
     @pytest.mark.it("Unit test: check correct column names")
     def test_check_correct_columns_names(self, s3):
         pass
@@ -155,7 +155,7 @@ class TestProcessDimDate():
         pass
 
 
-class TestProcessDimDesign():
+class TestProcessDimDesign:
     @pytest.mark.it("Unit test: created_at key removed")
     def test_remove_created_at(self, s3):
         pass
@@ -172,8 +172,8 @@ class TestProcessDimDesign():
     def test_check_correct_data_type(self, s3):
         pass
 
-    
-class TestProcessDimLocation():
+
+class TestProcessDimLocation:
     @pytest.mark.it("Unit test: rename address_id key to location_id")
     def test_rename_address_id(self, s3):
         pass
@@ -195,7 +195,7 @@ class TestProcessDimLocation():
         pass
 
 
-class TestProcessDimStaff():
+class TestProcessDimStaff:
     @pytest.mark.it("Unit test: created_at key removed")
     def test_remove_created_at(self, s3):
         pass
@@ -213,7 +213,7 @@ class TestProcessDimStaff():
         pass
 
 
-class TestConvertJsonToParquet():
+class TestConvertJsonToParquet:
     @pytest.mark.it("Unit test: check returned object is in parquet form")
     def test_check_returned_object(self, s3):
         pass
