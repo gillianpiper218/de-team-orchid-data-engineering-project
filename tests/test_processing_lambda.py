@@ -103,17 +103,31 @@ class TestProcessFactSalesOrder:
             assert 'created_time' in fact_sales_order
 
     @pytest.mark.it("Unit test: last_updated_date and last_updated_time keys exist")
-    def test_last_updated_date_and_time_existed(self, s3):
-        pass
+    def test_last_updated_date_and_time_existed(self, s3, bucket):
+          with open("data/test_data/sales_order.json", "r", encoding="utf-8") as json_file:
+            sales_order = json.load(json_file)
+            test_body = json.dumps(sales_order)
+            bucket.put_object(Bucket="test_bucket", Key="updated/sales_order-2022-11-03 14:20:49.962.json", Body=test_body)
+            fact_sales_order = process_fact_sales_order(bucket='test_bucket')
+            assert 'last_updated_date' in fact_sales_order
+            assert 'last_updated_time' in fact_sales_order
+        
 
     @pytest.mark.it("Unit test: created_at key removed")
     def test_remove_created_at(self, s3):
-        pass
+        df = pd.DataFrame({"address_id":[1], 
+                           "city":["London"], 
+                           "created_at": ["2022-11-03 14:20:49.962"], "last_updated": ["2022-11-03 14:30:41.962"]})
+        result = remove_created_at_and_last_updated(df)
+        assert "created_at" not in result
 
     @pytest.mark.it("Unit test: last_updated key removed")
     def test_remove_last_updated(self, s3):
-        pass
-
+        df = pd.DataFrame({"address_id":[1], 
+                           "city":["London"], 
+                           "created_at": ["2022-11-03 14:20:49.962"], "last_updated": ["2022-11-03 14:30:41.962"]})
+        result = remove_created_at_and_last_updated(df)
+        assert "last_updated" not in result
     @pytest.mark.it("Unit test: check correct column names")
     def test_check_correct_columns_names(self, s3):
         pass

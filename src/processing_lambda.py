@@ -48,11 +48,18 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME):
                         prefix='updated/', bucket=bucket)
     
     obj = s3.get_object(Bucket=bucket, Key=key)
-    df = pd.read_json(obj['Body'])
-    df['created_date'] = pd.to_datetime(df['created_at']).dt.date
-    df['created_time'] = pd.to_datetime(df['created_at']).dt.time
+    sales_order_json = obj['Body'].read().decode("utf-8")
+    sales_order_list = json.loads(sales_order_json)['sales_order']
+    pprint(sales_order_list)
+    for dictionary in sales_order_list:
+        dictionary['created_date'] = dictionary['created_at'][:10]
+        dictionary['created_time'] = dictionary['created_at'][11:]
+        dictionary['last_updated_date'] = dictionary['last_updated'][:10]
+        dictionary['last_updated_time'] = dictionary['last_updated'][11:]
+    df = pd.DataFrame(sales_order_list)
+    remove_created_at_and_last_updated(df)
     return df
-    #remove_created_at_and_last_updated(df)
+    remove_created_at_and_last_updated(df)
   
 
 
