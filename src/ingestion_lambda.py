@@ -220,6 +220,23 @@ def select_and_write_updated_data(
 
 
 def delete_empty_s3_files(bucket_name=S3_BUCKET_NAME):
+    ''' Deletes any empty dictionarys from the list in updated bucket:
+
+        Creates a response of items in updated s3 bucket which is a lists of dictionarys,
+        loops through list,    
+        checks to see if any contents exist,
+        if size in bytes of the object is <= 2, delete the object from the bucket.
+        Log the deletion in the logger.
+
+        Parameters:
+            bucket_name (str):
+                keyword argument - s3 bucket name.
+
+        Errors:
+            ClientError:
+                returns error if no s3 bucket exists in the given name.
+                Logs to the logger.
+    '''
     try:
         response = s3.list_objects_v2(Bucket=bucket_name, Prefix="updated/")
         if "Contents" in response:
@@ -236,6 +253,18 @@ def delete_empty_s3_files(bucket_name=S3_BUCKET_NAME):
 
 
 def lambda_handler(event, context):
+    '''Checks truthy or falsy value from check_baseline_exists(),
+        logs result,
+        invokes select_and_write_updated_data()
+
+        Parameters:
+            event:???????????????
+            context:??????????????
+        
+        Errors:
+            Exception:
+                Error message upon failed execution of lambda_handler.
+    '''
     try:
         if not check_baseline_exists():
             logger.info("Baseline does not exist. Running baseline data extraction.")
@@ -252,5 +281,7 @@ def lambda_handler(event, context):
 
 
 def check_baseline_exists():
+    '''checks to see if baseline exists by returning non-empty "Contents" in response list
+    '''
     response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix="baseline/")
     return "Contents" in response
