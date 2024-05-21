@@ -1,4 +1,3 @@
-import pprint
 import os
 import pandas as pd
 from datetime import datetime
@@ -6,11 +5,8 @@ import pg8000.exceptions
 from dotenv import load_dotenv
 import pg8000.native
 import logging
-from pg8000.native import literal
 import json
-from pprint import pprint
 import boto3
-import re
 
 load_dotenv()
 
@@ -18,6 +14,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 s3 = boto3.client('s3')
+secret_manager_client = boto3.client('secretsmanager')
 
 current_time = datetime.now()
 
@@ -25,14 +22,28 @@ current_time = datetime.now()
 S3_BUCKET_NAME = "de-team-orchid-totesys-ingestion"
 
 
-DB_HOST = os.getenv("DB_HOST")
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_PORT = os.getenv("DB_PORT")
+def retrieve_secret_credentials(secret_name='totesys_environment'):
+    response = secret_manager_client.get_secret_value(
+        SecretId=secret_name,
+    )
+
+    secret_string = json.loads(response['SecretString'])
+    DB_HOST = secret_string['host']
+    DB_PORT = secret_string['port']
+    DB_NAME = secret_string['dbname']
+    DB_USER = secret_string['username']
+    DB_PASSWORD = secret_string['password']
+    return DB_HOST, DB_PASSWORD, DB_NAME, DB_PORT, DB_USER
 
 
 def connect_to_db():
+    credentials = retrieve_secret_credentials()
+    DB_HOST = credentials[0]
+    DB_PORT = credentials[3]
+    DB_NAME = credentials[2]
+    DB_USER = credentials[4]
+    DB_PASSWORD = credentials[1]
+
     try:
         logger.info(f"Connecting to the database {DB_NAME}")
         conn = pg8000.connect(

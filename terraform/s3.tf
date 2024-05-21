@@ -6,7 +6,7 @@ resource "aws_s3_bucket" "ingestion_s3_bucket" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "bucket-lifecycle" {
-  bucket = aws_s3_bucket.ingestion_s3_bucket.id
+  bucket = aws_s3_bucket.ingestion_s3_bucket.bucket
 
 
   rule {
@@ -19,6 +19,22 @@ resource "aws_s3_bucket_lifecycle_configuration" "bucket-lifecycle" {
   }
 }
 
+resource "aws_s3_bucket" "code_bucket" {
+  bucket_prefix = "layer-code"
+}
+
+resource "aws_s3_object" "layer_code" {
+  bucket = aws_s3_bucket.code_bucket.bucket
+  key = "lambda_layer.zip"
+  source = "${path.module}/../lambda_layer/lambda_layer.zip"
+}
+
+
+resource "aws_lambda_layer_version" "dependancies" {
+  layer_name = "dependacnies"
+  compatible_runtimes = ["python3.11"]
+  s3_bucket = aws_s3_bucket.code_bucket.bucket
+  s3_key = "lambda_layer.zip"
 
 resource "aws_s3_bucket" "processed_s3_bucket" {
     bucket = "${var.processed_s3_bucket_name}"
