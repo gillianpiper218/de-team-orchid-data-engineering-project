@@ -1,4 +1,3 @@
-# test
 from unittest import mock
 import pytest
 from unittest.mock import patch
