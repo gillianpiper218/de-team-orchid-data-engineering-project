@@ -3,7 +3,7 @@ name: lambda-deployment
 on:
   push:
     branches:
-      - merge-everything
+      - main
 
 jobs:
   run-tests:
