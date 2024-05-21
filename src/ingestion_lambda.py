@@ -160,7 +160,8 @@ def delete_empty_s3_files(bucket_name=S3_BUCKET_NAME):
 def lambda_handler(event, context):
     try:
         if not check_baseline_exists():
-            logger.info("Baseline does not exist. Running baseline data extraction.")
+            logger.info(
+                "Baseline does not exist. Running baseline data extraction.")
             select_all_tables_for_baseline()
         else:
             logger.info("Baseline exists. Running updated data extraction.")
