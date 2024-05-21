@@ -104,7 +104,7 @@ class TestProcessFactSalesOrder:
 
     @pytest.mark.it("Unit test: last_updated_date and last_updated_time keys exist")
     def test_last_updated_date_and_time_existed(self, s3, bucket):
-          with open("data/test_data/sales_order.json", "r", encoding="utf-8") as json_file:
+        with open("data/test_data/sales_order.json", "r", encoding="utf-8") as json_file:
             sales_order = json.load(json_file)
             test_body = json.dumps(sales_order)
             bucket.put_object(Bucket="test_bucket", Key="updated/sales_order-2022-11-03 14:20:49.962.json", Body=test_body)

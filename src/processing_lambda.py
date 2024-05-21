@@ -57,9 +57,9 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME):
         dictionary['last_updated_date'] = dictionary['last_updated'][:10]
         dictionary['last_updated_time'] = dictionary['last_updated'][11:]
     df = pd.DataFrame(sales_order_list)
-    remove_created_at_and_last_updated(df)
-    return df
-    remove_created_at_and_last_updated(df)
+    return_df = remove_created_at_and_last_updated(df)
+    return return_df
+    
   
 
 
