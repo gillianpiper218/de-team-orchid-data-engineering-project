@@ -65,7 +65,7 @@ resource "aws_iam_role_policy_attachment" "attach_s3_put_access" {
 
 
 resource "aws_iam_role_policy_attachment" "lambda_s3_put_policy_attachment" {
-    role = aws_iam_role.lambda_role.name
+    role = aws_iam_role.ingestion_function_role.name
     policy_arn = aws_iam_policy.s3_ingestion_put_policy.arn
 }
 
