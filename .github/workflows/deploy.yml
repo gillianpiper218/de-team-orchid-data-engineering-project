@@ -38,8 +38,8 @@ jobs:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_PORT: ${{ secrets.DB_PORT }}
 
-  deploy-ingestion-lambda:
-    name: deploy-ingestion-lambda
+  deploy-infrastructure:
+    name: deploy-infrastructure
     needs: run-tests
     runs-on: ubuntu-latest
     steps:
