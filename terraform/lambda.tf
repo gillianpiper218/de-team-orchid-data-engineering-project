@@ -61,23 +61,23 @@ resource "aws_iam_policy" "lambda_layer_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_layer_policy_attachment" {
-  role       = aws_iam_role.lambda_exec_role.name
+  role       = aws_iam_role.ingestion_function_role.name
   policy_arn = aws_iam_policy.lambda_layer_policy.arn
 }
 
-resource "aws_iam_role" "lambda_exec_role" {
-  name               = "lambda_exec_role"
-  assume_role_policy = jsonencode({
-    Version   = "2012-10-17",
-    Statement = [{
-      Effect    = "Allow",
-      Principal = {
-        Service = "lambda.amazonaws.com"
-      },
-      Action    = "sts:AssumeRole"
-    }]
-  })
-}
+# resource "aws_iam_role" "lambda_exec_role" {
+#   name               = "lambda_exec_role"
+#   assume_role_policy = jsonencode({
+#     Version   = "2012-10-17",
+#     Statement = [{
+#       Effect    = "Allow",
+#       Principal = {
+#         Service = "lambda.amazonaws.com"
+#       },
+#       Action    = "sts:AssumeRole"
+#     }]
+#   })
+# }
 
 resource "aws_iam_policy" "secret_manager_policy" {
   name = "sm_access_permissions"
@@ -92,14 +92,14 @@ resource "aws_iam_policy" "secret_manager_policy" {
           "secretsmanager:GetSecretValue",
         ]
         Effect   = "Allow"
-        Resource = "arn:aws:secretsmanager:eu-west-2:851725259107:secret:totesys_environment-P0d7hT"
+        Resource = "*"
       },
     ]
   })
 }
 
 resource "aws_iam_role_policy_attachment" "secret_manager_policy_attachment" {
-  role       = aws_iam_role.lambda_exec_role.name
+  role       = aws_iam_role.ingestion_function_role.name
   policy_arn = aws_iam_policy.secret_manager_policy.arn
 }
 
