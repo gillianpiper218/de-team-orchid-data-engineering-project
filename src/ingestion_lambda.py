@@ -33,8 +33,7 @@ def retrieve_secret_credentials(secret_name="totesys_environment"):
     return DB_HOST, DB_PASSWORD, DB_NAME, DB_PORT, DB_USER
 
 
-def connect_to_db():
-    credentials = retrieve_secret_credentials()
+def connect_to_db(credentials=retrieve_secret_credentials()):
     DB_HOST = credentials[0]
     DB_PORT = credentials[3]
     DB_NAME = credentials[2]
