@@ -35,4 +35,7 @@ resource "aws_lambda_layer_version" "dependancies" {
   compatible_runtimes = ["python3.11"]
   s3_bucket = aws_s3_bucket.code_bucket.bucket
   s3_key = "lambda_layer.zip"
+
+resource "aws_s3_bucket" "processed_s3_bucket" {
+    bucket = "${var.processed_s3_bucket_name}"
 }
