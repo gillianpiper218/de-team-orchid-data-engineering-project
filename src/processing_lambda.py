@@ -45,9 +45,11 @@ def process_fact_sales_order(df):
     # split created at date into created_date and created_time keys
     # split last updated into last_updated_date and last_updated_time keys
     key = get_object_key(table_name='sales_order',
-                         prefix='updated', bucket=INGESTION_S3_BUCKET_NAME)
+                         prefix='updated/', bucket=INGESTION_S3_BUCKET_NAME)
     
     obj = s3.get_object(Bucket=INGESTION_S3_BUCKET_NAME, Key=key)
+    df = pd.read_json(obj['Body'])
+    df['created_date'] = pd.to_datetime(df['created_at']).dt.date
     #remove_created_at_and_last_updated(df)
     pass
 
@@ -110,3 +112,4 @@ def convert_json_to_parquet():
 if __name__== '__main__':
 
     get_object_key( table_name="currency", prefix="wrong")
+    process_fact_sales_order(df)
