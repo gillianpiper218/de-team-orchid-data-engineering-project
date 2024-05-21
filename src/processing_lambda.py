@@ -41,17 +41,19 @@ def remove_created_at_and_last_updated(df):
     return df
 
 
-def process_fact_sales_order(df):
+def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME):
     # split created at date into created_date and created_time keys
     # split last updated into last_updated_date and last_updated_time keys
     key = get_object_key(table_name='sales_order',
-                         prefix='updated/', bucket=INGESTION_S3_BUCKET_NAME)
+                        prefix='updated/', bucket=bucket)
     
-    obj = s3.get_object(Bucket=INGESTION_S3_BUCKET_NAME, Key=key)
+    obj = s3.get_object(Bucket=bucket, Key=key)
     df = pd.read_json(obj['Body'])
     df['created_date'] = pd.to_datetime(df['created_at']).dt.date
+    df['created_time'] = pd.to_datetime(df['created_at']).dt.time
+    return df
     #remove_created_at_and_last_updated(df)
-    pass
+  
 
 
 def process_dim_counterparty():
@@ -96,7 +98,7 @@ def process_dim_staff():
     pass
 
 
-def convert_json_to_parquet():
+def convert_dataframe_to_parquet():
     # convert file format from json to parquet
     # Read JSON into DataFrame
     # json_data = [{'name': 'Alice', 'age': 30}, {'name': 'Bob', 'age': 25}]
@@ -111,5 +113,5 @@ def convert_json_to_parquet():
 
 if __name__== '__main__':
 
-    get_object_key( table_name="currency", prefix="wrong")
+   
     process_fact_sales_order(df)

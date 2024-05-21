@@ -18,7 +18,7 @@ from src.processing_lambda import (
     process_dim_design,
     process_dim_location,
     process_dim_staff,
-    convert_json_to_parquet,
+    convert_dataframe_to_parquet,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -93,17 +93,14 @@ class TestRemoveCreatedAtAndLastUpdated:
 
 class TestProcessFactSalesOrder:
     @pytest.mark.it("Unit test: created_date and created_time keys exist")
-    def test_created_date_and_time_existed(self, s3):
-        sales_order_data = {"sales_order_id":1, 
-                            "created_at":"blah", 
-                            "last_updated":"blah blah", 
-                            "units_sold":10, 
-                            "unit_price":20}
-        df = pd.DataFrame([sales_order_data])
-        fact_sales_order = process_fact_sales_order(df)
-        remove_created_at_and_last_updated(df)
-        assert 'created_date' in fact_sales_order
-        assert 'created_time' in fact_sales_order
+    def test_created_date_and_time_existed(self, s3, bucket):
+        with open("data/test_data/sales_order.json", "r", encoding="utf-8") as json_file :
+            sales_order = json.load(json_file)
+            test_body = json.dumps(sales_order)
+            bucket.put_object(Bucket="test_bucket", Key="updated/sales_order-2022-11-03 14:20:49.962.json", Body=test_body)
+            fact_sales_order = process_fact_sales_order(bucket='test_bucket')
+            assert 'created_date' in fact_sales_order
+            assert 'created_time' in fact_sales_order
 
     @pytest.mark.it("Unit test: last_updated_date and last_updated_time keys exist")
     def test_last_updated_date_and_time_existed(self, s3):
@@ -242,7 +239,7 @@ class TestProcessDimStaff:
         pass
 
 @pytest.mark.skip
-class TestConvertJsonToParquet:
+class TestConvertDateframeToParquet:
     @pytest.mark.it("Unit test: check returned object is in parquet form")
     def test_check_returned_object(self, s3):
         pass
