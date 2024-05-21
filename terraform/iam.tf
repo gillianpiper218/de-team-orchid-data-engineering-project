@@ -16,7 +16,7 @@ data "aws_iam_policy_document" "trust_policy" {
 
 data "aws_iam_policy_document" "s3_ingestion_get_policy_document" {
     statement {
-        actions = ["s3:GetObject", "s3:ListBucket"]
+        actions = ["s3:GetObject", "s3:ListBucket", "s3:DeleteObject","s3:PutObject"]
         resources = [
             "${aws_s3_bucket.ingestion_s3_bucket.arn}/*",
             "${aws_s3_bucket.ingestion_s3_bucket.arn}"
@@ -26,7 +26,7 @@ data "aws_iam_policy_document" "s3_ingestion_get_policy_document" {
 
 data "aws_iam_policy_document" "s3_ingestion_put_policy_document" {
     statement {
-        actions = ["s3:PutObject", "s3:ListBucket"]
+        actions = ["s3:PutObject", "s3:ListBucket", "s3:DeleteObject"]
         resources = [
             "${aws_s3_bucket.ingestion_s3_bucket.arn}/*",
             "${aws_s3_bucket.ingestion_s3_bucket.arn}"

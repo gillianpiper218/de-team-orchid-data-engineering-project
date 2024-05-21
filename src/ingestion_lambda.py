@@ -55,7 +55,7 @@ def connect_to_db():
         return conn
     except pg8000.DatabaseError as e:
         logger.error(f"Error connecting to database: {e}")
-        raise
+
     except pg8000.exceptions.InterfaceError as e:
         logger.error(f"Error connecting to the database: {e}")
         raise
@@ -106,7 +106,7 @@ def select_all_tables_for_baseline(
             data = json.dumps(json.loads(json_data))
             s3_bucket_key = f"baseline/{table_name[0]}-{current_time}.json"
             s3.put_object(Body=data, Bucket=bucket_name, Key=s3_bucket_key)
-            logger.info({"Result": f"Uploaded file to {s3_bucket_key}"})
+            logger.info(f'{"Result": "Uploaded file to {s3_bucket_key}"}')
     except ClientError as ex:
         if ex.response["Error"]["Code"] == "NoSuchBucket":
             logger.info("No bucket found")
@@ -128,13 +128,16 @@ def select_and_write_updated_data(
                         """
             )
             result = cursor.fetchall()
-            col_names = [elt[0] for elt in cursor.description]
-            df = pd.DataFrame(result, columns=col_names)
-            json_data = df.to_json(orient="records")
-            data = json.dumps(json.loads(json_data))
-            file_path = f"updated/{table_name[0]}-{current_time}.json"
-            s3.put_object(Body=data, Bucket=bucket_name, Key=file_path)
-            logger.info({"Result": f"update to file at {file_path}"})
+            if len(result) == 0:
+                logger.info("No new data found")
+            else:
+                col_names = [elt[0] for elt in cursor.description]
+                df = pd.DataFrame(result, columns=col_names)
+                json_data = df.to_json(orient="records")
+                data = json.dumps(json.loads(json_data))
+                file_path = f"updated/{table_name[0]}-{current_time}.json"
+                s3.put_object(Body=data, Bucket=bucket_name, Key=file_path)
+                logger.info("New data added to updated")
     except ClientError as ex:
         if ex.response["Error"]["Code"] == "NoSuchBucket":
             logger.info("No bucket found")
@@ -159,19 +162,22 @@ def delete_empty_s3_files(bucket_name=S3_BUCKET_NAME):
 
 def lambda_handler(event, context):
     try:
+        conn = connect_to_db()
         if not check_baseline_exists():
             logger.info(
                 "Baseline does not exist. Running baseline data extraction.")
             select_all_tables_for_baseline()
         else:
             logger.info("Baseline exists. Running updated data extraction.")
+            select_and_write_updated_data()
+            delete_empty_s3_files()
 
-        select_and_write_updated_data()
-
-        # delete_empty_s3_files()
     except Exception as e:
         logger.error(f"Error in Lambda execution: {e}")
         raise
+    finally:
+        if conn:
+            conn.close()
 
 
 def check_baseline_exists():

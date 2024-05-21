@@ -3,6 +3,8 @@ resource "aws_lambda_function" "ingestion_function" {
     filename = data.archive_file.lambda.output_path
     role = aws_iam_role.ingestion_function_role.arn
     handler = "ingestion_lambda.lambda_handler"
+    source_code_hash = data.archive_file.lambda.output_base64sha256
+
     depends_on    = [aws_cloudwatch_log_group.ingestion_function_log_group]
     layers = [
     "arn:aws:lambda:eu-west-2:770693421928:layer:Klayers-p311-boto3:10",
@@ -18,7 +20,6 @@ data "archive_file" "lambda" {
   source_file = "${path.module}/../src/ingestion_lambda.py"
   output_path = "${path.module}/../function.zip"
 }
-
 
 
 resource "aws_lambda_layer_version" "modules" {
