@@ -1,6 +1,6 @@
 variable "ingestion_function_name" {
     type = string
-    default = "lambda_ellen"
+    default = "ingestion_lambda"
 }
 
 
@@ -17,7 +17,7 @@ variable "processed_s3_bucket_name" {
 
 variable "processing_function_name" {
     type = string
-    default = "lambda-ellen"
+    default = "processing_lambda"
 }
 
 
