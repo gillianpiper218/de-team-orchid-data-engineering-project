@@ -20,6 +20,17 @@ secret_manager_client = boto3.client("secretsmanager")
 
 
 def retrieve_secret_credentials(secret_name="totesys_environment"):
+    '''Uses the boto3 module with the AWS secrets manager to store and
+      retrieve AWS credentials securely.
+
+        Parameters:
+                secret_name (str): 
+                    keyword argument with the database environment as a default value.
+
+        Returns:
+			DB_HOST, DB_PASSWORD, DB_NAME, DB_PORT, DB_USER (Tuple): Credentials needed for AWS.
+    
+    '''
     response = secret_manager_client.get_secret_value(
         SecretId=secret_name,
     )
@@ -34,6 +45,18 @@ def retrieve_secret_credentials(secret_name="totesys_environment"):
 
 
 def connect_to_db(credentials=retrieve_secret_credentials()):
+    '''Retrieves credentials from retrieve_secret_credentials(),
+    stores as new constants with the same variable names as within retrieve_secret_credentials(),
+    connects to the database,
+    logs the outcome of connection to the database when successfully or unsuccessfully connected.
+
+        Returns:
+			conn (Connection): Connection to the database.
+
+        Errors:
+			DatabaseError: pg8000 specific error which is related to the database itself, such as incorrect SQL or constraint violations. Logs failure in logger.
+			InterfaceError: pg8000 specific error when connection failure with the database occurs. Logs failure in logger.
+    '''
     DB_HOST = credentials[0]
     DB_PORT = credentials[3]
     DB_NAME = credentials[2]
@@ -61,6 +84,17 @@ def connect_to_db(credentials=retrieve_secret_credentials()):
 
 
 def get_table_names():
+    '''Opens a connection to the database and runs an SQL query to get all relevant table names, 
+        list them and then sort them alphabetically. 
+        Ensures that a connection to the database is closed.
+
+        Returns:
+			table_names (list): Sorted list of table names from database.
+
+        Errors:
+			DatabaseError: pg8000 specific error which is related to the database itself, such as incorrect SQL or constraint violations. Logs failure in logger.
+			InterfaceError: pg8000 specific error when connection failure with the database occurs. Logs failure in logger.
+    '''
     db = None
     try:
         db = connect_to_db()
@@ -92,6 +126,32 @@ def select_all_tables_for_baseline(
     query_limit="",
     **kwargs,
 ):
+    '''Sets up the baseline database and uploads to s3 bucket:
+    
+    Tries to set up a cursor, 
+    if successful it loops through each table to extract all rows,
+    extracts all columnn names,
+    creates a dataframe,
+    converts that to json string format,
+    names the key based on the table name and the time of upload and
+    puts the json string into the s3 object,
+    logs result to the logger.
+
+    Parameters:
+        bucket_name (str): 
+            keyword argument - s3 bucket name.
+		name_of_tables (list): 
+            keyword argument - list of the names of tables.
+		db (Connection): 
+            keyword argument - connection to the database.
+		query_limit (str): 
+            keyword argument - query limit for the query.
+
+    Errors:
+        ClientError:
+            returns error if no s3 bucket exists in the given name.
+            Logs to the logger.
+    '''
     try:
         cursor = db.cursor()
         if not query_limit == "":
@@ -118,6 +178,25 @@ def select_and_write_updated_data(
     bucket_name=S3_BUCKET_NAME,
     **kwargs,
 ):
+    '''Tries to set up a cursor, 
+    if successful loops through every table,
+    runs a query that selects all entries in the last 20 minutes from time of execution,
+    same method as select_all_tables_for_baseline(),
+    *[could we abstract this away into a function rather than repeating code?],
+
+    Parameters:
+        db (Connection):
+            keyword argument - connection to database.
+        name_of_tables (list):
+            keyword argument - list of tables.
+        bucket_name (str):
+            keyword argument - name of the s3 bucket.
+
+    Errors:
+        ClientError:
+            returns error if bucket doesnt exist.
+            Logs to the logger.
+    '''
     try:
         cursor = db.cursor()
         for table_name in name_of_tables:
