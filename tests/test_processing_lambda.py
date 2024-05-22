@@ -18,7 +18,7 @@ from src.processing_lambda import (
     process_dim_design,
     process_dim_location,
     process_dim_staff,
-    convert_dataframe_to_parquet,
+    convert_to_parquet_put_in_s3,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -262,9 +262,7 @@ class TestProcessDimDate:
 class TestProcessDimDesign:
     @pytest.mark.it("Unit test: created_at key removed")
     def test_remove_created_at(self, s3, bucket):
-        with open(
-            "data/test_data/design.json", "r", encoding="utf-8"
-        ) as json_file:
+        with open("data/test_data/design.json", "r", encoding="utf-8") as json_file:
             design = json.load(json_file)
             test_body = json.dumps(design)
 
@@ -278,9 +276,7 @@ class TestProcessDimDesign:
 
     @pytest.mark.it("Unit test: last_updated key removed")
     def test_remove_last_updated(self, s3, bucket):
-        with open(
-            "data/test_data/design.json", "r", encoding="utf-8"
-        ) as json_file:
+        with open("data/test_data/design.json", "r", encoding="utf-8") as json_file:
             design = json.load(json_file)
             test_body = json.dumps(design)
 
@@ -296,9 +292,7 @@ class TestProcessDimDesign:
 class TestProcessDimLocation:
     @pytest.mark.it("Unit test: rename address_id key to location_id")
     def test_rename_address_id(self, s3, bucket):
-        with open(
-            "data/test_data/address.json", "r", encoding="utf-8"
-        ) as json_file:
+        with open("data/test_data/address.json", "r", encoding="utf-8") as json_file:
             address = json.load(json_file)
             test_body = json.dumps(address)
         bucket.put_object(
@@ -310,9 +304,7 @@ class TestProcessDimLocation:
 
     @pytest.mark.it("Unit test: created_at key removed")
     def test_remove_created_at(self, s3, bucket):
-        with open(
-            "data/test_data/address.json", "r", encoding="utf-8"
-        ) as json_file:
+        with open("data/test_data/address.json", "r", encoding="utf-8") as json_file:
             location = json.load(json_file)
             test_body = json.dumps(location)
 
@@ -326,9 +318,7 @@ class TestProcessDimLocation:
 
     @pytest.mark.it("Unit test: last_updated key removed")
     def test_remove_last_updated(self, s3, bucket):
-        with open(
-            "data/test_data/address.json", "r", encoding="utf-8"
-        ) as json_file:
+        with open("data/test_data/address.json", "r", encoding="utf-8") as json_file:
             location = json.load(json_file)
             test_body = json.dumps(location)
 
@@ -339,13 +329,12 @@ class TestProcessDimLocation:
         result = process_dim_location(bucket="test_bucket")
 
         assert "last_updated" not in result
+
 
 class TestProcessDimStaff:
     @pytest.mark.it("Unit test: created_at key removed")
     def test_remove_created_at(self, s3, bucket):
-        with open(
-            "data/test_data/staff.json", "r", encoding="utf-8"
-        ) as json_file:
+        with open("data/test_data/staff.json", "r", encoding="utf-8") as json_file:
             staff = json.load(json_file)
             test_body = json.dumps(staff)
 
@@ -359,9 +348,7 @@ class TestProcessDimStaff:
 
     @pytest.mark.it("Unit test: last_updated key removed")
     def test_remove_last_updated(self, s3, bucket):
-        with open(
-            "data/test_data/staff.json", "r", encoding="utf-8"
-        ) as json_file:
+        with open("data/test_data/staff.json", "r", encoding="utf-8") as json_file:
             staff = json.load(json_file)
             test_body = json.dumps(staff)
 
@@ -374,8 +361,19 @@ class TestProcessDimStaff:
         assert "last_updated" not in result
 
 
-@pytest.mark.skip
 class TestConvertDateframeToParquet:
     @pytest.mark.it("Unit test: check returned object is in parquet form")
-    def test_check_returned_object(self, s3):
-        pass
+    def test_check_returned_object(self, s3, bucket):
+        test_df = pd.DataFrame(
+            {
+                "address_id": [1],
+                "city": ["London"],
+                "created_at": ["2022-11-03 14:20:49.962"],
+                "last_updated": ["2022-11-03 14:30:41.962"],
+            }
+        )
+        convert_to_parquet_put_in_s3(
+            s3, test_df, "dimension/location.parquet", bucket="test_bucket"
+        )
+        response = s3.list_objects_v2(Bucket="test_bucket")
+        assert response["Contents"][0]["Key"] == "dimension/location.parquet"

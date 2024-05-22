@@ -102,7 +102,9 @@ multipart==0.2.4
 networkx==3.3
     # via cfn-lint
 numpy==1.26.4
-    # via pandas
+    # via
+    #   pandas
+    #   pyarrow
 openapi-schema-validator==0.6.2
     # via openapi-spec-validator
 openapi-spec-validator==0.7.1
@@ -127,6 +129,8 @@ ply==3.11
     # via jsonpath-ng
 py-partiql-parser==0.5.4
     # via moto
+pyarrow==16.1.0
+    # via -r requirements.in
 pycparser==2.22
     # via cffi
 pydantic==2.7.1
