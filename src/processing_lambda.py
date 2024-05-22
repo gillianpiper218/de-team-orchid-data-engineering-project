@@ -94,12 +94,18 @@ def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME):
     return return_df
 
 
-def process_dim_location():
+def process_dim_location(bucket=INGESTION_S3_BUCKET_NAME):
     # change address_id key into location_id
-    # Or rename the existing DataFrame (rather than creating a copy)
-    # df.rename(columns={'oldName1': 'newName1', 'oldName2': 'newName2'}, inplace=True)
-    remove_created_at_and_last_updated()
-    pass
+    key = get_object_key(table_name="address", prefix="baseline/", bucket=bucket)
+    obj = s3.get_object(Bucket=bucket, Key=key)
+    location_json = obj["Body"].read().decode("utf-8")
+    location_list = json.loads(location_json)["address"]
+    for location_dict in location_list:
+        location_dict['location_id'] = location_dict['address_id']
+        del location_dict['address_id']
+    df = pd.DataFrame(location_list)
+    return_df = remove_created_at_and_last_updated(df)
+    return return_df
 
 
 def process_dim_staff(bucket=INGESTION_S3_BUCKET_NAME):
