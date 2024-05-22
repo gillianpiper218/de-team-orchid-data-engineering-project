@@ -127,7 +127,8 @@ class TestProcessFactSalesOrder:
             "data/test_data/sales_order.json", "r", encoding="utf-8"
         ) as json_file:
             sales_order = json.load(json_file)
-            test_body = json.dumps(sales_order)
+            test_body = json.dumps(sales_order['sales_order'])
+
             bucket.put_object(
                 Bucket="test_bucket",
                 Key="updated/sales_order-2022-11-03 14:20:49.962.json",
@@ -143,7 +144,8 @@ class TestProcessFactSalesOrder:
             "data/test_data/sales_order.json", "r", encoding="utf-8"
         ) as json_file:
             sales_order = json.load(json_file)
-            test_body = json.dumps(sales_order)
+            test_body = json.dumps(sales_order['sales_order'])
+    
             bucket.put_object(
                 Bucket="test_bucket",
                 Key="updated/sales_order-2022-11-03 14:20:49.962.json",
@@ -159,7 +161,7 @@ class TestProcessFactSalesOrder:
             "data/test_data/sales_order.json", "r", encoding="utf-8"
         ) as json_file:
             sales_order = json.load(json_file)
-            test_body = json.dumps(sales_order)
+            test_body = json.dumps(sales_order['sales_order'])
 
         bucket.put_object(
             Bucket="test_bucket", Key="updated/sales_order.json", Body=test_body
@@ -177,8 +179,8 @@ class TestProcessFactSalesOrder:
             "data/test_data/sales_order.json", "r", encoding="utf-8"
         ) as json_file:
             sales_order = json.load(json_file)
-            test_body = json.dumps(sales_order)
-
+            test_body = json.dumps(sales_order['sales_order'])
+           
         bucket.put_object(
             Bucket="test_bucket", Key="updated/sales_order.json", Body=test_body
         )
@@ -232,7 +234,7 @@ class TestProcessDimCurrency:
             "data/test_data/currency.json", "r", encoding="utf-8"
         ) as json_file:
             currency = json.load(json_file)
-            test_body = json.dumps(currency)
+            test_body = json.dumps(currency['currency'])
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
@@ -248,7 +250,7 @@ class TestProcessDimCurrency:
             "data/test_data/currency.json", "r", encoding="utf-8"
         ) as json_file:
             currency = json.load(json_file)
-            test_body = json.dumps(currency)
+            test_body = json.dumps(currency['currency'])
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
@@ -264,7 +266,7 @@ class TestProcessDimCurrency:
             "data/test_data/currency.json", "r", encoding="utf-8"
         ) as json_file:
             currency = json.load(json_file)
-            test_body = json.dumps(currency)
+            test_body = json.dumps(currency['currency'])
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
@@ -280,7 +282,7 @@ class TestProcessDimCurrency:
             "data/test_data/currency.json", "r", encoding="utf-8"
         ) as json_file:
             currency = json.load(json_file)
-            test_body = json.dumps(currency)
+            test_body = json.dumps(currency['currency'])
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
@@ -296,7 +298,7 @@ class TestProcessDimCurrency:
             "data/test_data/currency.json", "r", encoding="utf-8"
         ) as json_file:
             currency = json.load(json_file)
-            test_body = json.dumps(currency)
+            test_body = json.dumps(currency['currency'])
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body

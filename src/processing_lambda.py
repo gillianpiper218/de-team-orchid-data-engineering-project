@@ -49,7 +49,7 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME):
 
     obj = s3.get_object(Bucket=bucket, Key=key)
     sales_order_json = obj["Body"].read().decode("utf-8")
-    sales_order_list = json.loads(sales_order_json)["sales_order"]
+    sales_order_list = json.loads(sales_order_json)
     for dictionary in sales_order_list:
         dictionary["created_date"] = dictionary["created_at"][:10]
         dictionary["created_time"] = dictionary["created_at"][11:]
@@ -72,7 +72,7 @@ def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME):
     key = get_object_key(table_name="currency", prefix="baseline/", bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     currency_json = obj["Body"].read().decode("utf-8")
-    currency_list = json.loads(currency_json)["currency"]
+    currency_list = json.loads(currency_json)
     dim_currency_df = pd.DataFrame(currency_list)
     remove_created_at_and_last_updated(dim_currency_df)
     currency_names = {
