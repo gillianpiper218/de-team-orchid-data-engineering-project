@@ -1,13 +1,10 @@
 name: lambda-deployment
-
 on:
   push:
     branches:
       - main
-
 jobs:
   run-tests:
-    
     name: run-tests
     runs-on: ubuntu-latest
     steps:
@@ -19,12 +16,51 @@ jobs:
           python-version: '3.11'
       - name: Install Make
         run: sudo apt install make -y
-      - name: Run Tests
-        run: make all
+      - name: Run Requirements
+        run: make requirements
+      - name: Run Dev Setup
+        run: make dev-setup
+      - name: AWS Creds
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Run Checks
+        run: make run-checks
+        env:
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
 
-  deploy-lambda:
-    name: deploy-lambda
+
+  zip-files:
+    name: make zip files
     needs: run-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+      - name: Action Zip
+        uses: vimtor/action-zip@v1.2
+        with:
+          files: python
+          dest: terraform/modules.zip
+      - name: check for modules
+        run: ls -a terraform
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ingestion-modules
+          path: terraform/modules.zip
+      
+
+
+  deploy-infrastructure:
+    name: deploy-infrastructure
+    needs: zip-files
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -32,11 +68,19 @@ jobs:
       - name: AWS Creds
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: $\{{ secrets.AWS_ACCESS_KEY_ID}}
-          aws-secret-access-key: $\{{ secrets.AWS_SECRET_ACCESS_KEY}}
-          aws-region: $\{{ secrets.AWS_REGION}}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v3
+      - name: Download modules artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ingestion-modules
+          path: terraform
+      - name: Verify modules.zip exists
+        working-directory: terraform
+        run: ls -a
       - name: Terraform Init
         working-directory: terraform
         run: terraform init
@@ -46,4 +90,10 @@ jobs:
       - name: Terraform Apply
         working-directory: terraform
         run: terraform apply -auto-approve
-            
+
+
+
+
+
+
+

@@ -2,3 +2,8 @@ boto3
 pytest
 pytest-cov
 moto[ec2,s3,all]
+python-dotenv
+pg8000
+pytest-testdox
+pandas
+pyarrow

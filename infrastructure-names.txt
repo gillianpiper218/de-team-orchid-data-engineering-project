@@ -1,1 +1,0 @@
-state-bucket-name = orchid-terraform-state-bucket-nc
