@@ -44,7 +44,7 @@ requirements: create-environment
 	$(call execute_in_env, $(PIP) install pip-tools)
 	$(call execute_in_env, pip-compile requirements.in)
 	$(call execute_in_env, $(PIP) install -r ./requirements.txt)
-	$(call execute_in_env, zip -r ./terraform/modules.zip python)
+	$(call execute_in_env, zip -r ./terraform/modules.zip ./python)
 	
 
 
