@@ -35,7 +35,7 @@ define execute_in_env
 endef
 
 ## run make layer zip files
-ZIP_FILE = modules.zip
+ZIP_FILE = terraform/modules.zip
 DIRECTORY = python
 
 
