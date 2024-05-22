@@ -94,5 +94,5 @@ ZIP_FILE = ./terraform/modules.zip
 DIRECTORY = python
 # Target to create the zip file
 zip:
-    @echo "Creating zip file $(ZIP_FILE) from directory $(DIRECTORY)"
+	@echo "Creating zip file $(ZIP_FILE) from directory $(DIRECTORY)"
     zip -r $(ZIP_FILE) $(DIRECTORY)
