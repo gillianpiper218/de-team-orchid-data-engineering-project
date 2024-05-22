@@ -2,7 +2,7 @@ name: lambda-deployment
 on:
   push:
     branches:
-      - main
+      - clean-up-terraform
 jobs:
   run-tests:
     name: run-tests
@@ -36,9 +36,31 @@ jobs:
           DB_PORT: ${{ secrets.DB_PORT }}
 
 
+  zip-files:
+    name: make zip files
+    needs: run-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+      - name: Action Zip
+        uses: vimtor/action-zip@v1.2
+        with:
+          files: python
+          dest: terraform/modules.zip
+      - name: check for modules
+        run: ls -a terraform
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ingestion-modules
+          path: terraform/modules.zip
+      
+
+
   deploy-infrastructure:
     name: deploy-infrastructure
-    needs: run-tests
+    needs: zip-files
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -51,6 +73,14 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v3
+      - name: Download modules artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ingestion-modules
+          path: terraform
+      - name: Verify modules.zip exists
+        working-directory: terraform
+        run: ls -a
       - name: Terraform Init
         working-directory: terraform
         run: terraform init

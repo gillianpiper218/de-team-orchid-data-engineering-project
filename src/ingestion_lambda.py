@@ -177,6 +177,7 @@ def select_and_write_updated_data(
     db=connect_to_db(),
     name_of_tables=get_table_names(),
     bucket_name=S3_BUCKET_NAME,
+    override_time_condition=False,
     **kwargs,
 ):
     """Tries to set up a cursor,
@@ -201,11 +202,12 @@ def select_and_write_updated_data(
     try:
         cursor = db.cursor()
         for table_name in name_of_tables:
-            cursor.execute(
-                f"""SELECT * FROM {table_name[0]} WHERE last_updated
-                        > NOW() - interval '20 minutes';
-                        """
-            )
+            if override_time_condition:
+                query = f"SELECT * FROM {table_name[0]}"
+            else:
+                query = f"""SELECT * FROM {table_name[0]} WHERE last_updated
+                            > NOW() - interval '20 minutes';"""
+            cursor.execute(query)
             result = cursor.fetchall()
             if len(result) == 0:
                 logger.info("No new data found")
