@@ -53,8 +53,10 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: modules.zip
+          name: ingestion-modules
           path: terraform/modules.zip
+      
+
 
   deploy-infrastructure:
     name: deploy-infrastructure
@@ -71,6 +73,11 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v3
+      - name: Download modules artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ingestion-modules
+          path: terraform/modules.zip
       - name: Verify modules.zip exists
         working-directory: terraform
         run: ls -a
