@@ -51,6 +51,9 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v3
+      - name: Verify modules.zip exists
+        working-directory: terraform
+        run: ls
       - name: Terraform Init
         working-directory: terraform
         run: terraform init

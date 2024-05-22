@@ -36,7 +36,7 @@ endef
 
 ## run make layer zip files
 ZIP_FILE = terraform/modules.zip
-DIRECTORY = python
+DIRECTORY = python/
 
 
 ## Build the environment requirements
