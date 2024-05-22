@@ -191,17 +191,13 @@ class TestProcessFactSalesOrder:
         assert "last_updated_time" in result
         assert "last_updated" not in result
 
-    @pytest.mark.it("Unit test: check correct column names")
-    def test_check_correct_columns_names(self, s3):
-        pass
 
-    @pytest.mark.it("Unit test: check correct data type for columns")
-    def test_check_correct_data_type(self, s3):
-        pass
-
-
-@pytest.mark.skip
 class TestProcessDimCounterparty:
+    @pytest.mark.it("Unit test: check correct column names")
+    def test_check_correct_columns_names(self, s3, bucket):
+        process_dim_counterparty(bucket)
+        assert 4 == 3
+
     @pytest.mark.it("Unit test: commercial_contact key removed")
     def test_remove_commercial_contact(self, s3):
         pass
@@ -216,10 +212,6 @@ class TestProcessDimCounterparty:
 
     @pytest.mark.it("Unit test: last_updated key removed")
     def test_remove_last_updated(self, s3):
-        pass
-
-    @pytest.mark.it("Unit test: check correct column names")
-    def test_check_correct_columns_names(self, s3):
         pass
 
     @pytest.mark.it("Unit test: check correct data type for columns")

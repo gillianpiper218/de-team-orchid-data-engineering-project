@@ -64,10 +64,22 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME):
     return fact_sales_order_df
 
 
-def process_dim_counterparty():
-    # remove commercial_contact and delivery_contact keys
-    remove_created_at_and_last_updated()
-    pass
+def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME):
+    counterparty_key = get_object_key(table_name="counterparty", prefix="baseline/", bucket=bucket)
+    obj = s3.get_object(Bucket=bucket, Key=counterparty_key)
+    counterparty_json = obj["Body"].read().decode("utf-8")
+    counterparty_list = json.loads(counterparty_json)
+    print('counterparty list\n')
+    pprint(counterparty_list)
+
+    address_key = get_object_key(table_name="address", prefix="baseline/", bucket=bucket)
+    obj = s3.get_object(Bucket=bucket, Key=address_key)
+    address_json = obj["Body"].read().decode("utf-8")
+    address_list = json.loads(address_json)
+    print('address list\n')
+    pprint(address_list)
+
+    return 'done'
 
 
 def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME):
