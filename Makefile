@@ -87,3 +87,10 @@ check-coverage:
 ## Run all checks
 run-checks: security-test run-black unit-test check-coverage
 
+## run make layer zip files
+ZIP_FILE = modules.zip
+DIRECTORY = Python
+# Target to create the zip file
+zip:
+    @echo "Creating zip file $(ZIP_FILE) from directory $(DIRECTORY)"
+    zip -r $(ZIP_FILE) $(DIRECTORY)

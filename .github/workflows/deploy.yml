@@ -1,13 +1,10 @@
 name: lambda-deployment
-
 on:
   push:
     branches:
-      - main
-
+      - lambda-end-to-end
 jobs:
   run-tests:
-    
     name: run-tests
     runs-on: ubuntu-latest
     steps:
@@ -23,6 +20,12 @@ jobs:
         run: make requirements
       - name: Run Dev Setup
         run: make dev-setup
+      - name: AWS Creds
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
       - name: Run Checks
         run: make run-checks
         env:
@@ -32,8 +35,9 @@ jobs:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_PORT: ${{ secrets.DB_PORT }}
 
-  deploy-ingestion-lambda:
-    name: deploy-ingestion-lambda
+
+  deploy-infrastructure:
+    name: deploy-infrastructure
     needs: run-tests
     runs-on: ubuntu-latest
     steps:
@@ -56,4 +60,10 @@ jobs:
       - name: Terraform Apply
         working-directory: terraform
         run: terraform apply -auto-approve
-            
+
+
+
+
+
+
+

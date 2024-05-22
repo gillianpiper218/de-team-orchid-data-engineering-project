@@ -3,6 +3,8 @@ resource "aws_lambda_function" "ingestion_function" {
     filename = data.archive_file.lambda.output_path
     role = aws_iam_role.ingestion_function_role.arn
     handler = "ingestion_lambda.lambda_handler"
+    source_code_hash = data.archive_file.lambda.output_base64sha256
+
     depends_on    = [aws_cloudwatch_log_group.ingestion_function_log_group]
     layers = [
     "arn:aws:lambda:eu-west-2:770693421928:layer:Klayers-p311-boto3:10",
@@ -18,7 +20,6 @@ data "archive_file" "lambda" {
   source_file = "${path.module}/../src/ingestion_lambda.py"
   output_path = "${path.module}/../function.zip"
 }
-
 
 
 resource "aws_lambda_layer_version" "modules" {
@@ -61,23 +62,23 @@ resource "aws_iam_policy" "lambda_layer_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_layer_policy_attachment" {
-  role       = aws_iam_role.lambda_exec_role.name
+  role       = aws_iam_role.ingestion_function_role.name
   policy_arn = aws_iam_policy.lambda_layer_policy.arn
 }
 
-resource "aws_iam_role" "lambda_exec_role" {
-  name               = "lambda_exec_role"
-  assume_role_policy = jsonencode({
-    Version   = "2012-10-17",
-    Statement = [{
-      Effect    = "Allow",
-      Principal = {
-        Service = "lambda.amazonaws.com"
-      },
-      Action    = "sts:AssumeRole"
-    }]
-  })
-}
+# resource "aws_iam_role" "lambda_exec_role" {
+#   name               = "lambda_exec_role"
+#   assume_role_policy = jsonencode({
+#     Version   = "2012-10-17",
+#     Statement = [{
+#       Effect    = "Allow",
+#       Principal = {
+#         Service = "lambda.amazonaws.com"
+#       },
+#       Action    = "sts:AssumeRole"
+#     }]
+#   })
+# }
 
 resource "aws_iam_policy" "secret_manager_policy" {
   name = "sm_access_permissions"
@@ -92,14 +93,14 @@ resource "aws_iam_policy" "secret_manager_policy" {
           "secretsmanager:GetSecretValue",
         ]
         Effect   = "Allow"
-        Resource = "arn:aws:secretsmanager:eu-west-2:851725259107:secret:totesys_environment-P0d7hT"
+        Resource = "*"
       },
     ]
   })
 }
 
 resource "aws_iam_role_policy_attachment" "secret_manager_policy_attachment" {
-  role       = aws_iam_role.lambda_exec_role.name
+  role       = aws_iam_role.ingestion_function_role.name
   policy_arn = aws_iam_policy.secret_manager_policy.arn
 }
 
