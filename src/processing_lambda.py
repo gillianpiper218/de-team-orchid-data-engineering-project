@@ -7,7 +7,7 @@ from pprint import pprint
 import boto3
 
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 s3 = boto3.client("s3")
 current_time = datetime.now()
@@ -55,9 +55,9 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME):
         dictionary["created_time"] = dictionary["created_at"][11:]
         dictionary["last_updated_date"] = dictionary["last_updated"][:10]
         dictionary["last_updated_time"] = dictionary["last_updated"][11:]
-    df = pd.DataFrame(sales_order_list)
-    return_df = remove_created_at_and_last_updated(df)
-    return return_df
+    fact_sales_order_df = pd.DataFrame(sales_order_list)
+    fact_sales_order_df = remove_created_at_and_last_updated(fact_sales_order_df)
+    return fact_sales_order_df
 
 
 def process_dim_counterparty():
@@ -73,15 +73,15 @@ def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME):
     obj = s3.get_object(Bucket=bucket, Key=key)
     currency_json = obj["Body"].read().decode("utf-8")
     currency_list = json.loads(currency_json)["currency"]
-    df = pd.DataFrame(currency_list)
-    remove_created_at_and_last_updated(df)
+    dim_currency_df = pd.DataFrame(currency_list)
+    remove_created_at_and_last_updated(dim_currency_df)
     currency_names = {
         'GDP': 'British Pound',
         'USD': 'US Dollar',
         'EUR': 'Euro'
     }
-    df["currency_name"] = df["currency_code"].map(currency_names)
-    return df
+    dim_currency_df["currency_name"] = dim_currency_df["currency_code"].map(currency_names)
+    return dim_currency_df
 
 
 def process_dim_date():
