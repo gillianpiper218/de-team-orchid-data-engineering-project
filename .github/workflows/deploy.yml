@@ -53,7 +53,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
       - name: Verify modules.zip exists
         working-directory: terraform
-        run: ls
+        run: ls -a
       - name: Terraform Init
         working-directory: terraform
         run: terraform init
