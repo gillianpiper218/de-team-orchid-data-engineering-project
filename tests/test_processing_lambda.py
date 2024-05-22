@@ -127,7 +127,7 @@ class TestProcessFactSalesOrder:
             "data/test_data/sales_order.json", "r", encoding="utf-8"
         ) as json_file:
             sales_order = json.load(json_file)
-            test_body = json.dumps(sales_order['sales_order'])
+            test_body = json.dumps(sales_order["sales_order"])
 
             bucket.put_object(
                 Bucket="test_bucket",
@@ -144,8 +144,8 @@ class TestProcessFactSalesOrder:
             "data/test_data/sales_order.json", "r", encoding="utf-8"
         ) as json_file:
             sales_order = json.load(json_file)
-            test_body = json.dumps(sales_order['sales_order'])
-    
+            test_body = json.dumps(sales_order["sales_order"])
+
             bucket.put_object(
                 Bucket="test_bucket",
                 Key="updated/sales_order-2022-11-03 14:20:49.962.json",
@@ -161,7 +161,7 @@ class TestProcessFactSalesOrder:
             "data/test_data/sales_order.json", "r", encoding="utf-8"
         ) as json_file:
             sales_order = json.load(json_file)
-            test_body = json.dumps(sales_order['sales_order'])
+            test_body = json.dumps(sales_order["sales_order"])
 
         bucket.put_object(
             Bucket="test_bucket", Key="updated/sales_order.json", Body=test_body
@@ -179,8 +179,8 @@ class TestProcessFactSalesOrder:
             "data/test_data/sales_order.json", "r", encoding="utf-8"
         ) as json_file:
             sales_order = json.load(json_file)
-            test_body = json.dumps(sales_order['sales_order'])
-           
+            test_body = json.dumps(sales_order["sales_order"])
+
         bucket.put_object(
             Bucket="test_bucket", Key="updated/sales_order.json", Body=test_body
         )
@@ -230,11 +230,9 @@ class TestProcessDimCounterparty:
 class TestProcessDimCurrency:
     @pytest.mark.it("Unit test: create currency_name column ")
     def test_currency_name_created(self, s3, bucket):
-        with open(
-            "data/test_data/currency.json", "r", encoding="utf-8"
-        ) as json_file:
+        with open("data/test_data/currency.json", "r", encoding="utf-8") as json_file:
             currency = json.load(json_file)
-            test_body = json.dumps(currency['currency'])
+            test_body = json.dumps(currency["currency"])
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
@@ -246,11 +244,9 @@ class TestProcessDimCurrency:
 
     @pytest.mark.it("Unit test: created_at key removed")
     def test_remove_created_at(self, s3, bucket):
-        with open(
-            "data/test_data/currency.json", "r", encoding="utf-8"
-        ) as json_file:
+        with open("data/test_data/currency.json", "r", encoding="utf-8") as json_file:
             currency = json.load(json_file)
-            test_body = json.dumps(currency['currency'])
+            test_body = json.dumps(currency["currency"])
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
@@ -262,11 +258,9 @@ class TestProcessDimCurrency:
 
     @pytest.mark.it("Unit test: last_updated key removed")
     def test_remove_last_updated(self, s3, bucket):
-        with open(
-            "data/test_data/currency.json", "r", encoding="utf-8"
-        ) as json_file:
+        with open("data/test_data/currency.json", "r", encoding="utf-8") as json_file:
             currency = json.load(json_file)
-            test_body = json.dumps(currency['currency'])
+            test_body = json.dumps(currency["currency"])
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
@@ -278,11 +272,9 @@ class TestProcessDimCurrency:
 
     @pytest.mark.it("Unit test: check correct column names")
     def test_check_correct_columns_names(self, s3, bucket):
-        with open(
-            "data/test_data/currency.json", "r", encoding="utf-8"
-        ) as json_file:
+        with open("data/test_data/currency.json", "r", encoding="utf-8") as json_file:
             currency = json.load(json_file)
-            test_body = json.dumps(currency['currency'])
+            test_body = json.dumps(currency["currency"])
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
@@ -294,11 +286,9 @@ class TestProcessDimCurrency:
 
     @pytest.mark.it("Unit test: check correct data type for columns")
     def test_check_correct_data_type(self, s3, bucket):
-        with open(
-            "data/test_data/currency.json", "r", encoding="utf-8"
-        ) as json_file:
+        with open("data/test_data/currency.json", "r", encoding="utf-8") as json_file:
             currency = json.load(json_file)
-            test_body = json.dumps(currency['currency'])
+            test_body = json.dumps(currency["currency"])
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
