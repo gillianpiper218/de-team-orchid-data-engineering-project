@@ -50,7 +50,11 @@ jobs:
           dest: terraform/modules.zip
       - name: check for modules
         run: ls -a terraform
-
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: modules.zip
+          path: terraform/modules.zip
 
   deploy-infrastructure:
     name: deploy-infrastructure
