@@ -2,7 +2,7 @@ name: lambda-deployment
 on:
   push:
     branches:
-      - clean-up-terraform
+      - main
 jobs:
   run-tests:
     name: run-tests
