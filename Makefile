@@ -35,8 +35,8 @@ define execute_in_env
 endef
 
 ## run make layer zip files
-ZIP_FILE = terraform/modules.zip
-DIRECTORY = python/
+# ZIP_FILE = terraform/modules.zip
+# DIRECTORY = python
 
 
 ## Build the environment requirements
@@ -44,7 +44,7 @@ requirements: create-environment
 	$(call execute_in_env, $(PIP) install pip-tools)
 	$(call execute_in_env, pip-compile requirements.in)
 	$(call execute_in_env, $(PIP) install -r ./requirements.txt)
-	$(call execute_in_env, zip -r $(ZIP_FILE) $(DIRECTORY))
+	$(call execute_in_env, zip -r ./terraform/modules.zip python)
 	
 
 
