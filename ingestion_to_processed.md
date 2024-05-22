@@ -57,7 +57,17 @@ The dim_design table will be populated by the data from the design table with th
 - last_updated not required for dim_design
 
 ### dim_counterparty
-The dim_counterparty table will be populated by the data from the counterparty table with the following adjustments:
+The following information (keys/columns) will need to be added from the data in the address table (possibly using legal_address_id which is linked to the address table):
+- counterparty_leagl_address_line_1
+- counterparty_legal_address_line_2
+- counterparty_legal_district
+- counterparty_legal_city
+- counterparty_legal_postal_code
+- counterparty_legal_country
+- counterparty_legal_phone_number
+
+The dim_counterparty table will be populated by the data from the counterparty table with the following keys removed:
+- legal_address_id (be careful with removing this, you might need to do this last to ensure you can get the required info from the address table)
 - commercial_contact not required for dim_counterparty
 - delivery_contact not required for dim_counterparty
 - created_at not required for dim_counterparty
