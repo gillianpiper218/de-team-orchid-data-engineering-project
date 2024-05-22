@@ -3,7 +3,13 @@ resource "aws_sns_topic" "sns_alerts" {
 }
 
 locals {
-  emails = [ "souad.alkhaledi@gmail.com", "anita.amena@icloud.com" ]
+  emails = [ "souad.alkhaledi@gmail.com", 
+  "anita.amena@icloud.com", 
+  "ellen12008@hotmail.co.uk", 
+  "gillianpiper218@btinternet.com",
+  "04robik@gmail.com", 
+  "ajrp111@googlemail.com" 
+  ]
 }
 
 resource "aws_sns_topic_subscription" "lambda_error_subs" {

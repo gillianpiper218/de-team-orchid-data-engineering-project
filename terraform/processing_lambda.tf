@@ -1,9 +1,11 @@
-# resource "aws_lambda_function" "processing_function" {
-#     function_name = var.processing_function_name
-#     filename = data.archive_file.processing_lambda.output_path
-#     role = aws_iam_role.processing_function_role.arn
-#     handler = "lambda-ellen.lambda_handler" #to confirm ingestion function name
-#     depends_on    = [aws_cloudwatch_log_group.processing_function_log_group]
+
+resource "aws_lambda_function" "processing_function" {
+    function_name = var.processing_function_name
+    filename = data.archive_file.processing_lambda.output_path
+    role = aws_iam_role.processing_function_role.arn
+    handler = "lambda-ellen.lambda_handler" #to confirm processing function name
+    depends_on    = [aws_cloudwatch_log_group.processing_function_log_group]
+
 
 #     runtime = "python3.11"
 #   }

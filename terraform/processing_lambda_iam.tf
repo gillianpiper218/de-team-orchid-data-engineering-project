@@ -1,20 +1,21 @@
-# resource "aws_iam_role" "processing_function_role" {
-#     name_prefix = "role-${var.processing_function_name}"
-#     assume_role_policy = data.aws_iam_policy_document.trust_policy.json
-# }
+
+resource "aws_iam_role" "processing_function_role" {
+    name_prefix = "role-${var.processing_function_name}"
+    assume_role_policy = data.aws_iam_policy_document.trust_policy_processing_lambda.json
+}
 
 
 
-# # data "aws_iam_policy_document" "trust_policy" {
-# #     statement {
-# #         effect = "Allow"
-# #         principals {
-# #             type = "Service"
-# #             identifiers = ["lambda.amazonaws.com"]
-# #         } 
-# #         actions = ["sts:AssumeRole"]
-# #     }
-# # }
+data "aws_iam_policy_document" "trust_policy_processing_lambda" {
+    statement {
+        effect = "Allow"
+        principals {
+            type = "Service"
+            identifiers = ["lambda.amazonaws.com"]
+        } 
+        actions = ["sts:AssumeRole"]
+    }
+}
 
 
 # resource "aws_iam_role_policy_attachment" "processing_lambda_get_policy_attachment" {
