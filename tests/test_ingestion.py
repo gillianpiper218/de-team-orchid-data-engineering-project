@@ -16,6 +16,7 @@ from src.ingestion_lambda import (
     select_and_write_updated_data,
     delete_empty_s3_files,
     retrieve_secret_credentials,
+    check_baseline_exists,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ def secrets_manager_client(aws_credentials):
         yield boto3.client("secretsmanager")
 
 
-class TestRetrieveSecret:
+class TestRetrieveSecretCredentials:
     @pytest.mark.it("unit test: check function retrieves secret")
     def test_retieve_secret(self, secrets_manager_client):
         secrets_manager_client.create_secret(
@@ -119,7 +120,7 @@ class TestGetTableNames:
     @pytest.mark.it("unit test: raises InterfaceError")
     def test_raises_InterfaceError(self, caplog):
         LOGGER.info("Testing now")
-        with patch("src.ingestion_function.connect_to_db") as mock_connection:
+        with patch("src.ingestion_lambda.connect_to_db") as mock_connection:
             mock_connection.side_effect = InterfaceError("Connection timed out")
             get_table_names()
             assert (
@@ -129,13 +130,14 @@ class TestGetTableNames:
 
 class TestSelectAllTablesBaseline:
     @pytest.mark.it("unit test: function writes data to s3 bucket")
-    def test_writes_to_s3(self, s3):
+    def test_writes_to_s3(self, s3, secrets_manager_client):
         test_bucket_name = "test_bucket"
         name_of_tables = get_table_names()
         s3.create_bucket(
             Bucket=test_bucket_name,
             CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
         )
+
         response = s3.list_objects_v2(Bucket="test_bucket", Prefix="baseline")
         assert response["KeyCount"] == 0
         select_all_tables_for_baseline(
@@ -164,7 +166,7 @@ class TestSelectAllTablesBaseline:
 
 class TestSelectAndWriteUpdatedData:
     @pytest.mark.it("unit test: check last updated is within the last 20 minutes")
-    def test_data_within_20_mins(self, s3):
+    def test_data_within_20_mins(self, s3, secrets_manager_client):
         test_bucket_name = "test_bucket"
         s3.create_bucket(
             Bucket="test_bucket",
@@ -224,3 +226,10 @@ class TestDeleteEmptyS3Files:
             test_bucket_name = "test_bucket"
             delete_empty_s3_files(bucket_name=test_bucket_name)
         assert "No bucket found" in caplog.text
+
+
+class TestCheckBaselineExists:
+    @pytest.mark.it("unit test: check contents is in the response")
+    def test_contents_in_response(self):
+        result = check_baseline_exists()
+        assert result
