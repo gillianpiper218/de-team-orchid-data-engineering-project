@@ -18,6 +18,8 @@ jobs:
         run: sudo apt install make -y
       - name: Run Requirements
         run: make requirements
+      - name: Run Zip
+        run: make zip
       - name: Run Dev Setup
         run: make dev-setup
       - name: AWS Creds
