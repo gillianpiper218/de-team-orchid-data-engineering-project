@@ -130,7 +130,7 @@ class TestGetTableNames:
 
 class TestSelectAllTablesBaseline:
     @pytest.mark.it("unit test: function writes data to s3 bucket")
-    def test_writes_to_s3(self, s3, secrets_manager_client):
+    def test_writes_to_s3(self, s3, caplog):
         test_bucket_name = "test_bucket"
         name_of_tables = get_table_names()
         s3.create_bucket(
@@ -151,6 +151,7 @@ class TestSelectAllTablesBaseline:
             assert response["Contents"][i]["Key"][:9] == "baseline/"
         for i in range(len(name_of_tables)):
             assert response["Contents"][i]["Key"][-5:] == ".json"
+        assert "Uploaded file to" in caplog.text
 
     @pytest.mark.it("unit test: NoSuchBucket exception")
     def test_no_bucket_exceptions(self, caplog):
