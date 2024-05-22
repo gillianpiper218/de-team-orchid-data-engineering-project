@@ -292,27 +292,53 @@ class TestProcessDimDesign:
 
         assert "last_updated" not in result
 
-@pytest.mark.skip
+
 class TestProcessDimLocation:
     @pytest.mark.it("Unit test: rename address_id key to location_id")
-    def test_rename_address_id(self, s3):
-        pass
+    def test_rename_address_id(self, s3, bucket):
+        with open(
+            "data/test_data/address.json", "r", encoding="utf-8"
+        ) as json_file:
+            address = json.load(json_file)
+            test_body = json.dumps(address)
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/address.json", Body=test_body
+        )
+        result = process_dim_location(bucket="test_bucket")
+        assert "address_id" not in result
+        assert "location_id" in result
 
     @pytest.mark.it("Unit test: created_at key removed")
-    def test_remove_created_at(self, s3):
-        pass
+    def test_remove_created_at(self, s3, bucket):
+        with open(
+            "data/test_data/address.json", "r", encoding="utf-8"
+        ) as json_file:
+            location = json.load(json_file)
+            test_body = json.dumps(location)
+
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/address.json", Body=test_body
+        )
+
+        result = process_dim_location(bucket="test_bucket")
+
+        assert "created_at" not in result
 
     @pytest.mark.it("Unit test: last_updated key removed")
-    def test_remove_last_updated(self, s3):
-        pass
+    def test_remove_last_updated(self, s3, bucket):
+        with open(
+            "data/test_data/address.json", "r", encoding="utf-8"
+        ) as json_file:
+            location = json.load(json_file)
+            test_body = json.dumps(location)
 
-    @pytest.mark.it("Unit test: check correct column names")
-    def test_check_correct_columns_names(self, s3):
-        pass
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/address.json", Body=test_body
+        )
 
-    @pytest.mark.it("Unit test: check correct data type for columns")
-    def test_check_correct_data_type(self, s3):
-        pass
+        result = process_dim_location(bucket="test_bucket")
+
+        assert "last_updated" not in result
 
 class TestProcessDimStaff:
     @pytest.mark.it("Unit test: created_at key removed")
