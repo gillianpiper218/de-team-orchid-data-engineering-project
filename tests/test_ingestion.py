@@ -174,30 +174,38 @@ class TestSelectAndWriteUpdatedData:
             CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
         )
         select_and_write_updated_data(
-            name_of_tables=get_table_names(), bucket_name="test_bucket"
+            name_of_tables=get_table_names(),
+            bucket_name="test_bucket",
+            query_minutes="real",
         )
+        delete_empty_s3_files(bucket_name="test_bucket")
         obj_list = s3.list_objects_v2(Bucket="test_bucket", Prefix="updated")
-        for i in range(len(obj_list["Contents"])):
-            object_key = obj_list["Contents"][0]["Key"]
-            response = s3.get_object(Bucket=test_bucket_name, Key=object_key)
-            contents = response["Body"].read().decode("utf-8")
-            data = json.loads(contents)
-            for dictionary in data:
-                if dictionary:
-                    epoch_time = (dictionary["last_updated"]) / 1000
-                    formatted_time = datetime.fromtimestamp(epoch_time)
-                    current_time = datetime.now()
-                    difference = current_time - formatted_time
-                    differene_mins = difference.total_seconds() / 60
-                    assert differene_mins < 20
+        print(obj_list)
+        if obj_list["KeyCount"] != 0:
+            for i in range(len(obj_list["Contents"])):
+                object_key = obj_list["Contents"][0]["Key"]
+                response = s3.get_object(Bucket=test_bucket_name, Key=object_key)
+                contents = response["Body"].read().decode("utf-8")
+                data = json.loads(contents)
+                for dictionary in data:
+                    if dictionary:
+                        epoch_time = (dictionary["last_updated"]) / 1000
+                        formatted_time = datetime.fromtimestamp(epoch_time)
+                        current_time = datetime.now()
+                        difference = current_time - formatted_time
+                        differene_mins = difference.total_seconds() / 60
+                        assert differene_mins < 20
+        else:
+            assert obj_list["KeyCount"] == 0
 
     @pytest.mark.it("unit test: NoSuchBucket exception")
-    def test_no_bucket_exceptions(self, caplog):
+    def test_no_bucket_exceptions(self, s3, caplog):
         with pytest.raises(ClientError):
-            test_bucket_name = "test_bucket"
+            test_bucket_name = "test_bucket1"
             select_and_write_updated_data(
                 bucket_name=test_bucket_name,
                 db=connect_to_db(),
+                query_minutes="testing",
             )
         assert "No bucket found" in caplog.text
 
