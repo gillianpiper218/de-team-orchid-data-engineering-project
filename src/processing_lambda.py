@@ -50,7 +50,6 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME):
     obj = s3.get_object(Bucket=bucket, Key=key)
     sales_order_json = obj["Body"].read().decode("utf-8")
     sales_order_list = json.loads(sales_order_json)["sales_order"]
-    pprint(sales_order_list)
     for dictionary in sales_order_list:
         dictionary["created_date"] = dictionary["created_at"][:10]
         dictionary["created_time"] = dictionary["created_at"][11:]
@@ -85,9 +84,14 @@ def process_dim_date():
     pass
 
 
-def process_dim_design():
-    remove_created_at_and_last_updated()
-    pass
+def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME):
+    key = get_object_key(table_name="design", prefix="baseline/", bucket=bucket)
+    obj = s3.get_object(Bucket=bucket, Key=key)
+    design_json = obj["Body"].read().decode("utf-8")
+    design_list = json.loads(design_json)["design"]
+    df = pd.DataFrame(design_list)
+    return_df = remove_created_at_and_last_updated(df)
+    return return_df
 
 
 def process_dim_location():
@@ -98,9 +102,14 @@ def process_dim_location():
     pass
 
 
-def process_dim_staff():
-    remove_created_at_and_last_updated()
-    pass
+def process_dim_staff(bucket=INGESTION_S3_BUCKET_NAME):
+    key = get_object_key(table_name="staff", prefix="baseline/", bucket=bucket)
+    obj = s3.get_object(Bucket=bucket, Key=key)
+    staff_json = obj["Body"].read().decode("utf-8")
+    staff_list = json.loads(staff_json)["staff"]
+    df = pd.DataFrame(staff_list)
+    return_df = remove_created_at_and_last_updated(df)
+    return return_df
 
 
 def convert_dataframe_to_parquet():

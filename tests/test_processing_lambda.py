@@ -259,24 +259,38 @@ class TestProcessDimDate:
         pass
 
 
-@pytest.mark.skip
 class TestProcessDimDesign:
     @pytest.mark.it("Unit test: created_at key removed")
-    def test_remove_created_at(self, s3):
-        pass
+    def test_remove_created_at(self, s3, bucket):
+        with open(
+            "data/test_data/design.json", "r", encoding="utf-8"
+        ) as json_file:
+            design = json.load(json_file)
+            test_body = json.dumps(design)
+
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/design.json", Body=test_body
+        )
+
+        result = process_dim_design(bucket="test_bucket")
+
+        assert "created_at" not in result
 
     @pytest.mark.it("Unit test: last_updated key removed")
-    def test_remove_last_updated(self, s3):
-        pass
+    def test_remove_last_updated(self, s3, bucket):
+        with open(
+            "data/test_data/design.json", "r", encoding="utf-8"
+        ) as json_file:
+            design = json.load(json_file)
+            test_body = json.dumps(design)
 
-    @pytest.mark.it("Unit test: check correct column names")
-    def test_check_correct_columns_names(self, s3):
-        pass
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/design.json", Body=test_body
+        )
 
-    @pytest.mark.it("Unit test: check correct data type for columns")
-    def test_check_correct_data_type(self, s3):
-        pass
+        result = process_dim_design(bucket="test_bucket")
 
+        assert "last_updated" not in result
 
 @pytest.mark.skip
 class TestProcessDimLocation:
@@ -300,24 +314,38 @@ class TestProcessDimLocation:
     def test_check_correct_data_type(self, s3):
         pass
 
-
-@pytest.mark.skip
 class TestProcessDimStaff:
     @pytest.mark.it("Unit test: created_at key removed")
-    def test_remove_created_at(self, s3):
-        pass
+    def test_remove_created_at(self, s3, bucket):
+        with open(
+            "data/test_data/staff.json", "r", encoding="utf-8"
+        ) as json_file:
+            staff = json.load(json_file)
+            test_body = json.dumps(staff)
+
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/staff.json", Body=test_body
+        )
+
+        result = process_dim_staff(bucket="test_bucket")
+
+        assert "created_at" not in result
 
     @pytest.mark.it("Unit test: last_updated key removed")
-    def test_remove_last_updated(self, s3):
-        pass
+    def test_remove_last_updated(self, s3, bucket):
+        with open(
+            "data/test_data/staff.json", "r", encoding="utf-8"
+        ) as json_file:
+            staff = json.load(json_file)
+            test_body = json.dumps(staff)
 
-    @pytest.mark.it("Unit test: check correct column names")
-    def test_check_correct_columns_names(self, s3):
-        pass
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/staff.json", Body=test_body
+        )
 
-    @pytest.mark.it("Unit test: check correct data type for columns")
-    def test_check_correct_data_type(self, s3):
-        pass
+        result = process_dim_staff(bucket="test_bucket")
+
+        assert "last_updated" not in result
 
 
 @pytest.mark.skip
