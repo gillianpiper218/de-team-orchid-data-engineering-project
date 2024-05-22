@@ -50,7 +50,6 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME):
     obj = s3.get_object(Bucket=bucket, Key=key)
     sales_order_json = obj["Body"].read().decode("utf-8")
     sales_order_list = json.loads(sales_order_json)["sales_order"]
-    pprint(sales_order_list)
     for dictionary in sales_order_list:
         dictionary["created_date"] = dictionary["created_at"][:10]
         dictionary["created_time"] = dictionary["created_at"][11:]
@@ -67,10 +66,22 @@ def process_dim_counterparty():
     pass
 
 
-def process_dim_currency():
+def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME):
     # create currency_name column
-    remove_created_at_and_last_updated()
-    pass
+    # remove_created_at_and_last_updated()
+    key = get_object_key(table_name="currency", prefix="baseline/", bucket=bucket)
+    obj = s3.get_object(Bucket=bucket, Key=key)
+    currency_json = obj["Body"].read().decode("utf-8")
+    currency_list = json.loads(currency_json)["currency"]
+    df = pd.DataFrame(currency_list)
+    remove_created_at_and_last_updated(df)
+    currency_names = {
+        'GDP': 'British Pound',
+        'USD': 'US Dollar',
+        'EUR': 'Euro'
+    }
+    df["currency_name"] = df["currency_code"].map(currency_names)
+    return df
 
 
 def process_dim_date():
@@ -117,6 +128,6 @@ def convert_dataframe_to_parquet():
     pass
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    process_fact_sales_order(df)
+    #process_fact_sales_order(df)
