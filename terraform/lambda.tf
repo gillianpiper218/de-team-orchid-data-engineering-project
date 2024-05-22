@@ -18,7 +18,7 @@ resource "aws_lambda_function" "ingestion_function" {
 data "archive_file" "lambda" {
   type        = "zip"
   source_file = "${path.module}/../src/ingestion_lambda.py"
-  output_path = "${path.module}/../function.zip"
+  output_path = "${path.module}/../function_ingestion.zip"
 }
 
 
@@ -66,19 +66,6 @@ resource "aws_iam_role_policy_attachment" "lambda_layer_policy_attachment" {
   policy_arn = aws_iam_policy.lambda_layer_policy.arn
 }
 
-# resource "aws_iam_role" "lambda_exec_role" {
-#   name               = "lambda_exec_role"
-#   assume_role_policy = jsonencode({
-#     Version   = "2012-10-17",
-#     Statement = [{
-#       Effect    = "Allow",
-#       Principal = {
-#         Service = "lambda.amazonaws.com"
-#       },
-#       Action    = "sts:AssumeRole"
-#     }]
-#   })
-# }
 
 resource "aws_iam_policy" "secret_manager_policy" {
   name = "sm_access_permissions"
