@@ -36,7 +36,7 @@ endef
 
 ## run make layer zip files
 ZIP_FILE = modules.zip
-DIRECTORY = Python
+DIRECTORY = python
 
 
 ## Build the environment requirements
