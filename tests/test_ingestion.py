@@ -205,7 +205,7 @@ class TestSelectAndWriteUpdatedData:
             select_and_write_updated_data(
                 bucket_name=test_bucket_name,
                 db=connect_to_db(),
-                query_minutes="testing",
+                override_time_condition=True,
             )
         assert "No bucket found" in caplog.text
 
