@@ -195,7 +195,22 @@ class TestProcessFactSalesOrder:
 class TestProcessDimCounterparty:
     @pytest.mark.it("Unit test: check correct column names")
     def test_check_correct_columns_names(self, s3, bucket):
-        process_dim_counterparty(bucket)
+        with open("data/test_data/counterparty.json", "r", encoding="utf-8") as json_file:
+            counterparty = json.load(json_file)
+            test_body = json.dumps(counterparty["counterparty"])
+        
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/counterparty.json", Body=test_body
+        )
+        
+        with open("data/test_data/address.json", "r", encoding="utf-8") as json_file:
+            address = json.load(json_file)
+            test_body = json.dumps(address["address"])
+
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/address.json", Body=test_body
+        )
+        process_dim_counterparty(bucket="test_bucket")
         assert 4 == 3
 
     @pytest.mark.it("Unit test: commercial_contact key removed")

@@ -65,18 +65,16 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME):
 
 
 def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME):
-    counterparty_key = get_object_key(table_name="counterparty", prefix="baseline/", bucket=bucket)
-    obj = s3.get_object(Bucket=bucket, Key=counterparty_key)
+    key = get_object_key(table_name="counterparty", prefix="baseline/", bucket=bucket)
+    obj = s3.get_object(Bucket=bucket, Key=key)
     counterparty_json = obj["Body"].read().decode("utf-8")
     counterparty_list = json.loads(counterparty_json)
-    print('counterparty list\n')
     pprint(counterparty_list)
 
-    address_key = get_object_key(table_name="address", prefix="baseline/", bucket=bucket)
-    obj = s3.get_object(Bucket=bucket, Key=address_key)
+    key = get_object_key(table_name="address", prefix="baseline/", bucket=bucket)
+    obj = s3.get_object(Bucket=bucket, Key=key)
     address_json = obj["Body"].read().decode("utf-8")
     address_list = json.loads(address_json)
-    print('address list\n')
     pprint(address_list)
 
     return 'done'
