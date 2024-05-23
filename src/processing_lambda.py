@@ -44,10 +44,10 @@ def remove_created_at_and_last_updated(df):
     return df
 
 
-def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME):
+def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     # split created at date into created_date and created_time keys
     # split last updated into last_updated_date and last_updated_time keys
-    key = get_object_key(table_name="sales_order", prefix="updated/", bucket=bucket)
+    key = get_object_key(table_name="sales_order", prefix=prefix, bucket=bucket)
 
     obj = s3.get_object(Bucket=bucket, Key=key)
     sales_order_json = obj["Body"].read().decode("utf-8")
@@ -134,7 +134,7 @@ def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME):
     return dim_currency_df
 
 
-def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME):
+def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     # create from each unique date
     # - year
     # - month
@@ -144,7 +144,7 @@ def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME):
     # - month_name
     # - quarter
 
-    fso_df = process_fact_sales_order(bucket=bucket)
+    fso_df = process_fact_sales_order(bucket=bucket, prefix=prefix)
     fso_dicts = fso_df.to_dict(orient="records")
 
     dim_date = []

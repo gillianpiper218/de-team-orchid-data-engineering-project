@@ -119,10 +119,12 @@ class TestProcessFactSalesOrder:
 
             bucket.put_object(
                 Bucket="test_bucket",
-                Key="updated/sales_order-2022-11-03 14:20:49.962.json",
+                Key="baseline/sales_order-2022-11-03 14:20:49.962.json",
                 Body=test_body,
             )
-            fact_sales_order = process_fact_sales_order(bucket="test_bucket")
+            fact_sales_order = process_fact_sales_order(
+                bucket="test_bucket", prefix="baseline/"
+            )
             assert "created_date" in fact_sales_order
             assert "created_time" in fact_sales_order
 
@@ -136,10 +138,12 @@ class TestProcessFactSalesOrder:
 
             bucket.put_object(
                 Bucket="test_bucket",
-                Key="updated/sales_order-2022-11-03 14:20:49.962.json",
+                Key="baseline/sales_order-2022-11-03 14:20:49.962.json",
                 Body=test_body,
             )
-            fact_sales_order = process_fact_sales_order(bucket="test_bucket")
+            fact_sales_order = process_fact_sales_order(
+                bucket="test_bucket", prefix="baseline/"
+            )
             assert "last_updated_date" in fact_sales_order
             assert "last_updated_time" in fact_sales_order
 
@@ -152,10 +156,10 @@ class TestProcessFactSalesOrder:
             test_body = json.dumps(sales_order["sales_order"])
 
         bucket.put_object(
-            Bucket="test_bucket", Key="updated/sales_order.json", Body=test_body
+            Bucket="test_bucket", Key="baseline/sales_order.json", Body=test_body
         )
 
-        result = process_fact_sales_order(bucket="test_bucket")
+        result = process_fact_sales_order(bucket="test_bucket", prefix="baseline/")
 
         assert "created_date" in result
         assert "created_time" in result
@@ -175,7 +179,6 @@ class TestProcessDimCounterparty:
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/counterparty.json", Body=test_body
         )
-
 
         with open("data/test_data/address.json", "r", encoding="utf-8") as json_file:
             address = json.load(json_file)
@@ -247,7 +250,7 @@ class TestProcessDimCounterparty:
         result = process_dim_counterparty(bucket="test_bucket")
 
         assert "created_at" not in result
-        assert "last_updated" not in result        
+        assert "last_updated" not in result
 
 
 class TestProcessDimCurrency:
@@ -326,10 +329,10 @@ class TestProcessDimDate:
             test_body = json.dumps(model_f_s_o)
 
         bucket.put_object(
-            Bucket="test_bucket", Key="updated/'sales_order'.json", Body=test_body
+            Bucket="test_bucket", Key="baseline/'sales_order'.json", Body=test_body
         )
 
-        result = process_dim_date(bucket="test_bucket")
+        result = process_dim_date(bucket="test_bucket", prefix="baseline/")
         expected_columns = [
             "date_id",
             "year",
@@ -357,10 +360,10 @@ class TestProcessDimDate:
             test_body = json.dumps(model_f_s_o)
 
         bucket.put_object(
-            Bucket="test_bucket", Key="updated/sales_order.json", Body=test_body
+            Bucket="test_bucket", Key="baseline/sales_order.json", Body=test_body
         )
 
-        result = process_dim_date(bucket="test_bucket")
+        result = process_dim_date(bucket="test_bucket", prefix="baseline/")
 
         expected_column_dtypes = {
             "date_id": "object",
