@@ -124,7 +124,7 @@ class TestProcessFactSalesOrder:
     @pytest.mark.it("Unit test: created_date and created_time keys exist")
     def test_created_date_and_time_existed(self, s3, bucket):
         with open(
-            "data/test_data/sales_order.json", "r", encoding="utf-8"
+            "data/test_data_unix_ts/sales_order_unix.json", "r", encoding="utf-8"
         ) as json_file:
             sales_order = json.load(json_file)
             test_body = json.dumps(sales_order["sales_order"])
@@ -141,7 +141,7 @@ class TestProcessFactSalesOrder:
     @pytest.mark.it("Unit test: last_updated_date and last_updated_time keys exist")
     def test_last_updated_date_and_time_existed(self, s3, bucket):
         with open(
-            "data/test_data/sales_order.json", "r", encoding="utf-8"
+            "data/test_data_unix_ts/sales_order_unix.json", "r", encoding="utf-8"
         ) as json_file:
             sales_order = json.load(json_file)
             test_body = json.dumps(sales_order["sales_order"])
@@ -158,7 +158,7 @@ class TestProcessFactSalesOrder:
     @pytest.mark.it("Unit test: created_at key removed")
     def test_remove_created_at(self, s3, bucket):
         with open(
-            "data/test_data/sales_order.json", "r", encoding="utf-8"
+            "data/test_data_unix_ts/sales_order_unix.json", "r", encoding="utf-8"
         ) as json_file:
             sales_order = json.load(json_file)
             test_body = json.dumps(sales_order["sales_order"])
@@ -176,7 +176,7 @@ class TestProcessFactSalesOrder:
     @pytest.mark.it("Unit test: last_updated key removed")
     def test_remove_last_updated(self, s3, bucket):
         with open(
-            "data/test_data/sales_order.json", "r", encoding="utf-8"
+            "data/test_data_unix_ts/sales_order_unix.json", "r", encoding="utf-8"
         ) as json_file:
             sales_order = json.load(json_file)
             test_body = json.dumps(sales_order["sales_order"])
@@ -305,7 +305,7 @@ class TestProcessDimDate:
     @pytest.mark.it("Unit test: check correct column names")
     def test_check_correct_columns_names(self, s3, bucket):
         with open(
-            "data/test_data/sales_order.json", "r", encoding="utf-8"
+            "data/test_data_unix_ts/sales_order_unix.json", "r", encoding="utf-8"
         ) as json_file:
             sales_order = json.load(json_file)
             # add columns fact sales order should also have
@@ -335,7 +335,7 @@ class TestProcessDimDate:
     @pytest.mark.it("Unit test: check correct data type for columns")
     def test_check_correct_data_type(self, s3, bucket):
         with open(
-            "data/test_data/sales_order.json", "r", encoding="utf-8"
+            "data/test_data_unix_ts/sales_order_unix.json", "r", encoding="utf-8"
         ) as json_file:
             sales_order = json.load(json_file)
             test_body = json.dumps(sales_order["sales_order"])
