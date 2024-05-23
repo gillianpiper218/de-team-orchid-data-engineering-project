@@ -65,19 +65,48 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME):
 
 
 def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME):
+
     key = get_object_key(table_name="counterparty", prefix="baseline/", bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     counterparty_json = obj["Body"].read().decode("utf-8")
     counterparty_list = json.loads(counterparty_json)
-    pprint(counterparty_list)
 
     key = get_object_key(table_name="address", prefix="baseline/", bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     address_json = obj["Body"].read().decode("utf-8")
     address_list = json.loads(address_json)
-    pprint(address_list)
 
-    return 'done'
+    for counterparty_dict in counterparty_list:
+        for address_dict in address_list:
+            if address_dict["address_id"] == counterparty_dict["legal_address_id"]:
+                counterparty_dict["counterparty_legal_address_line_1"] = address_dict[
+                    "address_line_1"
+                ]
+                counterparty_dict["counterparty_legal_address_line_2"] = address_dict[
+                    "address_line_2"
+                ]
+                counterparty_dict["counterparty_legal_district"] = address_dict[
+                    "district"
+                ]
+                counterparty_dict["counterparty_legal_city"] = address_dict["city"]
+                counterparty_dict["counterparty_legal_postal_code"] = address_dict[
+                    "postal_code"
+                ]
+                counterparty_dict["counterparty_legal_country"] = address_dict[
+                    "country"
+                ]
+                counterparty_dict["counterparty_legal_phone_number"] = address_dict[
+                    "phone"
+                ]
+
+    dim_counterparty_df = pd.DataFrame(counterparty_list)
+    dim_counterparty_df = remove_created_at_and_last_updated(dim_counterparty_df)
+    dim_counterparty_df.drop(
+        ["commercial_contact", "delivery_contact", "legal_address_id"],
+        axis=1,
+        inplace=True,
+    )
+    return dim_counterparty_df
 
 
 def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME):
