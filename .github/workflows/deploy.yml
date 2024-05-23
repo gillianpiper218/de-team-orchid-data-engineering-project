@@ -18,8 +18,15 @@ jobs:
         run: sudo apt install make -y
       - name: Run Requirements
         run: make requirements
+      - name: make layer zip
+        run: make zip
       - name: Run Dev Setup
         run: make dev-setup
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: modules
+          path: terraform/modules.zip
       - name: AWS Creds
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -36,31 +43,31 @@ jobs:
           DB_PORT: ${{ secrets.DB_PORT }}
 
 
-  zip-files:
-    name: make zip files
-    needs: run-tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-      - name: Action Zip
-        uses: vimtor/action-zip@v1.2
-        with:
-          files: python
-          dest: terraform/modules.zip
-      - name: check for modules
-        run: ls -a terraform
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ingestion-modules
-          path: terraform/modules.zip
+  # zip-files:
+  #   name: make zip files
+  #   needs: run-tests
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Repo
+  #       uses: actions/checkout@v4
+  #     - name: Action Zip
+  #       uses: vimtor/action-zip@v1.2
+  #       with:
+  #         files: python
+  #         dest: terraform/modules.zip
+  #     - name: check for modules
+  #       run: ls -a terraform
+  #     - name: Upload artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: modules
+  #         path: terraform/modules.zip
       
 
 
   deploy-infrastructure:
     name: deploy-infrastructure
-    needs: zip-files
+    needs: run-tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -76,7 +83,7 @@ jobs:
       - name: Download modules artifact
         uses: actions/download-artifact@v4
         with:
-          name: ingestion-modules
+          name: modules
           path: terraform
       - name: Verify modules.zip exists
         working-directory: terraform

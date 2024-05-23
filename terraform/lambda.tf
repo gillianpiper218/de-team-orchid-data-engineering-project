@@ -23,11 +23,11 @@ data "archive_file" "lambda" {
 
 
 resource "aws_lambda_layer_version" "modules" {
-  filename   = "modules.zip"
+  filename   = "${path.module}/modules.zip"
   layer_name = "modules"
   compatible_runtimes = ["python3.11"]
 
-  source_code_hash = filebase64sha256("modules.zip")
+  source_code_hash = filebase64sha256("${path.module}/modules.zip")
 }
 
 
