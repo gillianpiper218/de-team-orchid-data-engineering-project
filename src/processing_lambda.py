@@ -22,7 +22,7 @@ PROCESSED_S3_BUCKET_NAME = "de-team-orchid-totesys-processed"
 def get_object_key(
     table_name: str, prefix: str = None, bucket=INGESTION_S3_BUCKET_NAME
 ) -> str:
-    """ Retrieves the s3 object key for the specifed prefix table name and bucket
+    """Retrieves the s3 object key for the specifed prefix table name and bucket
     Parameters:
         table_name(str): The name of the table to search for inside the s3 bucket.
         prefix(str): The prefix path to use when listing the objects in the s3 bucket if not specified no prefix is used.
@@ -46,21 +46,22 @@ def get_object_key(
 
 
 def remove_created_at_and_last_updated(df):
-    """Removes the created_at and last_updated columns from a DataFrame. 
-    Parameters: 
+    """Removes the created_at and last_updated columns from a DataFrame.
+    Parameters:
         df(pandas.DataFrame): The DataFrame from which to remove the columns.
-    Returns: 
+    Returns:
         (pandas.DataFrame): The DataFrame without created_at and last_updated columns.
     """
     df.drop(["created_at", "last_updated"], axis=1, inplace=True)
     return df
 
+
 def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
-    """This function processes the latest sales_order data from the s3 bucket 
+    """This function processes the latest sales_order data from the s3 bucket
     and split the created_at and last_updated columns into separate date and time columns , renames staff_id to
     sales_staff_id
     and returns the DataFrame with the created_at and last_updated columns removed.
-    Parameters: 
+    Parameters:
         bucket(str): The name of the s3 bucket to retrieve the sales_order table.
     Returns:
         (pandas.DataFrame): The DataFrame for the processed sales_order table.
@@ -134,13 +135,14 @@ def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     )
     return dim_counterparty_df
 
+
 def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
-    """Process the currency table from the s3 bucket by adding a new column currency_name 
+    """Process the currency table from the s3 bucket by adding a new column currency_name
     and converting into DataFrame then removing created_at and last_updated columns.
-    Parameters: 
+    Parameters:
         bucket(str): The name of the s3 bucket to retrieve the currency table.
     Returns:
-        (pandas.DataFrame): The DataFrame for the processed currency data. 
+        (pandas.DataFrame): The DataFrame for the processed currency data.
     """
     key = get_object_key(table_name="currency", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
@@ -154,12 +156,13 @@ def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     )
     return dim_currency_df
 
+
 def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
-    """ 
-    Process the sales order data to create a dim date DataFrame. 
-    It extracts unique dates and creates additional columns for year, month, 
+    """
+    Process the sales order data to create a dim date DataFrame.
+    It extracts unique dates and creates additional columns for year, month,
     day, day_of_week, day_name, month_name and quarter.
-    Parameters: 
+    Parameters:
         bucket(str): The name of the bucket to retrieve the sales order data from.
         The default value is INGESTION_S3_BUCKET_NAME.
     Returns:
@@ -199,13 +202,12 @@ def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     return dim_date_df
 
 
-
 def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
-    """Process the design table from s3 bucket convert it into a DataFrame ,removes created_at and last_updated columns 
-    Parameters: 
+    """Process the design table from s3 bucket convert it into a DataFrame ,removes created_at and last_updated columns
+    Parameters:
         bucket(str): The name of the s3 bucket to retrieve the design table.
     Returns:
-        (pandas.DataFrame): The DataFrame for the processed design data. 
+        (pandas.DataFrame): The DataFrame for the processed design data.
     """
     key = get_object_key(table_name="design", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
@@ -215,15 +217,16 @@ def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     return_df = remove_created_at_and_last_updated(df)
     return return_df
 
+
 def process_dim_location(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
-    """Process the address table from s3 bucket converts to json ,renames address_id column to 
+    """Process the address table from s3 bucket converts to json ,renames address_id column to
     location_id ,then converts to DataFrame , removes the created_at and last_updated columns.
-    Parameters: 
+    Parameters:
         bucket(str): The name of the s3 bucket to retrieve the address table.
     Returns:
-        (pandas.DataFrame): The DataFrame for the processed address data as the location data. 
+        (pandas.DataFrame): The DataFrame for the processed address data as the location data.
     """
-  
+
     key = get_object_key(table_name="address", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     location_json = obj["Body"].read().decode("utf-8")
@@ -236,13 +239,12 @@ def process_dim_location(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     return return_df
 
 
-
-def process_dim_staff(bucket=INGESTION_S3_BUCKET_NAME, prefix=None)):
-    """Process the staff table from s3 bucket convert it into a DataFrame ,removes created_at and last_updated columns 
-    Parameters: 
+def process_dim_staff(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
+    """Process the staff table from s3 bucket convert it into a DataFrame ,removes created_at and last_updated columns
+    Parameters:
         bucket(str): The name of the s3 bucket to retrieve the staff table.
     Returns:
-        (pandas.DataFrame): The DataFrame for the processed staff data. 
+        (pandas.DataFrame): The DataFrame for the processed staff data.
     """
 
     key = get_object_key(table_name="staff", prefix=prefix, bucket=bucket)
@@ -256,7 +258,7 @@ def process_dim_staff(bucket=INGESTION_S3_BUCKET_NAME, prefix=None)):
 
 def convert_to_parquet_put_in_s3(s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME):
     """Converts a DataFrame into parquet and uploads it into s3 bucket by specified key .
-    Parameters: 
+    Parameters:
         s3(boto3.client): The boto3 client to interact with s3.
         df(pandas.DataFrame): The DataFrame  to convert into parquet.
         key(str): The s3 path to store the parquet file into s3 bucket.
