@@ -44,10 +44,10 @@ def remove_created_at_and_last_updated(df):
     return df
 
 
-def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME):
+def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     # split created at date into created_date and created_time keys
     # split last updated into last_updated_date and last_updated_time keys
-    key = get_object_key(table_name="sales_order", prefix="updated/", bucket=bucket)
+    key = get_object_key(table_name="sales_order", prefix=prefix, bucket=bucket)
 
     obj = s3.get_object(Bucket=bucket, Key=key)
     sales_order_json = obj["Body"].read().decode("utf-8")
@@ -73,14 +73,14 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME):
     return fact_sales_order_df
 
 
-def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME):
+def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
 
-    key = get_object_key(table_name="counterparty", prefix="baseline/", bucket=bucket)
+    key = get_object_key(table_name="counterparty", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     counterparty_json = obj["Body"].read().decode("utf-8")
     counterparty_list = json.loads(counterparty_json)
 
-    key = get_object_key(table_name="address", prefix="baseline/", bucket=bucket)
+    key = get_object_key(table_name="address", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     address_json = obj["Body"].read().decode("utf-8")
     address_list = json.loads(address_json)
@@ -118,10 +118,10 @@ def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME):
     return dim_counterparty_df
 
 
-def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME):
+def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     # create currency_name column
     # remove_created_at_and_last_updated()
-    key = get_object_key(table_name="currency", prefix="baseline/", bucket=bucket)
+    key = get_object_key(table_name="currency", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     currency_json = obj["Body"].read().decode("utf-8")
     currency_list = json.loads(currency_json)
@@ -134,7 +134,7 @@ def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME):
     return dim_currency_df
 
 
-def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME):
+def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     # create from each unique date
     # - year
     # - month
@@ -144,7 +144,7 @@ def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME):
     # - month_name
     # - quarter
 
-    fso_df = process_fact_sales_order(bucket=bucket)
+    fso_df = process_fact_sales_order(bucket=bucket, prefix=prefix)
     fso_dicts = fso_df.to_dict(orient="records")
 
     dim_date = []
@@ -181,8 +181,8 @@ def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME):
     return dim_date_df
 
 
-def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME):
-    key = get_object_key(table_name="design", prefix="baseline/", bucket=bucket)
+def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
+    key = get_object_key(table_name="design", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     design_json = obj["Body"].read().decode("utf-8")
     design_list = json.loads(design_json)["design"]
@@ -191,9 +191,9 @@ def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME):
     return return_df
 
 
-def process_dim_location(bucket=INGESTION_S3_BUCKET_NAME):
+def process_dim_location(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     # change address_id key into location_id
-    key = get_object_key(table_name="address", prefix="baseline/", bucket=bucket)
+    key = get_object_key(table_name="address", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     location_json = obj["Body"].read().decode("utf-8")
     location_list = json.loads(location_json)["address"]
@@ -205,8 +205,8 @@ def process_dim_location(bucket=INGESTION_S3_BUCKET_NAME):
     return return_df
 
 
-def process_dim_staff(bucket=INGESTION_S3_BUCKET_NAME):
-    key = get_object_key(table_name="staff", prefix="baseline/", bucket=bucket)
+def process_dim_staff(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
+    key = get_object_key(table_name="staff", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     staff_json = obj["Body"].read().decode("utf-8")
     staff_list = json.loads(staff_json)["staff"]
