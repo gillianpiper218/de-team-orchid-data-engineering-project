@@ -1,12 +1,9 @@
-import os
 import pandas as pd
 from datetime import datetime
 import logging
 import json
-from pprint import pprint
+# from pprint import pprint
 import boto3
-import pyarrow as pa
-import pyarrow.parquet as pq
 from io import BytesIO
 
 
@@ -68,7 +65,8 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     Returns:
         (pandas.DataFrame): The DataFrame for the processed sales_order table.
     """
-    key = get_object_key(table_name="sales_order", prefix=prefix, bucket=bucket)
+    key = get_object_key(table_name="sales_order",
+                         prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     sales_order_json = obj["Body"].read().decode("utf-8")
     sales_order_list = json.loads(sales_order_json)
@@ -112,7 +110,8 @@ def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         with all required columns.
     """
 
-    key = get_object_key(table_name="counterparty", prefix=prefix, bucket=bucket)
+    key = get_object_key(table_name="counterparty",
+                         prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     counterparty_json = obj["Body"].read().decode("utf-8")
     counterparty_list = json.loads(counterparty_json)
@@ -146,7 +145,8 @@ def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
                 ]
 
     dim_counterparty_df = pd.DataFrame(counterparty_list)
-    dim_counterparty_df = remove_created_at_and_last_updated(dim_counterparty_df)
+    dim_counterparty_df = remove_created_at_and_last_updated(
+        dim_counterparty_df)
     dim_counterparty_df.drop(
         ["commercial_contact", "delivery_contact", "legal_address_id"],
         axis=1,
@@ -172,7 +172,8 @@ def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     currency_list = json.loads(currency_json)
     dim_currency_df = pd.DataFrame(currency_list)
     remove_created_at_and_last_updated(dim_currency_df)
-    currency_names = {"GDP": "British Pound", "USD": "US Dollar", "EUR": "Euro"}
+    currency_names = {"GDP": "British Pound",
+                      "USD": "US Dollar", "EUR": "Euro"}
     dim_currency_df["currency_name"] = dim_currency_df["currency_code"].map(
         currency_names
     )

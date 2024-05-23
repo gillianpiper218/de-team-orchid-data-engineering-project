@@ -2,7 +2,7 @@ name: lambda-deployment
 on:
   push:
     branches:
-      - main
+      - lambda-processing-layers
 jobs:
   run-tests:
     name: run-tests
