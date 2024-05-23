@@ -218,10 +218,6 @@ Status ExportDeviceRecordBatch(const RecordBatch& batch,
 using DeviceMemoryMapper =
     std::function<Result<std::shared_ptr<MemoryManager>>(ArrowDeviceType, int64_t)>;
 
-ARROW_EXPORT
-Result<std::shared_ptr<MemoryManager>> DefaultDeviceMemoryMapper(
-    ArrowDeviceType device_type, int64_t device_id);
-
 /// \brief EXPERIMENTAL: Import C++ device array from the C data interface.
 ///
 /// The ArrowArray struct has its contents moved (as per the C data interface
@@ -230,13 +226,12 @@ Result<std::shared_ptr<MemoryManager>> DefaultDeviceMemoryMapper(
 ///
 /// \param[in,out] array C data interface struct holding the array data
 /// \param[in] type type of the imported array
-/// \param[in] mapper A function to map device + id to memory manager. If not
-/// specified, defaults to map "cpu" to the built-in default memory manager.
+/// \param[in] mapper A function to map device + id to memory manager
 /// \return Imported array object
 ARROW_EXPORT
-Result<std::shared_ptr<Array>> ImportDeviceArray(
-    struct ArrowDeviceArray* array, std::shared_ptr<DataType> type,
-    const DeviceMemoryMapper& mapper = DefaultDeviceMemoryMapper);
+Result<std::shared_ptr<Array>> ImportDeviceArray(struct ArrowDeviceArray* array,
+                                                 std::shared_ptr<DataType> type,
+                                                 const DeviceMemoryMapper& mapper);
 
 /// \brief EXPERIMENTAL: Import C++ device array and its type from the C data interface.
 ///
@@ -247,13 +242,12 @@ Result<std::shared_ptr<Array>> ImportDeviceArray(
 ///
 /// \param[in,out] array C data interface struct holding the array data
 /// \param[in,out] type C data interface struct holding the array type
-/// \param[in] mapper A function to map device + id to memory manager. If not
-/// specified, defaults to map "cpu" to the built-in default memory manager.
+/// \param[in] mapper A function to map device + id to memory manager
 /// \return Imported array object
 ARROW_EXPORT
-Result<std::shared_ptr<Array>> ImportDeviceArray(
-    struct ArrowDeviceArray* array, struct ArrowSchema* type,
-    const DeviceMemoryMapper& mapper = DefaultDeviceMemoryMapper);
+Result<std::shared_ptr<Array>> ImportDeviceArray(struct ArrowDeviceArray* array,
+                                                 struct ArrowSchema* type,
+                                                 const DeviceMemoryMapper& mapper);
 
 /// \brief EXPERIMENTAL: Import C++ record batch with buffers on a device from the C data
 /// interface.
@@ -265,13 +259,12 @@ Result<std::shared_ptr<Array>> ImportDeviceArray(
 ///
 /// \param[in,out] array C data interface struct holding the record batch data
 /// \param[in] schema schema of the imported record batch
-/// \param[in] mapper A function to map device + id to memory manager. If not
-/// specified, defaults to map "cpu" to the built-in default memory manager.
+/// \param[in] mapper A function to map device + id to memory manager
 /// \return Imported record batch object
 ARROW_EXPORT
 Result<std::shared_ptr<RecordBatch>> ImportDeviceRecordBatch(
     struct ArrowDeviceArray* array, std::shared_ptr<Schema> schema,
-    const DeviceMemoryMapper& mapper = DefaultDeviceMemoryMapper);
+    const DeviceMemoryMapper& mapper);
 
 /// \brief EXPERIMENTAL: Import C++ record batch with buffers on a device and its schema
 /// from the C data interface.
@@ -285,13 +278,12 @@ Result<std::shared_ptr<RecordBatch>> ImportDeviceRecordBatch(
 ///
 /// \param[in,out] array C data interface struct holding the record batch data
 /// \param[in,out] schema C data interface struct holding the record batch schema
-/// \param[in] mapper A function to map device + id to memory manager. If not
-/// specified, defaults to map "cpu" to the built-in default memory manager.
+/// \param[in] mapper A function to map device + id to memory manager
 /// \return Imported record batch object
 ARROW_EXPORT
 Result<std::shared_ptr<RecordBatch>> ImportDeviceRecordBatch(
     struct ArrowDeviceArray* array, struct ArrowSchema* schema,
-    const DeviceMemoryMapper& mapper = DefaultDeviceMemoryMapper);
+    const DeviceMemoryMapper& mapper);
 
 /// @}
 
@@ -310,17 +302,6 @@ ARROW_EXPORT
 Status ExportRecordBatchReader(std::shared_ptr<RecordBatchReader> reader,
                                struct ArrowArrayStream* out);
 
-/// \brief Export C++ ChunkedArray using the C data interface format.
-///
-/// The resulting ArrowArrayStream struct keeps the chunked array data and buffers alive
-/// until its release callback is called by the consumer.
-///
-/// \param[in] chunked_array ChunkedArray object to export
-/// \param[out] out C struct where to export the stream
-ARROW_EXPORT
-Status ExportChunkedArray(std::shared_ptr<ChunkedArray> chunked_array,
-                          struct ArrowArrayStream* out);
-
 /// \brief Import C++ RecordBatchReader from the C stream interface.
 ///
 /// The ArrowArrayStream struct has its contents moved to a private object
@@ -331,17 +312,6 @@ Status ExportChunkedArray(std::shared_ptr<ChunkedArray> chunked_array,
 ARROW_EXPORT
 Result<std::shared_ptr<RecordBatchReader>> ImportRecordBatchReader(
     struct ArrowArrayStream* stream);
-
-/// \brief Import C++ ChunkedArray from the C stream interface
-///
-/// The ArrowArrayStream struct has its contents moved to a private object,
-/// is consumed in its entirity, and released before returning all chunks
-/// as a ChunkedArray.
-///
-/// \param[in,out] stream C stream interface struct
-/// \return Imported ChunkedArray object
-ARROW_EXPORT
-Result<std::shared_ptr<ChunkedArray>> ImportChunkedArray(struct ArrowArrayStream* stream);
 
 /// @}
 

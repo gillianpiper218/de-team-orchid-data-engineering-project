@@ -36,7 +36,7 @@ from pyarrow import Codec
 import pyarrow as pa
 
 
-def check_large_seeks(file_factory, expected_error=None):
+def check_large_seeks(file_factory):
     if sys.platform in ('win32', 'darwin'):
         pytest.skip("need sparse file support")
     try:
@@ -45,16 +45,11 @@ def check_large_seeks(file_factory, expected_error=None):
             f.truncate(2 ** 32 + 10)
             f.seek(2 ** 32 + 5)
             f.write(b'mark\n')
-        if expected_error:
-            with expected_error:
-                file_factory(filename)
-        else:
-            with file_factory(filename) as f:
-                assert f.size() == 2 ** 32 + 10
-                assert f.seek(2 ** 32 + 5) == 2 ** 32 + 5
-                assert f.tell() == 2 ** 32 + 5
-                assert f.read(5) == b'mark\n'
-                assert f.tell() == 2 ** 32 + 10
+        with file_factory(filename) as f:
+            assert f.seek(2 ** 32 + 5) == 2 ** 32 + 5
+            assert f.tell() == 2 ** 32 + 5
+            assert f.read(5) == b'mark\n'
+            assert f.tell() == 2 ** 32 + 10
     finally:
         os.unlink(filename)
 
@@ -1142,14 +1137,7 @@ def test_memory_zero_length(tmpdir):
 
 
 def test_memory_map_large_seeks():
-    if sys.maxsize >= 2**32:
-        expected_error = None
-    else:
-        expected_error = pytest.raises(
-            pa.ArrowCapacityError,
-            match="Requested memory map length 4294967306 "
-                  "does not fit in a C size_t")
-    check_large_seeks(pa.memory_map, expected_error=expected_error)
+    check_large_seeks(pa.memory_map)
 
 
 def test_memory_map_close_remove(tmpdir):

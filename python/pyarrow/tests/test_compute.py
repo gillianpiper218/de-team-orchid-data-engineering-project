@@ -561,8 +561,7 @@ def test_slice_compatibility():
 
 
 def test_binary_slice_compatibility():
-    data = [b"", b"a", b"a\xff", b"ab\x00", b"abc\xfb", b"ab\xf2de"]
-    arr = pa.array(data)
+    arr = pa.array([b"", b"a", b"a\xff", b"ab\x00", b"abc\xfb", b"ab\xf2de"])
     for start, stop, step in itertools.product(range(-6, 6),
                                                range(-6, 6),
                                                range(-3, 4)):
@@ -575,13 +574,6 @@ def test_binary_slice_compatibility():
         assert expected.equals(result)
         # Positional options
         assert pc.binary_slice(arr, start, stop, step) == result
-        # Fixed size binary input / output
-        for item in data:
-            fsb_scalar = pa.scalar(item, type=pa.binary(len(item)))
-            expected = item[start:stop:step]
-            actual = pc.binary_slice(fsb_scalar, start, stop, step)
-            assert actual.type == pa.binary(len(expected))
-            assert actual.as_py() == expected
 
 
 def test_split_pattern():
@@ -2373,10 +2365,10 @@ def _check_temporal_rounding(ts, values, unit):
     unit_shorthand = {
         "nanosecond": "ns",
         "microsecond": "us",
-        "millisecond": "ms",
+        "millisecond": "L",
         "second": "s",
         "minute": "min",
-        "hour": "h",
+        "hour": "H",
         "day": "D"
     }
     greater_unit = {
@@ -2384,7 +2376,7 @@ def _check_temporal_rounding(ts, values, unit):
         "microsecond": "ms",
         "millisecond": "s",
         "second": "min",
-        "minute": "h",
+        "minute": "H",
         "hour": "d",
     }
     ta = pa.array(ts)
@@ -3214,7 +3206,8 @@ def test_list_element():
 
 
 def test_count_distinct():
-    samples = [datetime.datetime(year=y, month=1, day=1) for y in range(1992, 2092)]
+    seed = datetime.datetime.now()
+    samples = [seed.replace(year=y) for y in range(1992, 2092)]
     arr = pa.array(samples, pa.timestamp("ns"))
     assert pc.count_distinct(arr) == pa.scalar(len(samples), type=pa.int64())
 

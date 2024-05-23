@@ -47,6 +47,7 @@ from pyarrow._parquet import (ParquetReader, Statistics,  # noqa
                               SortingColumn)
 from pyarrow.fs import (LocalFileSystem, FileSystem, FileType,
                         _resolve_filesystem_and_path, _ensure_filesystem)
+from pyarrow import filesystem as legacyfs
 from pyarrow.util import guid, _is_path_like, _stringify_path, _deprecate_api
 
 
@@ -308,7 +309,7 @@ class ParquetFile:
         self._close_source = getattr(source, 'closed', True)
 
         filesystem, source = _resolve_filesystem_and_path(
-            source, filesystem, memory_map=memory_map)
+            source, filesystem, memory_map)
         if filesystem is not None:
             source = filesystem.open_input_file(source)
             self._close_source = True  # We opened it here, ensure we close it.
@@ -988,13 +989,20 @@ Examples
         # sure to close it when `self.close` is called.
         self.file_handle = None
 
-        filesystem, path = _resolve_filesystem_and_path(where, filesystem)
+        filesystem, path = _resolve_filesystem_and_path(
+            where, filesystem, allow_legacy_filesystem=True
+        )
         if filesystem is not None:
-            # ARROW-10480: do not auto-detect compression.  While
-            # a filename like foo.parquet.gz is nonconforming, it
-            # shouldn't implicitly apply compression.
-            sink = self.file_handle = filesystem.open_output_stream(
-                path, compression=None)
+            if isinstance(filesystem, legacyfs.FileSystem):
+                # legacy filesystem (eg custom subclass)
+                # TODO deprecate
+                sink = self.file_handle = filesystem.open(path, 'wb')
+            else:
+                # ARROW-10480: do not auto-detect compression.  While
+                # a filename like foo.parquet.gz is nonconforming, it
+                # shouldn't implicitly apply compression.
+                sink = self.file_handle = filesystem.open_output_stream(
+                    path, compression=None)
         else:
             sink = where
         self._metadata_collector = options.pop('metadata_collector', None)
@@ -1114,6 +1122,12 @@ def _get_pandas_index_columns(keyvalues):
 
 
 EXCLUDED_PARQUET_PATHS = {'_SUCCESS'}
+
+
+def _is_local_file_system(fs):
+    return isinstance(fs, LocalFileSystem) or isinstance(
+        fs, legacyfs.LocalFileSystem
+    )
 
 
 _read_docstring_common = """\
@@ -1292,7 +1306,7 @@ Examples
         if (
             hasattr(path_or_paths, "__fspath__") and
             filesystem is not None and
-            not isinstance(filesystem, LocalFileSystem)
+            not _is_local_file_system(filesystem)
         ):
             raise TypeError(
                 "Path-like objects with __fspath__ must only be used with "
