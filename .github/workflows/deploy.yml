@@ -76,7 +76,7 @@ jobs:
       - name: Download modules artifact
         uses: actions/download-artifact@v4
         with:
-          name: modules.zip
+          name: modules
           path: terraform
       - name: Verify modules.zip exists
         working-directory: terraform
