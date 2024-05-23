@@ -64,6 +64,7 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         prefix(str): The file path of the s3 bucket, default value is None.
     Returns:
         (pandas.DataFrame): The DataFrame for the processed sales_order table.
+        (str): The key for the processed data in the s3 bucket.
     """
     key = get_object_key(table_name="sales_order",
                          prefix=prefix, bucket=bucket)
@@ -95,19 +96,20 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
 def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     """
     Process the counterparty data with the address data from an s3 bucket and
-    create the required columns for counterparty by renaming existing columns 
-    from the address table convert to a DataFrame, then remove columns, 
-    "created_at", "last_updated", "commercial_contact", "delivery_contact" and 
+    create the required columns for counterparty by renaming existing columns
+    from the address table convert to a DataFrame, then remove columns,
+    "created_at", "last_updated", "commercial_contact", "delivery_contact" and
     "legal_address_id".
 
     Parameter:
-        bucket(str): The name of the s3 bucket where the address data is stored, 
+        bucket(str): The name of the s3 bucket where the address data is stored,
         the default value is INGESTION_S3_BUCKET_NAME.
         prefix(str): The file path of the s3 bucket, default value is None.
 
     Return:
-        (pandas.DataFrame): A DataFrame containing processed counterparty data, 
+        (pandas.DataFrame): A DataFrame containing processed counterparty data,
         with all required columns.
+        (str): The key for the processed data in the s3 bucket.
     """
 
     key = get_object_key(table_name="counterparty",
@@ -165,6 +167,7 @@ def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         prefix(str): The file path of the s3 bucket, default value is None.
     Returns:
         (pandas.DataFrame): The DataFrame for the processed currency data.
+        (str): The key for the processed data in the s3 bucket.
     """
     key = get_object_key(table_name="currency", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
@@ -192,6 +195,7 @@ def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         prefix(str): The file path of the s3 bucket, default value is None.
     Returns:
         pandas.DataFrame: The DataFrame containing unique dates and the corresponding date-related columns.
+        (str): The key for the processed data in the s3 bucket.
     """
     fso_df, key = process_fact_sales_order(bucket=bucket, prefix=prefix)
     fso_dicts = fso_df.to_dict(orient="records")
@@ -235,6 +239,7 @@ def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         prefix(str): The file path of the s3 bucket, default value is None.
     Returns:
         (pandas.DataFrame): The DataFrame for the processed design data.
+        (str): The key for the processed data in the s3 bucket.
     """
     key = get_object_key(table_name="design", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
@@ -255,6 +260,7 @@ def process_dim_location(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         prefix(str): The file path of the s3 bucket, default value is None.
     Returns:
         (pandas.DataFrame): The DataFrame for the processed address data as the location data.
+        (str): The key for the processed data in the s3 bucket.
     """
 
     key = get_object_key(table_name="address", prefix=prefix, bucket=bucket)
@@ -278,6 +284,7 @@ def process_dim_staff(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         prefix(str): The file path of the s3 bucket, default value is None.
     Returns:
         (pandas.DataFrame): The DataFrame for the processed staff data.
+        (str): The key for the processed data in the s3 bucket.
     """
 
     key = get_object_key(table_name="staff", prefix=prefix, bucket=bucket)
