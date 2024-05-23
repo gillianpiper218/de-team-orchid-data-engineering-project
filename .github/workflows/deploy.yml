@@ -2,7 +2,7 @@ name: lambda-deployment
 on:
   push:
     branches:
-      - github-lambdas
+      - main
 jobs:
   run-tests:
     name: run-tests
