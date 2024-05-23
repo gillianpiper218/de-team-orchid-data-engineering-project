@@ -6,6 +6,12 @@ resource "aws_lambda_function" "processing_function" {
     handler = "processing_lambda.lambda_handler" #to confirm processing function name
     depends_on    = [aws_cloudwatch_log_group.processing_function_log_group]
     source_code_hash = data.archive_file.processing_lambda.output_base64sha256
+    layers = [
+    "arn:aws:lambda:eu-west-2:770693421928:layer:Klayers-p311-boto3:10",
+    "arn:aws:lambda:eu-west-2:770693421928:layer:Klayers-p311-numpy:6",
+    "arn:aws:lambda:eu-west-2:770693421928:layer:Klayers-p311-pandas:10",
+    aws_lambda_layer_version.modules.arn
+]
 
     runtime = "python3.11"
   }
