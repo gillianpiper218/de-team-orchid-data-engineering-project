@@ -134,7 +134,7 @@ def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     )
     return dim_counterparty_df
 
-def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME, prefix=None)):
+def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     """Process the currency table from the s3 bucket by adding a new column currency_name 
     and converting into DataFrame then removing created_at and last_updated columns.
     Parameters: 
