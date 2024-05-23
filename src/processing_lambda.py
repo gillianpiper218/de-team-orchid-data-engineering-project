@@ -55,8 +55,7 @@ def remove_created_at_and_last_updated(df):
     df.drop(["created_at", "last_updated"], axis=1, inplace=True)
     return df
 
-
-def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME):
+def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     """This function processes the latest sales_order data from the s3 bucket 
     and split the created_at and last_updated columns into separate date and time columns , renames staff_id to
     sales_staff_id
@@ -66,8 +65,7 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME):
     Returns:
         (pandas.DataFrame): The DataFrame for the processed sales_order table.
     """
-    key = get_object_key(table_name="sales_order", prefix="updated/", bucket=bucket)
-
+    key = get_object_key(table_name="sales_order", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     sales_order_json = obj["Body"].read().decode("utf-8")
     sales_order_list = json.loads(sales_order_json)
@@ -92,13 +90,51 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME):
     return fact_sales_order_df
 
 
-def process_dim_counterparty():
-    # remove commercial_contact and delivery_contact keys
-    remove_created_at_and_last_updated()
-    pass
+def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
 
+    key = get_object_key(table_name="counterparty", prefix=prefix, bucket=bucket)
+    obj = s3.get_object(Bucket=bucket, Key=key)
+    counterparty_json = obj["Body"].read().decode("utf-8")
+    counterparty_list = json.loads(counterparty_json)
 
-def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME):
+    key = get_object_key(table_name="address", prefix=prefix, bucket=bucket)
+    obj = s3.get_object(Bucket=bucket, Key=key)
+    address_json = obj["Body"].read().decode("utf-8")
+    address_list = json.loads(address_json)
+
+    for counterparty_dict in counterparty_list:
+        for address_dict in address_list:
+            if address_dict["address_id"] == counterparty_dict["legal_address_id"]:
+                counterparty_dict["counterparty_legal_address_line_1"] = address_dict[
+                    "address_line_1"
+                ]
+                counterparty_dict["counterparty_legal_address_line_2"] = address_dict[
+                    "address_line_2"
+                ]
+                counterparty_dict["counterparty_legal_district"] = address_dict[
+                    "district"
+                ]
+                counterparty_dict["counterparty_legal_city"] = address_dict["city"]
+                counterparty_dict["counterparty_legal_postal_code"] = address_dict[
+                    "postal_code"
+                ]
+                counterparty_dict["counterparty_legal_country"] = address_dict[
+                    "country"
+                ]
+                counterparty_dict["counterparty_legal_phone_number"] = address_dict[
+                    "phone"
+                ]
+
+    dim_counterparty_df = pd.DataFrame(counterparty_list)
+    dim_counterparty_df = remove_created_at_and_last_updated(dim_counterparty_df)
+    dim_counterparty_df.drop(
+        ["commercial_contact", "delivery_contact", "legal_address_id"],
+        axis=1,
+        inplace=True,
+    )
+    return dim_counterparty_df
+
+def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME, prefix=None)):
     """Process the currency table from the s3 bucket by adding a new column currency_name 
     and converting into DataFrame then removing created_at and last_updated columns.
     Parameters: 
@@ -106,7 +142,7 @@ def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME):
     Returns:
         (pandas.DataFrame): The DataFrame for the processed currency data. 
     """
-    key = get_object_key(table_name="currency", prefix="baseline/", bucket=bucket)
+    key = get_object_key(table_name="currency", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     currency_json = obj["Body"].read().decode("utf-8")
     currency_list = json.loads(currency_json)
@@ -118,8 +154,7 @@ def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME):
     )
     return dim_currency_df
 
-
-def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME):
+def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     """ 
     Process the sales order data to create a dim date DataFrame. 
     It extracts unique dates and creates additional columns for year, month, 
@@ -130,8 +165,7 @@ def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME):
     Returns:
         pandas.DataFrame: The DataFrame containing unique dates and the corresponding date-related columns.
     """
-
-    fso_df = process_fact_sales_order(bucket=bucket)
+    fso_df = process_fact_sales_order(bucket=bucket, prefix=prefix)
     fso_dicts = fso_df.to_dict(orient="records")
 
     dim_date = []
@@ -162,20 +196,18 @@ def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME):
     dim_date_df = pd.DataFrame(dim_date)
     dim_date_df = dim_date_df.drop_duplicates(subset=["date_id"])
 
-    # print(fso_df)
-    # print(fso_dicts)
-    # print(dim_date_df)
     return dim_date_df
 
 
-def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME):
+
+def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     """Process the design table from s3 bucket convert it into a DataFrame ,removes created_at and last_updated columns 
     Parameters: 
         bucket(str): The name of the s3 bucket to retrieve the design table.
     Returns:
         (pandas.DataFrame): The DataFrame for the processed design data. 
     """
-    key = get_object_key(table_name="design", prefix="baseline/", bucket=bucket)
+    key = get_object_key(table_name="design", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     design_json = obj["Body"].read().decode("utf-8")
     design_list = json.loads(design_json)["design"]
@@ -183,8 +215,7 @@ def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME):
     return_df = remove_created_at_and_last_updated(df)
     return return_df
 
-
-def process_dim_location(bucket=INGESTION_S3_BUCKET_NAME):
+def process_dim_location(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     """Process the address table from s3 bucket converts to json ,renames address_id column to 
     location_id ,then converts to DataFrame , removes the created_at and last_updated columns.
     Parameters: 
@@ -192,7 +223,8 @@ def process_dim_location(bucket=INGESTION_S3_BUCKET_NAME):
     Returns:
         (pandas.DataFrame): The DataFrame for the processed address data as the location data. 
     """
-    key = get_object_key(table_name="address", prefix="baseline/", bucket=bucket)
+  
+    key = get_object_key(table_name="address", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     location_json = obj["Body"].read().decode("utf-8")
     location_list = json.loads(location_json)["address"]
@@ -204,14 +236,16 @@ def process_dim_location(bucket=INGESTION_S3_BUCKET_NAME):
     return return_df
 
 
-def process_dim_staff(bucket=INGESTION_S3_BUCKET_NAME):
+
+def process_dim_staff(bucket=INGESTION_S3_BUCKET_NAME, prefix=None)):
     """Process the staff table from s3 bucket convert it into a DataFrame ,removes created_at and last_updated columns 
     Parameters: 
         bucket(str): The name of the s3 bucket to retrieve the staff table.
     Returns:
         (pandas.DataFrame): The DataFrame for the processed staff data. 
     """
-    key = get_object_key(table_name="staff", prefix="baseline/", bucket=bucket)
+
+    key = get_object_key(table_name="staff", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     staff_json = obj["Body"].read().decode("utf-8")
     staff_list = json.loads(staff_json)["staff"]

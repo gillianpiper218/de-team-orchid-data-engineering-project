@@ -1,3 +1,4 @@
+import unittest
 from unittest import mock
 import pytest
 from unittest.mock import patch
@@ -17,9 +18,14 @@ from src.ingestion_lambda import (
     delete_empty_s3_files,
     retrieve_secret_credentials,
     check_baseline_exists,
+    lambda_handler,
 )
 
 LOGGER = logging.getLogger(__name__)
+
+
+class DummyContext:
+    pass
 
 
 @pytest.fixture(scope="function")
@@ -180,7 +186,6 @@ class TestSelectAndWriteUpdatedData:
         )
         delete_empty_s3_files(bucket_name="test_bucket")
         obj_list = s3.list_objects_v2(Bucket="test_bucket", Prefix="updated")
-        print(obj_list)
         if obj_list["KeyCount"] != 0:
             for i in range(len(obj_list["Contents"])):
                 object_key = obj_list["Contents"][0]["Key"]
@@ -237,8 +242,30 @@ class TestDeleteEmptyS3Files:
         assert "No bucket found" in caplog.text
 
 
-class TestCheckBaselineExists:
-    @pytest.mark.it("unit test: check contents is in the response")
-    def test_contents_in_response(self):
-        result = check_baseline_exists()
-        assert result
+class TestLambdaHandler:
+
+    @pytest.mark.it("test that connect_to_db success message is logged")
+    def test_lambda_handler_logs_connect_to_db_success(self, caplog):
+        event = {}
+        context = DummyContext()
+        lambda_handler(event, context)
+        assert "Connected to the database successfully" in caplog.text
+
+    @pytest.mark.it("test that if no baseline we get a message stating no baseline")
+    def test_lambda_handler_gives_correct_info_if_no_baseline(self, caplog):
+        with patch("src.ingestion_lambda.check_baseline_exists", return_value=False):
+            context = DummyContext()
+            event = {}
+            lambda_handler(event, context)
+            assert (
+                "Baseline does not exist. Running baseline data extraction."
+                in caplog.text
+            )
+
+    @pytest.mark.it("test that baseline exists produces correct message")
+    def test_lambda_handler_gives_correct_info_if_baseline_exists(self, caplog):
+        with patch("src.ingestion_lambda.check_baseline_exists", return_value=True):
+            context = DummyContext()
+            event = {}
+            lambda_handler(event, context)
+            assert "Baseline exists. Running updated data extraction."
