@@ -1,7 +1,7 @@
 resource "aws_cloudwatch_event_rule" "scheduler" {
     name = "scheduler"
     description = "run lambda function every 5 minutes"
-    schedule_expression = "rate(60 minutes)"
+    schedule_expression = "rate(5 minutes)"
 }
 
 
