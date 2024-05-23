@@ -197,7 +197,7 @@ def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         pandas.DataFrame: The DataFrame containing unique dates and the corresponding date-related columns.
         (str): The key for the processed data in the s3 bucket.
     """
-    fso_df, key = process_fact_sales_order(bucket=bucket, prefix=prefix)
+    fso_df = process_fact_sales_order(bucket=bucket, prefix=prefix)
     fso_dicts = fso_df.to_dict(orient="records")
 
     dim_date = []
