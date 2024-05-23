@@ -77,7 +77,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ingestion-modules
-          path: terraform
       - name: Verify modules.zip exists
         working-directory: terraform
         run: ls -a
