@@ -49,6 +49,15 @@ def bucket(s3):
     return s3
 
 
+@pytest.fixture
+def process_bucket(s3):
+    s3.create_bucket(
+        Bucket="process_bucket",
+        CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
+    )
+    return s3
+
+
 class TestGetObjectKey:
     @pytest.mark.it("Unit test: returns object key form specified table in s3")
     def test_return_object_key(self, s3, bucket):
@@ -103,7 +112,7 @@ class TestRemoveCreatedAtAndLastUpdated:
                 "last_updated": ["2022-11-03 14:30:41.962"],
             }
         )
-        result = remove_created_at_and_last_updated(df)
+        result, key = remove_created_at_and_last_updated(df)
         assert "created_at" not in result
         assert "last_updated" not in result
 
@@ -122,11 +131,12 @@ class TestProcessFactSalesOrder:
                 Key="baseline/sales_order-2022-11-03 14:20:49.962.json",
                 Body=test_body,
             )
-            fact_sales_order = process_fact_sales_order(
+            fact_sales_order, key = process_fact_sales_order(
                 bucket="test_bucket", prefix="baseline/"
             )
             assert "created_date" in fact_sales_order
             assert "created_time" in fact_sales_order
+            assert key == "fact/sales_order.parquet"
 
     @pytest.mark.it("Unit test: last_updated_date and last_updated_time keys exist")
     def test_last_updated_date_and_time_existed(self, s3, bucket):
@@ -141,11 +151,12 @@ class TestProcessFactSalesOrder:
                 Key="baseline/sales_order-2022-11-03 14:20:49.962.json",
                 Body=test_body,
             )
-            fact_sales_order = process_fact_sales_order(
+            fact_sales_order, key = process_fact_sales_order(
                 bucket="test_bucket", prefix="baseline/"
             )
             assert "last_updated_date" in fact_sales_order
             assert "last_updated_time" in fact_sales_order
+            assert key == "fact/sales_order.parquet"
 
     @pytest.mark.it("Unit test: created_at and last_updated keys removed")
     def test_remove_created_at(self, s3, bucket):
@@ -159,12 +170,13 @@ class TestProcessFactSalesOrder:
             Bucket="test_bucket", Key="baseline/sales_order.json", Body=test_body
         )
 
-        result = process_fact_sales_order(bucket="test_bucket", prefix="baseline/")
+        result, key = process_fact_sales_order(bucket="test_bucket", prefix="baseline/")
 
         assert "created_date" in result
         assert "created_time" in result
         assert "created_at" not in result
         assert "last_updated" not in result
+        assert key == "fact/sales_order.parquet"
 
 
 class TestProcessDimCounterparty:
@@ -187,7 +199,7 @@ class TestProcessDimCounterparty:
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
-        result = process_dim_counterparty(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_counterparty(bucket="test_bucket", prefix="baseline/")
 
         assert "counterparty_id" in result
         assert "counterparty_legal_name" in result
@@ -198,6 +210,7 @@ class TestProcessDimCounterparty:
         assert "counterparty_legal_postal_code" in result
         assert "counterparty_legal_country" in result
         assert "counterparty_legal_phone_number" in result
+        assert key == "dimension/counterparty.parquet"
 
     @pytest.mark.it(
         "Unit test: commercial_contact, delivery_contact and legal_address_id keys removed"
@@ -221,11 +234,12 @@ class TestProcessDimCounterparty:
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
 
-        result = process_dim_counterparty(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_counterparty(bucket="test_bucket", prefix="baseline/")
 
         assert "commercial_contact" not in result
         assert "delivery_contact" not in result
         assert "legal_address_id" not in result
+        assert key == "dimension/counterparty.parquet"
 
     @pytest.mark.it("Unit test: created_at and last_updated keys removed")
     def test_remove_created_at(self, s3, bucket):
@@ -247,10 +261,11 @@ class TestProcessDimCounterparty:
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
 
-        result = process_dim_counterparty(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_counterparty(bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
+        assert key == "dimension/counterparty.parquet"
 
 
 class TestProcessDimCurrency:
@@ -264,9 +279,10 @@ class TestProcessDimCurrency:
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
         )
 
-        result = process_dim_currency(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_currency(bucket="test_bucket", prefix="baseline/")
 
         assert "currency_name" in result
+        assert key == "dimension/currency.parquet"
 
     @pytest.mark.it("Unit test: created_at and last_updated keys removed")
     def test_remove_created_at(self, s3, bucket):
@@ -278,10 +294,11 @@ class TestProcessDimCurrency:
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
         )
 
-        result = process_dim_currency(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_currency(bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
+        assert key == "dimension/currency.parquet"
 
     @pytest.mark.it("Unit test: check correct column names")
     def test_check_correct_columns_names(self, s3, bucket):
@@ -293,9 +310,10 @@ class TestProcessDimCurrency:
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
         )
 
-        result = process_dim_currency(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_currency(bucket="test_bucket", prefix="baseline/")
         expected_columns = ["currency_id", "currency_code", "currency_name"]
         assert list(result.columns) == expected_columns
+        assert key == "dimension/currency.parquet"
 
     @pytest.mark.it("Unit test: check correct data type for columns")
     def test_check_correct_data_type(self, s3, bucket):
@@ -307,11 +325,12 @@ class TestProcessDimCurrency:
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
         )
 
-        result = process_dim_currency(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_currency(bucket="test_bucket", prefix="baseline/")
 
         assert result["currency_id"].dtype == "int64"
         assert result["currency_code"].dtype == "object"
         assert result["currency_name"].dtype == "object"
+        assert key == "dimension/currency.parquet"
 
 
 class TestProcessDimDate:
@@ -332,7 +351,7 @@ class TestProcessDimDate:
             Bucket="test_bucket", Key="baseline/'sales_order'.json", Body=test_body
         )
 
-        result = process_dim_date(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_date(bucket="test_bucket", prefix="baseline/")
         expected_columns = [
             "date_id",
             "year",
@@ -344,6 +363,7 @@ class TestProcessDimDate:
             "quarter",
         ]
         assert list(result.columns) == expected_columns
+        assert key == "dimension/date.parquet"
 
     @pytest.mark.it("Unit test: check correct data type for columns")
     def test_check_correct_data_type(self, s3, bucket):
@@ -363,7 +383,7 @@ class TestProcessDimDate:
             Bucket="test_bucket", Key="baseline/sales_order.json", Body=test_body
         )
 
-        result = process_dim_date(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_date(bucket="test_bucket", prefix="baseline/")
 
         expected_column_dtypes = {
             "date_id": "object",
@@ -378,6 +398,7 @@ class TestProcessDimDate:
 
         for col, expected_dtype in expected_column_dtypes.items():
             assert result[col].dtype == expected_dtype
+        assert key == "dimension/date.parquet"
 
 
 class TestProcessDimDesign:
@@ -391,10 +412,11 @@ class TestProcessDimDesign:
             Bucket="test_bucket", Key="baseline/design.json", Body=test_body
         )
 
-        result = process_dim_design(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_design(bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
+        assert key == "dimension/design.parquet"
 
 
 class TestProcessDimLocation:
@@ -406,9 +428,10 @@ class TestProcessDimLocation:
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
-        result = process_dim_location(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_location(bucket="test_bucket", prefix="baseline/")
         assert "address_id" not in result
         assert "location_id" in result
+        assert key == "dimension/location.parquet"
 
     @pytest.mark.it("Unit test: created_at and last_updated keys removed")
     def test_remove_created_at(self, s3, bucket):
@@ -420,10 +443,11 @@ class TestProcessDimLocation:
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
 
-        result = process_dim_location(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_location(bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
+        assert key == "dimension/location.parquet"
 
 
 class TestProcessDimStaff:
@@ -437,25 +461,27 @@ class TestProcessDimStaff:
             Bucket="test_bucket", Key="baseline/staff.json", Body=test_body
         )
 
-        result = process_dim_staff(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_staff(bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
+        assert key == "dimension/staff.parquet"
 
 
 class TestConvertDateframeToParquet:
     @pytest.mark.it("Unit test: check returned object is in parquet form")
-    def test_check_returned_object(self, s3, bucket):
-        test_df = pd.DataFrame(
-            {
-                "address_id": [1],
-                "city": ["London"],
-                "created_at": ["2022-11-03 14:20:49.962"],
-                "last_updated": ["2022-11-03 14:30:41.962"],
-            }
+    def test_check_returned_object(self, s3, bucket, process_bucket):
+
+        with open("data/test_data/staff.json", "r", encoding="utf-8") as json_file:
+            staff = json.load(json_file)
+            test_body = json.dumps(staff)
+
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/staff.json", Body=test_body
         )
-        convert_to_parquet_put_in_s3(
-            s3, test_df, "dimension/location.parquet", bucket="test_bucket"
-        )
-        response = s3.list_objects_v2(Bucket="test_bucket")
-        assert response["Contents"][0]["Key"] == "dimension/location.parquet"
+
+        test_df, key = process_dim_staff(bucket="test_bucket", prefix="baseline/")
+
+        convert_to_parquet_put_in_s3(s3, test_df, key, bucket="process_bucket")
+        response = s3.list_objects_v2(Bucket="process_bucket")
+        assert response["Contents"][0]["Key"] == "dimension/staff.parquet"

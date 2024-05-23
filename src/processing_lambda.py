@@ -88,7 +88,8 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
 
     fact_sales_order_df = pd.DataFrame(sales_order_list)
     fact_sales_order_df = remove_created_at_and_last_updated(fact_sales_order_df)
-    return fact_sales_order_df
+    key = "fact/sales_order.parquet"
+    return fact_sales_order_df, key
 
 
 def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
@@ -133,7 +134,8 @@ def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         axis=1,
         inplace=True,
     )
-    return dim_counterparty_df
+    key = "dimension/counterparty.parquet"
+    return dim_counterparty_df, key
 
 
 def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
@@ -154,7 +156,8 @@ def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     dim_currency_df["currency_name"] = dim_currency_df["currency_code"].map(
         currency_names
     )
-    return dim_currency_df
+    key = "dimension/currency.parquet"
+    return dim_currency_df, key
 
 
 def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
@@ -168,7 +171,7 @@ def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     Returns:
         pandas.DataFrame: The DataFrame containing unique dates and the corresponding date-related columns.
     """
-    fso_df = process_fact_sales_order(bucket=bucket, prefix=prefix)
+    fso_df, key = process_fact_sales_order(bucket=bucket, prefix=prefix)
     fso_dicts = fso_df.to_dict(orient="records")
 
     dim_date = []
@@ -198,8 +201,8 @@ def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
             dim_date.append(dim_date_item)
     dim_date_df = pd.DataFrame(dim_date)
     dim_date_df = dim_date_df.drop_duplicates(subset=["date_id"])
-
-    return dim_date_df
+    key = "dimension/date.parquet"
+    return dim_date_df, key
 
 
 def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
@@ -215,7 +218,8 @@ def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     design_list = json.loads(design_json)["design"]
     df = pd.DataFrame(design_list)
     return_df = remove_created_at_and_last_updated(df)
-    return return_df
+    key = "dimension/design.parquet"
+    return return_df, key
 
 
 def process_dim_location(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
@@ -236,7 +240,8 @@ def process_dim_location(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         del location_dict["address_id"]
     df = pd.DataFrame(location_list)
     return_df = remove_created_at_and_last_updated(df)
-    return return_df
+    key = "dimension/location.parquet"
+    return return_df, key
 
 
 def process_dim_staff(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
@@ -253,7 +258,8 @@ def process_dim_staff(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     staff_list = json.loads(staff_json)["staff"]
     df = pd.DataFrame(staff_list)
     return_df = remove_created_at_and_last_updated(df)
-    return return_df
+    key = "dimension/staff.parquet"
+    return return_df, key
 
 
 def convert_to_parquet_put_in_s3(s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME):
