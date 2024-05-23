@@ -33,14 +33,13 @@ def get_object_key(
 
     if not table_files:
         logger.error(f"No files found for table {table_name}")
-        raise AttributeError
+        raise FileNotFoundError(f"No files found for table {table_name}")
 
     return table_files[0]
 
 
 def remove_created_at_and_last_updated(df):
     # remove created_at and last_updated keys function
-    # Assuming df is your DataFrame
     df.drop(["created_at", "last_updated"], axis=1, inplace=True)
     return df
 
@@ -55,10 +54,20 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME):
     sales_order_list = json.loads(sales_order_json)
 
     for dictionary in sales_order_list:
-        dictionary["created_date"] = dictionary["created_at"][:10]
-        dictionary["created_time"] = dictionary["created_at"][11:]
-        dictionary["last_updated_date"] = dictionary["last_updated"][:10]
-        dictionary["last_updated_time"] = dictionary["last_updated"][11:]
+        if "staff_id" in dictionary:
+            dictionary["sales_staff_id"] = dictionary.pop("staff_id")
+
+        unix_ts_s_created_at = (dictionary["created_at"]) / 1000
+        unix_ts_s_last_updated = (dictionary["last_updated"]) / 1000
+
+        formatted_time_c = datetime.fromtimestamp(unix_ts_s_created_at)
+        formatted_time_l = datetime.fromtimestamp(unix_ts_s_last_updated)
+
+        dictionary["created_date"] = formatted_time_c.date()
+        dictionary["created_time"] = formatted_time_c.time()
+        dictionary["last_updated_date"] = formatted_time_l.date()
+        dictionary["last_updated_time"] = formatted_time_l.time()
+
     fact_sales_order_df = pd.DataFrame(sales_order_list)
     fact_sales_order_df = remove_created_at_and_last_updated(fact_sales_order_df)
     return fact_sales_order_df
@@ -86,7 +95,7 @@ def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME):
     return dim_currency_df
 
 
-def process_dim_date():
+def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME):
     # create from each unique date
     # - year
     # - month
@@ -95,7 +104,42 @@ def process_dim_date():
     # - day_name
     # - month_name
     # - quarter
-    pass
+
+    fso_df = process_fact_sales_order(bucket=bucket)
+    fso_dicts = fso_df.to_dict(orient="records")
+
+    dim_date = []
+    date_columns = [
+        "created_date",
+        "last_updated_date",
+        "agreed_payment_date",
+        "agreed_delivery_date",
+    ]
+    for sales_order_dict in fso_dicts:
+        for col in date_columns:
+            date_string = str(sales_order_dict[col])
+
+            date_format = "%Y-%m-%d"
+            dt_obj = datetime.strptime(date_string, date_format)
+
+            dim_date_item = {
+                "date_id": dt_obj.date(),
+                "year": dt_obj.year,
+                "month": dt_obj.month,
+                "day": dt_obj.day,
+                "day_of_week": dt_obj.isoweekday(),
+                "day_name": dt_obj.strftime("%A"),
+                "month_name": dt_obj.strftime("%B"),
+                "quarter": (dt_obj.month - 1) // 3 + 1,
+            }
+            dim_date.append(dim_date_item)
+    dim_date_df = pd.DataFrame(dim_date)
+    dim_date_df = dim_date_df.drop_duplicates(subset=["date_id"])
+
+    # print(fso_df)
+    # print(fso_dicts)
+    # print(dim_date_df)
+    return dim_date_df
 
 
 def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME):
@@ -139,3 +183,4 @@ def convert_to_parquet_put_in_s3(s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME):
 
 
 # if __name__ == "__main__":
+#     process_dim_date(bucket=INGESTION_S3_BUCKET_NAME)
