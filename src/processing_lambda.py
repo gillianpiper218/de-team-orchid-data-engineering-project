@@ -212,7 +212,8 @@ def process_dim_staff(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     staff_list = json.loads(staff_json)["staff"]
     df = pd.DataFrame(staff_list)
     return_df = remove_created_at_and_last_updated(df)
-    return return_df
+    key = "dimension/staff.parquet"
+    return return_df, key
 
 
 def convert_to_parquet_put_in_s3(s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME):

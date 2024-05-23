@@ -49,6 +49,15 @@ def bucket(s3):
     return s3
 
 
+@pytest.fixture
+def process_bucket(s3):
+    s3.create_bucket(
+        Bucket="process_bucket",
+        CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
+    )
+    return s3
+
+
 class TestGetObjectKey:
     @pytest.mark.it("Unit test: returns object key form specified table in s3")
     def test_return_object_key(self, s3, bucket):
@@ -437,7 +446,7 @@ class TestProcessDimStaff:
             Bucket="test_bucket", Key="baseline/staff.json", Body=test_body
         )
 
-        result = process_dim_staff(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_staff(bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
@@ -445,17 +454,21 @@ class TestProcessDimStaff:
 
 class TestConvertDateframeToParquet:
     @pytest.mark.it("Unit test: check returned object is in parquet form")
-    def test_check_returned_object(self, s3, bucket):
-        test_df = pd.DataFrame(
-            {
-                "address_id": [1],
-                "city": ["London"],
-                "created_at": ["2022-11-03 14:20:49.962"],
-                "last_updated": ["2022-11-03 14:30:41.962"],
-            }
+    def test_check_returned_object(self, s3, bucket, process_bucket):
+
+        with open("data/test_data/staff.json", "r", encoding="utf-8") as json_file:
+            staff = json.load(json_file)
+            test_body = json.dumps(staff)
+
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/staff.json", Body=test_body
         )
+        
+        test_df, key = process_dim_staff(bucket="test_bucket", prefix="baseline/")
+
         convert_to_parquet_put_in_s3(
-            s3, test_df, "dimension/location.parquet", bucket="test_bucket"
+            s3, test_df, key, bucket="process_bucket"
         )
-        response = s3.list_objects_v2(Bucket="test_bucket")
-        assert response["Contents"][0]["Key"] == "dimension/location.parquet"
+        response = s3.list_objects_v2(Bucket="process_bucket")
+        pprint(response)
+        assert response["Contents"][0]["Key"] == "dimension/staff.parquet"
