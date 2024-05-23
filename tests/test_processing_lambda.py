@@ -187,7 +187,7 @@ class TestProcessDimCounterparty:
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
-        result = process_dim_counterparty(bucket="test_bucket")
+        result = process_dim_counterparty(bucket="test_bucket", prefix="baseline/")
 
         assert "counterparty_id" in result
         assert "counterparty_legal_name" in result
@@ -221,7 +221,7 @@ class TestProcessDimCounterparty:
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
 
-        result = process_dim_counterparty(bucket="test_bucket")
+        result = process_dim_counterparty(bucket="test_bucket", prefix="baseline/")
 
         assert "commercial_contact" not in result
         assert "delivery_contact" not in result
@@ -247,7 +247,7 @@ class TestProcessDimCounterparty:
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
 
-        result = process_dim_counterparty(bucket="test_bucket")
+        result = process_dim_counterparty(bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
@@ -264,7 +264,7 @@ class TestProcessDimCurrency:
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
         )
 
-        result = process_dim_currency(bucket="test_bucket")
+        result = process_dim_currency(bucket="test_bucket", prefix="baseline/")
 
         assert "currency_name" in result
 
@@ -278,7 +278,7 @@ class TestProcessDimCurrency:
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
         )
 
-        result = process_dim_currency(bucket="test_bucket")
+        result = process_dim_currency(bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
@@ -293,7 +293,7 @@ class TestProcessDimCurrency:
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
         )
 
-        result = process_dim_currency(bucket="test_bucket")
+        result = process_dim_currency(bucket="test_bucket", prefix="baseline/")
         expected_columns = ["currency_id", "currency_code", "currency_name"]
         assert list(result.columns) == expected_columns
 
@@ -307,7 +307,7 @@ class TestProcessDimCurrency:
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
         )
 
-        result = process_dim_currency(bucket="test_bucket")
+        result = process_dim_currency(bucket="test_bucket", prefix="baseline/")
 
         assert result["currency_id"].dtype == "int64"
         assert result["currency_code"].dtype == "object"
@@ -391,7 +391,7 @@ class TestProcessDimDesign:
             Bucket="test_bucket", Key="baseline/design.json", Body=test_body
         )
 
-        result = process_dim_design(bucket="test_bucket")
+        result = process_dim_design(bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
@@ -406,7 +406,7 @@ class TestProcessDimLocation:
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
-        result = process_dim_location(bucket="test_bucket")
+        result = process_dim_location(bucket="test_bucket", prefix="baseline/")
         assert "address_id" not in result
         assert "location_id" in result
 
@@ -420,7 +420,7 @@ class TestProcessDimLocation:
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
 
-        result = process_dim_location(bucket="test_bucket")
+        result = process_dim_location(bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
@@ -437,7 +437,7 @@ class TestProcessDimStaff:
             Bucket="test_bucket", Key="baseline/staff.json", Body=test_body
         )
 
-        result = process_dim_staff(bucket="test_bucket")
+        result = process_dim_staff(bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
