@@ -264,8 +264,8 @@ def lambda_handler(event, context):
     invokes select_and_write_updated_data()
 
     Parameters:
-        event:???????????????
-        context:??????????????
+        event: the trigger for the invocation of the lambda - in event.tf
+        context: provides info about the invocation, function and execution environment of the lambda
 
     Errors:
         Exception:
@@ -274,15 +274,16 @@ def lambda_handler(event, context):
     try:
         conn = connect_to_db()
         if not check_baseline_exists():
-            logger.info("Baseline does not exist. Running baseline data extraction.")
             select_all_tables_for_baseline()
+            logger.info("Baseline does not exist. Running baseline data extraction.")
         else:
             logger.info("Baseline exists. Running updated data extraction.")
             select_and_write_updated_data()
             delete_empty_s3_files()
 
     except Exception as e:
-        logger.error(f"Error in Lambda execution: {e}")
+        # logger.error(f"Error in Lambda execution: {e}")
+        logger.error("Error in Lambda execution")
         raise
     finally:
         if conn:
