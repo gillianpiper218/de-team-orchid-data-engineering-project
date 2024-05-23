@@ -1,9 +1,9 @@
 {
     "counterparty":[
-        {"counterparty_id":1, "delivery_contact":"Dave Smith", "created_at": "2022-11-03 14:20:49.962", "last_updated": "2022-11-03 14:30:41.962"},
-        {"counterparty_id":2, "delivery_contact":"Lisa Smith", "created_at": "2022-11-05 14:20:49.962", "last_updated": "2022-11-07 14:30:41.962"},
-        {"counterparty_id":3, "delivery_contact":"Jane Small", "created_at": "2022-11-06 14:20:49.962", "last_updated": "2022-11-10 14:30:41.962"},
-        {"counterparty_id":4, "delivery_contact":"Karl Robinson", "created_at": "2022-11-07 14:20:49.962", "last_updated": "2022-11-09 14:30:41.962"},
-        {"counterparty_id":5, "delivery_contact":"Dave Smith", "created_at": "2022-11-07 14:20:49.962", "last_updated": "2022-11-10 14:30:41.962"}
+        {"counterparty_id":1, "counterparty_legal_name": "Jeff", "legal_address_id": 1, "commercial_contact": "Harry Potter", "delivery_contact":"Dave Smith", "created_at": "2022-11-03 14:20:49.962", "last_updated": "2022-11-03 14:30:41.962"},
+        {"counterparty_id":2, "counterparty_legal_name": "James", "legal_address_id": 2, "commercial_contact": "Ron Weasley", "delivery_contact":"Lisa Smith", "created_at": "2022-11-05 14:20:49.962", "last_updated": "2022-11-07 14:30:41.962"},
+        {"counterparty_id":3, "counterparty_legal_name": "Geoff", "legal_address_id": 3, "commercial_contact": "Draco Malfoy", "delivery_contact":"Jane Small", "created_at": "2022-11-06 14:20:49.962", "last_updated": "2022-11-10 14:30:41.962"},
+        {"counterparty_id":4, "counterparty_legal_name": "Jeremy", "legal_address_id": 4, "commercial_contact": "Snape", "delivery_contact":"Karl Robinson", "created_at": "2022-11-07 14:20:49.962", "last_updated": "2022-11-09 14:30:41.962"},
+        {"counterparty_id":5, "counterparty_legal_name": "Jim", "legal_address_id": 5, "commercial_contact": "Harry Potter", "delivery_contact":"Dave Smith", "created_at": "2022-11-07 14:20:49.962", "last_updated": "2022-11-10 14:30:41.962"}
     ]
     }

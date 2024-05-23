@@ -191,40 +191,115 @@ class TestProcessFactSalesOrder:
         assert "last_updated_time" in result
         assert "last_updated" not in result
 
-    # @pytest.mark.it("Unit test: check correct column names")
-    # def test_check_correct_columns_names(self, s3):
-    #     pass
 
-    # @pytest.mark.it("Unit test: check correct data type for columns")
-    # def test_check_correct_data_type(self, s3):
-    #     pass
-
-
-@pytest.mark.skip
 class TestProcessDimCounterparty:
-    @pytest.mark.it("Unit test: commercial_contact key removed")
-    def test_remove_commercial_contact(self, s3):
-        pass
+    @pytest.mark.it("Unit test: check correct column names")
+    def test_check_correct_columns_names(self, s3, bucket):
+        with open(
+            "data/test_data/counterparty.json", "r", encoding="utf-8"
+        ) as json_file:
+            counterparty = json.load(json_file)
+            test_body = json.dumps(counterparty["counterparty"])
 
-    @pytest.mark.it("Unit test: delivery_contact key removed")
-    def test_remove_delivery_contact(self, s3):
-        pass
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/counterparty.json", Body=test_body
+        )
+
+
+        with open("data/test_data/address.json", "r", encoding="utf-8") as json_file:
+            address = json.load(json_file)
+            test_body = json.dumps(address["address"])
+
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/address.json", Body=test_body
+        )
+        result = process_dim_counterparty(bucket="test_bucket")
+
+        assert "counterparty_id" in result
+        assert "counterparty_legal_name" in result
+        assert "counterparty_legal_address_line_1" in result
+        assert "counterparty_legal_address_line_2" in result
+        assert "counterparty_legal_district" in result
+        assert "counterparty_legal_city" in result
+        assert "counterparty_legal_postal_code" in result
+        assert "counterparty_legal_country" in result
+        assert "counterparty_legal_phone_number" in result
+
+    @pytest.mark.it(
+        "Unit test: commercial_contact, delivery_contact and legal_address_id keys removed"
+    )
+    def test_remove_commercial_contact(self, s3, bucket):
+        with open(
+            "data/test_data/counterparty.json", "r", encoding="utf-8"
+        ) as json_file:
+            counterparty = json.load(json_file)
+            test_body = json.dumps(counterparty["counterparty"])
+
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/counterparty.json", Body=test_body
+        )
+
+        with open("data/test_data/address.json", "r", encoding="utf-8") as json_file:
+            address = json.load(json_file)
+            test_body = json.dumps(address["address"])
+
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/address.json", Body=test_body
+        )
+
+        result = process_dim_counterparty(bucket="test_bucket")
+
+        assert "commercial_contact" not in result
+        assert "delivery_contact" not in result
+        assert "legal_address_id" not in result
 
     @pytest.mark.it("Unit test: created_at key removed")
-    def test_remove_created_at(self, s3):
-        pass
+    def test_remove_created_at(self, s3, bucket):
+        with open(
+            "data/test_data/counterparty.json", "r", encoding="utf-8"
+        ) as json_file:
+            counterparty = json.load(json_file)
+            test_body = json.dumps(counterparty["counterparty"])
+
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/counterparty.json", Body=test_body
+        )
+
+        with open("data/test_data/address.json", "r", encoding="utf-8") as json_file:
+            address = json.load(json_file)
+            test_body = json.dumps(address["address"])
+
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/address.json", Body=test_body
+        )
+
+        result = process_dim_counterparty(bucket="test_bucket")
+
+        assert "created_at" not in result
 
     @pytest.mark.it("Unit test: last_updated key removed")
-    def test_remove_last_updated(self, s3):
-        pass
+    def test_remove_last_updated(self, s3, bucket):
+        with open(
+            "data/test_data/counterparty.json", "r", encoding="utf-8"
+        ) as json_file:
+            counterparty = json.load(json_file)
+            test_body = json.dumps(counterparty["counterparty"])
 
-    @pytest.mark.it("Unit test: check correct column names")
-    def test_check_correct_columns_names(self, s3):
-        pass
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/counterparty.json", Body=test_body
+        )
 
-    @pytest.mark.it("Unit test: check correct data type for columns")
-    def test_check_correct_data_type(self, s3):
-        pass
+        with open("data/test_data/address.json", "r", encoding="utf-8") as json_file:
+            address = json.load(json_file)
+            test_body = json.dumps(address["address"])
+
+        bucket.put_object(
+            Bucket="test_bucket", Key="baseline/address.json", Body=test_body
+        )
+
+        result = process_dim_counterparty(bucket="test_bucket")
+
+        assert "last_updated" not in result
 
 
 class TestProcessDimCurrency:

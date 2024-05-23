@@ -180,7 +180,6 @@ class TestSelectAndWriteUpdatedData:
         )
         delete_empty_s3_files(bucket_name="test_bucket")
         obj_list = s3.list_objects_v2(Bucket="test_bucket", Prefix="updated")
-        print(obj_list)
         if obj_list["KeyCount"] != 0:
             for i in range(len(obj_list["Contents"])):
                 object_key = obj_list["Contents"][0]["Key"]
