@@ -305,5 +305,9 @@ def convert_to_parquet_put_in_s3(s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME):
     s3.put_object(Bucket=bucket, Key=key, Body=out_buffer.getvalue())
 
 
+def delete_duplicates(bucket=INGESTION_S3_BUCKET_NAME):
+    pass
+
+
 # if __name__ == "__main__":
 #     process_dim_date(bucket=INGESTION_S3_BUCKET_NAME)

@@ -485,3 +485,8 @@ class TestConvertDateframeToParquet:
         convert_to_parquet_put_in_s3(s3, test_df, key, bucket="process_bucket")
         response = s3.list_objects_v2(Bucket="process_bucket")
         assert response["Contents"][0]["Key"] == "dimension/staff.parquet"
+
+class TestDeleteDuplicates:
+    @pytest.mark.it("Unit test: duplicate files deleted from ingestion s3 bucket in updated folder")
+    def test_delete_duplicates(self, s3, bucket):
+        pass
