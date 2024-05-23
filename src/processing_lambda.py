@@ -120,14 +120,16 @@ def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME):
 
 
 def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME):
-    # create from each unique date
-    # - year
-    # - month
-    # - day
-    # - day_of_week (int type where Monday = 1 and Sunday = 7)
-    # - day_name
-    # - month_name
-    # - quarter
+    """ 
+    Process the sales order data to create a dim date DataFrame. 
+    It extracts unique dates and creates additional columns for year, month, 
+    day, day_of_week, day_name, month_name and quarter.
+    Parameters: 
+        bucket(str): The name of the bucket to retrieve the sales order data from.
+        The default value is INGESTION_S3_BUCKET_NAME.
+    Returns:
+        pandas.DataFrame: The DataFrame containing unique dates and the corresponding date-related columns.
+    """
 
     fso_df = process_fact_sales_order(bucket=bucket)
     fso_dicts = fso_df.to_dict(orient="records")
