@@ -63,6 +63,8 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     and returns the DataFrame with the created_at and last_updated columns removed.
     Parameters:
         bucket(str): The name of the s3 bucket to retrieve the sales_order table.
+        The default value is INGESTION_S3_BUCKET_NAME.
+        prefix(str): The file path of the s3 bucket, default value is None.
     Returns:
         (pandas.DataFrame): The DataFrame for the processed sales_order table.
     """
@@ -93,6 +95,22 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
 
 
 def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
+    """
+    Process the counterparty data with the address data from an s3 bucket and
+    create the required columns for counterparty by renaming existing columns 
+    from the address table convert to a DataFrame, then remove columns, 
+    "created_at", "last_updated", "commercial_contact", "delivery_contact" and 
+    "legal_address_id".
+
+    Parameter:
+        bucket(str): The name of the s3 bucket where the address data is stored, 
+        the default value is INGESTION_S3_BUCKET_NAME.
+        prefix(str): The file path of the s3 bucket, default value is None.
+
+    Return:
+        (pandas.DataFrame): A DataFrame containing processed counterparty data, 
+        with all required columns.
+    """
 
     key = get_object_key(table_name="counterparty", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
@@ -143,6 +161,8 @@ def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     and converting into DataFrame then removing created_at and last_updated columns.
     Parameters:
         bucket(str): The name of the s3 bucket to retrieve the currency table.
+        The default value is INGESTION_S3_BUCKET_NAME.
+        prefix(str): The file path of the s3 bucket, default value is None.
     Returns:
         (pandas.DataFrame): The DataFrame for the processed currency data.
     """
@@ -168,6 +188,7 @@ def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     Parameters:
         bucket(str): The name of the bucket to retrieve the sales order data from.
         The default value is INGESTION_S3_BUCKET_NAME.
+        prefix(str): The file path of the s3 bucket, default value is None.
     Returns:
         pandas.DataFrame: The DataFrame containing unique dates and the corresponding date-related columns.
     """
@@ -209,6 +230,8 @@ def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     """Process the design table from s3 bucket convert it into a DataFrame ,removes created_at and last_updated columns
     Parameters:
         bucket(str): The name of the s3 bucket to retrieve the design table.
+        The default value is INGESTION_S3_BUCKET_NAME.
+        prefix(str): The file path of the s3 bucket, default value is None.
     Returns:
         (pandas.DataFrame): The DataFrame for the processed design data.
     """
@@ -227,6 +250,8 @@ def process_dim_location(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     location_id ,then converts to DataFrame , removes the created_at and last_updated columns.
     Parameters:
         bucket(str): The name of the s3 bucket to retrieve the address table.
+        The default value is INGESTION_S3_BUCKET_NAME.
+        prefix(str): The file path of the s3 bucket, default value is None.
     Returns:
         (pandas.DataFrame): The DataFrame for the processed address data as the location data.
     """
@@ -248,6 +273,8 @@ def process_dim_staff(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     """Process the staff table from s3 bucket convert it into a DataFrame ,removes created_at and last_updated columns
     Parameters:
         bucket(str): The name of the s3 bucket to retrieve the staff table.
+        The default value is INGESTION_S3_BUCKET_NAME.
+        prefix(str): The file path of the s3 bucket, default value is None.
     Returns:
         (pandas.DataFrame): The DataFrame for the processed staff data.
     """
@@ -269,6 +296,7 @@ def convert_to_parquet_put_in_s3(s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME):
         df(pandas.DataFrame): The DataFrame  to convert into parquet.
         key(str): The s3 path to store the parquet file into s3 bucket.
         bucket(str): The name of the s3 bucket to upload the parquet file.
+        The default value is PROCESSED_S3_BUCKET_NAME.
     Returns:
         None.
     """
