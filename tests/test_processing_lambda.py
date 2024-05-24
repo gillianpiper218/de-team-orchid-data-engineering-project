@@ -561,3 +561,16 @@ class TestDeleteFilesFromUpdated:
         count_of_updated_after = updated_files['KeyCount']
         assert count_of_updated_before == 1
         assert count_of_updated_after == 0
+
+    @pytest.mark.it("unit test: NoSuchBucket exception")
+    def test_no_bucket_exceptions_deleted(self, caplog, s3):
+        with pytest.raises(ClientError):
+            delete_files_from_updated_after_handling(s3)
+        assert "No bucket found" in caplog.text
+
+    @pytest.mark.it("unit test: No files to be deleted")
+    def test_no_files_deleted(self, caplog, s3):
+        s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
+                         'LocationConstraint': 'eu-west-2', },)
+        delete_files_from_updated_after_handling(s3)
+        assert "No files to be moved" in caplog.text
