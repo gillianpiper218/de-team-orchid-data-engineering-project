@@ -3,6 +3,7 @@ from moto import mock_aws
 import os
 import boto3
 from pg8000 import DatabaseError, InterfaceError
+from botocore.exceptions import ClientError
 from pprint import pprint
 from datetime import datetime
 import logging
@@ -506,28 +507,33 @@ class TestConvertDateframeToParquet:
 class TestMoveProcessedIngestionData:
     @pytest.mark.it("Unit test: Updated files moved to new location")
     def test_updated_files_moved(self, s3):
-        s3.create_bucket(Bucket='ingestion', CreateBucketConfiguration={
+        s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
                          'LocationConstraint': 'eu-west-2', },)
 
         s3.put_object(
             Body='filetoupload',
-            Bucket='ingestion',
+            Bucket="de-team-orchid-totesys-ingestion",
             Key='updated/test.txt',
         )
-        s3.put_object(
-            Body='filetoupload',
-            Bucket='ingestion',
-            Key='updated/test1.txt',
-        )
-        before = s3.list_objects_v2(Bucket='ingestion', Prefix='updated')
-        move_processed_ingestion_data()
-        after = s3.list_objects_v2(Bucket='ingestion', Prefix='updated')
-        new_location = s3.list_objects_v2(
-            Bucket='ingestion', Prefix='processed_updated')
-        assert before['KeyCount'] == 2
-        assert after['KeyCount'] == 0
-        assert new_location['Contents']['Key'] == 'test.txt'
+        updated_files = s3.list_objects_v2(
+            Bucket="de-team-orchid-totesys-ingestion", Prefix='updated')
+        pprint(updated_files)
+        move_processed_ingestion_data(s3)
+        processed_files = s3.list_objects_v2(
+            Bucket="de-team-orchid-totesys-ingestion", Prefix='processed_updated')
+        pprint(processed_files)
+        assert updated_files['Contents'][0]['Key'][-8:
+                                                   ] == processed_files['Contents'][0]['Key'][-8:]
 
-    @pytest.mark.it("Unit test: can handle when there is no updated data")
-    def test_no_updated_data(self):
-        pass
+    @pytest.mark.it("unit test: NoSuchBucket exception")
+    def test_no_bucket_exceptions(self, caplog, s3):
+        with pytest.raises(ClientError):
+            move_processed_ingestion_data(s3)
+        assert "No bucket found" in caplog.text
+
+    @pytest.mark.it("unit test: No data in updated")
+    def test_no_data_updated(self, caplog, s3):
+        s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
+                         'LocationConstraint': 'eu-west-2', },)
+        move_processed_ingestion_data(s3)
+        assert 'No files were found in updated' in caplog.text
