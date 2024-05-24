@@ -30,7 +30,7 @@ def retrieve_secret_credentials(secret_name="totesys_environment"):
     DW_NAME = secret_string["dbname"]
     DW_USER = secret_string["username"]
     DW_PASSWORD = secret_string["password"]
-    #DW_SCHEMA?
+    # DW_SCHEMA?
     return DW_HOST, DW_PASSWORD, DW_NAME, DW_PORT, DW_USER
 
 
@@ -70,19 +70,10 @@ def get_latest_parquet_file_key(prefix, bucket=S3_PROCESSED_BUCKET_NAME):
             raise FileNotFoundError(
                 f"No files have been found from {bucket} for prefix: {prefix}"
             )
-        # if isinstance(response["Contents"], str):
-        #     for content in response["Contents"]:
-        #         content["LastModified"] = datetime.strptime(
-        #             content["LastModified"], "%Y-%m-%d %H:%M:%S"
-        #         )
-
-        # sorted_files = sorted(response["Contents"], key=lambda x: x["LastModified"])
-        # latest_file_key = sorted_files[-1]["Key"]
-        # return latest_file_key
         else:
             process_content_keys_list = []
             for content in response["Contents"]:
-                if content['Key'].endswith('.parquet'):
+                if content["Key"].endswith(".parquet"):
                     process_content_keys_list.append(content["Key"])
         return process_content_keys_list[-1]
     except FileNotFoundError as fnfe:
@@ -95,17 +86,3 @@ def get_latest_parquet_file_key(prefix, bucket=S3_PROCESSED_BUCKET_NAME):
             f"Error getting the latest parquet file from bucket {bucket} for prefix {prefix}: {e}"
         )
         raise
-
-    # files = []
-    # for obj in response['Contents']:
-    #     if obj['Key'].endswith('.parquet'):
-    #         files.append(obj['Key'])
-    # Print(files)
-    # return files
-
-
-# - Multiple timestamped parquet files in fact/sales_order and dimension/{table_name}.
-
-# - Response = s3.list_object_v2(bucket, prefix).
-
-# - Logic to sort timestamped responses and get lastest file key.

@@ -118,7 +118,7 @@ class TestConnectToDatabase:
 class TestGetLatestParquetFileWithPatch:
     # using decorator patch on boto3 client
     @patch("src.loading_lambda.boto3.client")
-    def test_get_latest_file_with_patch(self, mock_boto_3_client):
+    def test_get_latest_file_key_with_patch(self, mock_boto_3_client):
         prefix = "dimension/"
         mock_response = {
             "IsTruncated": False,
@@ -145,10 +145,21 @@ class TestGetLatestParquetFileWithPatch:
             Bucket=test_bucket, Prefix=prefix
         )
 
+    @patch("src.loading_lambda.boto3.client")
+    def test_cw_logging_of_exception_error(self, mock_boto_3_client, caplog):
+        prefix = "exceptiontest/"
+        caplog.set_level(logging.ERROR)
+        mock_boto_3_client.return_value.list_objects_v2.side_effect = Exception(
+            "Test Exception"
+        )
+
+        with pytest.raises(Exception, match="Test Exception"):
+            get_latest_parquet_file_key(prefix=prefix, bucket=test_bucket)
+
 
 class TestGetLatestParquetFileKeyWithMockAws:
     # using mock aws environment
-    def test_get_latest_file_with_mock_aws(self, mock_s3_bucket):
+    def test_get_latest_file_key_with_mock_aws(self, mock_s3_bucket):
         prefix = "dimension/"
         latest_file_key = get_latest_parquet_file_key(bucket=test_bucket, prefix=prefix)
         assert latest_file_key == "dimension/date-2024-05-24 14:35:22.parquet"
@@ -172,17 +183,7 @@ class TestGetLatestParquetFileKeyWithMockAws:
                 in caplog.text
             )
 
-    # def test_cw_logging_of_exception_error(self, mock_s3_bucket, caplog):
-    #     prefix = "exceptiontest/"
-    #     caplog.set_level(logging.ERROR)
-    #     with pytest.raises(Exception):
-    #         get_latest_parquet_file_key(prefix=prefix, bucket=test_bucket)
-    #         assert (
-    #             "Error getting the latest parquet file from test_bucket for prefix exceptiontest/"
-    #             in caplog.text
-    #         )
-
-    def test_get_latest_file_with_new_file_added_to_bucket(self, mock_s3_bucket):
+    def test_get_latest_file_key_with_new_file_added_to_bucket(self, mock_s3_bucket):
         prefix = "dimension/"
         mock_s3_bucket.put_object(
             Bucket=test_bucket,
@@ -192,32 +193,3 @@ class TestGetLatestParquetFileKeyWithMockAws:
         result = get_latest_parquet_file_key(prefix, bucket=test_bucket)
         expected = "dimension/date-2024-05-24 20:05:22.parquet"
         assert result == expected
-        # assert isinstance(mock_response["Contents"][0]["LastModified"], str)
-
-    @patch("src.loading_lambda.boto3.client")
-    def test_cw_logging_of_exception_error(self, mock_boto_3_client, caplog):
-        prefix = "exceptiontest/"
-        caplog.set_level(logging.ERROR)
-        mock_boto_3_client.return_value.list_objects_v2.side_effect = Exception("Test Exception")
-        
-        with pytest.raises(Exception, match="Test Exception"):
-            get_latest_parquet_file_key(prefix=prefix, bucket=test_bucket)
-
-
-# class TestGetLatestParquetFile:
-#     @pytest.mark.it("Unit test: returns the latest parquet file in s3")
-#     def test_get_latest_files(self, s3):
-#         test_body = "hello"
-#         bucket = 'test-bucket'
-#         prefix = 'fact/sales_order/'
-#         s3 = boto3.client('s3', region_name='us-east-1')
-#         s3.create_bucket(Bucket=bucket)
-#         files = [
-#             'fact/sales_order/file_20240101.parquet',
-#             'fact/sales_order/file_20240102.parquet',
-#             'fact/sales_order/file_20240103.parquet'
-#         ]
-#         for file in files:
-#             s3.put_object(Bucket=bucket, Key=file, Body=test_body)
-#         latest_file = get_latest_parquet_file_key(bucket, prefix)
-#         assert latest_file == ['fact/sales_order/file_20240103.parquet']
