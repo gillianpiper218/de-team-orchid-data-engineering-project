@@ -82,7 +82,8 @@ def get_latest_parquet_file_key(prefix, bucket=S3_PROCESSED_BUCKET_NAME):
         else:
             process_content_keys_list = []
             for content in response["Contents"]:
-                process_content_keys_list.append(content["Key"])
+                if content['Key'].endswith('.parquet'):
+                    process_content_keys_list.append(content["Key"])
         return process_content_keys_list[-1]
     except FileNotFoundError as fnfe:
         logger.error(
