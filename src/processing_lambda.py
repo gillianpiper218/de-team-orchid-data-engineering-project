@@ -5,6 +5,7 @@ import json
 # from pprint import pprint
 import boto3
 from io import BytesIO
+from botocore.exceptions import ClientError
 
 
 logger = logging.getLogger(__name__)
@@ -88,7 +89,8 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         dictionary["last_updated_time"] = formatted_time_l.time()
 
     fact_sales_order_df = pd.DataFrame(sales_order_list)
-    fact_sales_order_df = remove_created_at_and_last_updated(fact_sales_order_df)
+    fact_sales_order_df = remove_created_at_and_last_updated(
+        fact_sales_order_df)
     key = "fact/sales_order.parquet"
     return fact_sales_order_df, key
 
@@ -313,6 +315,41 @@ def convert_to_parquet_put_in_s3(s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME):
     s3.put_object(Bucket=bucket, Key=key, Body=out_buffer.getvalue())
 
 
+def move_processed_ingestion_data(s3, bucket=INGESTION_S3_BUCKET_NAME):
+    try:
+        list_of_files = s3.list_objects_v2(Bucket=bucket, Prefix='updated')
+        number_of_files = list_of_files['KeyCount']
+        if number_of_files > 0:
+            for i in range(number_of_files):
+                file = list_of_files['Contents'][i]['Key']
+                s3.copy_object(
+                    Bucket=bucket,
+                    CopySource={'Bucket': bucket, 'Key': file},
+                    Key=f'processed_updated/{file[8:]}'
+                )
+        else:
+            logger.info('No files were found in updated')
+
+    except ClientError as ex:
+        if ex.response["Error"]["Code"] == "NoSuchBucket":
+            logger.info("No bucket found")
+            raise
+
+
+def delete_files_from_updated_after_handling(s3, bucket_name=INGESTION_S3_BUCKET_NAME):
+    try:
+        response = s3.list_objects_v2(Bucket=bucket_name, Prefix="updated/")
+        if "Contents" in response:
+            for obj in response["Contents"]:
+                file_path = obj["Key"]
+                s3.delete_object(Bucket=bucket_name, Key=file_path)
+            logger.info(f"moved {response['KeyCount']} files")
+        else:
+            logger.info("No files to be moved")
+    except ClientError as ex:
+        if ex.response["Error"]["Code"] == "NoSuchBucket":
+            logger.info("No bucket found")
+            raise
 
 def lambda_handler(event, context):
     pass

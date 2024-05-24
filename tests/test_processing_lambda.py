@@ -3,6 +3,7 @@ from moto import mock_aws
 import os
 import boto3
 from pg8000 import DatabaseError, InterfaceError
+from botocore.exceptions import ClientError
 from pprint import pprint
 from datetime import datetime
 import logging
@@ -19,6 +20,8 @@ from src.processing_lambda import (
     process_dim_location,
     process_dim_staff,
     convert_to_parquet_put_in_s3,
+    move_processed_ingestion_data,
+    delete_files_from_updated_after_handling
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -170,7 +173,8 @@ class TestProcessFactSalesOrder:
             Bucket="test_bucket", Key="baseline/sales_order.json", Body=test_body
         )
 
-        result, key = process_fact_sales_order(bucket="test_bucket", prefix="baseline/")
+        result, key = process_fact_sales_order(
+            bucket="test_bucket", prefix="baseline/")
 
         assert "created_date" in result
         assert "created_time" in result
@@ -199,7 +203,8 @@ class TestProcessDimCounterparty:
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
-        result, key = process_dim_counterparty(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_counterparty(
+            bucket="test_bucket", prefix="baseline/")
 
         assert "counterparty_id" in result
         assert "counterparty_legal_name" in result
@@ -234,7 +239,8 @@ class TestProcessDimCounterparty:
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
 
-        result, key = process_dim_counterparty(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_counterparty(
+            bucket="test_bucket", prefix="baseline/")
 
         assert "commercial_contact" not in result
         assert "delivery_contact" not in result
@@ -261,7 +267,8 @@ class TestProcessDimCounterparty:
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
 
-        result, key = process_dim_counterparty(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_counterparty(
+            bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
@@ -279,7 +286,8 @@ class TestProcessDimCurrency:
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
         )
 
-        result, key = process_dim_currency(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_currency(
+            bucket="test_bucket", prefix="baseline/")
 
         assert "currency_name" in result
         assert key == "dimension/currency.parquet"
@@ -294,7 +302,8 @@ class TestProcessDimCurrency:
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
         )
 
-        result, key = process_dim_currency(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_currency(
+            bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
@@ -310,7 +319,8 @@ class TestProcessDimCurrency:
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
         )
 
-        result, key = process_dim_currency(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_currency(
+            bucket="test_bucket", prefix="baseline/")
         expected_columns = ["currency_id", "currency_code", "currency_name"]
         assert list(result.columns) == expected_columns
         assert key == "dimension/currency.parquet"
@@ -325,7 +335,8 @@ class TestProcessDimCurrency:
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
         )
 
-        result, key = process_dim_currency(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_currency(
+            bucket="test_bucket", prefix="baseline/")
 
         assert result["currency_id"].dtype == "int64"
         assert result["currency_code"].dtype == "object"
@@ -351,7 +362,8 @@ class TestProcessDimDate:
             Bucket="test_bucket", Key="baseline/'sales_order'.json", Body=test_body
         )
 
-        result, key = process_dim_date(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_date(
+            bucket="test_bucket", prefix="baseline/")
         expected_columns = [
             "date_id",
             "year",
@@ -383,7 +395,8 @@ class TestProcessDimDate:
             Bucket="test_bucket", Key="baseline/sales_order.json", Body=test_body
         )
 
-        result, key = process_dim_date(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_date(
+            bucket="test_bucket", prefix="baseline/")
 
         expected_column_dtypes = {
             "date_id": "object",
@@ -412,7 +425,8 @@ class TestProcessDimDesign:
             Bucket="test_bucket", Key="baseline/design.json", Body=test_body
         )
 
-        result, key = process_dim_design(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_design(
+            bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
@@ -428,7 +442,8 @@ class TestProcessDimLocation:
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
-        result, key = process_dim_location(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_location(
+            bucket="test_bucket", prefix="baseline/")
         assert "address_id" not in result
         assert "location_id" in result
         assert key == "dimension/location.parquet"
@@ -443,7 +458,8 @@ class TestProcessDimLocation:
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
 
-        result, key = process_dim_location(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_location(
+            bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
@@ -461,7 +477,8 @@ class TestProcessDimStaff:
             Bucket="test_bucket", Key="baseline/staff.json", Body=test_body
         )
 
-        result, key = process_dim_staff(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_staff(
+            bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
@@ -480,8 +497,80 @@ class TestConvertDateframeToParquet:
             Bucket="test_bucket", Key="baseline/staff.json", Body=test_body
         )
 
-        test_df, key = process_dim_staff(bucket="test_bucket", prefix="baseline/")
+        test_df, key = process_dim_staff(
+            bucket="test_bucket", prefix="baseline/")
 
         convert_to_parquet_put_in_s3(s3, test_df, key, bucket="process_bucket")
         response = s3.list_objects_v2(Bucket="process_bucket")
         assert response["Contents"][0]["Key"] == "dimension/staff.parquet"
+
+
+class TestMoveProcessedIngestionData:
+    @pytest.mark.it("Unit test: Updated files moved to new location")
+    def test_updated_files_moved(self, s3):
+        s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
+                         'LocationConstraint': 'eu-west-2', },)
+
+        s3.put_object(
+            Body='filetoupload',
+            Bucket="de-team-orchid-totesys-ingestion",
+            Key='updated/test.txt',
+        )
+        updated_files = s3.list_objects_v2(
+            Bucket="de-team-orchid-totesys-ingestion", Prefix='updated')
+        pprint(updated_files)
+        move_processed_ingestion_data(s3)
+        processed_files = s3.list_objects_v2(
+            Bucket="de-team-orchid-totesys-ingestion", Prefix='processed_updated')
+        pprint(processed_files)
+        assert updated_files['Contents'][0]['Key'][-8:
+                                                   ] == processed_files['Contents'][0]['Key'][-8:]
+
+    @pytest.mark.it("unit test: NoSuchBucket exception")
+    def test_no_bucket_exceptions(self, caplog, s3):
+        with pytest.raises(ClientError):
+            move_processed_ingestion_data(s3)
+        assert "No bucket found" in caplog.text
+
+    @pytest.mark.it("unit test: No data in updated")
+    def test_no_data_updated(self, caplog, s3):
+        s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
+                         'LocationConstraint': 'eu-west-2', },)
+        move_processed_ingestion_data(s3)
+        assert 'No files were found in updated' in caplog.text
+
+
+class TestDeleteFilesFromUpdated:
+
+    @pytest.mark.it("unit test: files are deleted from updated")
+    def test_files_deleted_after_processing(self, s3):
+        s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
+                         'LocationConstraint': 'eu-west-2', },)
+
+        s3.put_object(
+            Body='filetoupload',
+            Bucket="de-team-orchid-totesys-ingestion",
+            Key='updated/test.txt',
+        )
+        updated_files = s3.list_objects_v2(
+            Bucket="de-team-orchid-totesys-ingestion", Prefix='updated')
+        count_of_updated_before = updated_files['KeyCount']
+        delete_files_from_updated_after_handling(s3)
+        updated_files = s3.list_objects_v2(
+            Bucket="de-team-orchid-totesys-ingestion", Prefix='updated')
+        count_of_updated_after = updated_files['KeyCount']
+        assert count_of_updated_before == 1
+        assert count_of_updated_after == 0
+
+    @pytest.mark.it("unit test: NoSuchBucket exception")
+    def test_no_bucket_exceptions_deleted(self, caplog, s3):
+        with pytest.raises(ClientError):
+            delete_files_from_updated_after_handling(s3)
+        assert "No bucket found" in caplog.text
+
+    @pytest.mark.it("unit test: No files to be deleted")
+    def test_no_files_deleted(self, caplog, s3):
+        s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
+                         'LocationConstraint': 'eu-west-2', },)
+        delete_files_from_updated_after_handling(s3)
+        assert "No files to be moved" in caplog.text
