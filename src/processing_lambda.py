@@ -2,7 +2,7 @@ import pandas as pd
 from datetime import datetime
 import logging
 import json
-# from pprint import pprint
+from pprint import pprint
 import boto3
 from io import BytesIO
 from src.ingestion_lambda import get_table_names
@@ -326,24 +326,20 @@ def delete_duplicates(bucket=INGESTION_S3_BUCKET_NAME):
     for table in table_names:
         sizes_and_date_dict = {}
         for i in range(dict_list_len - 1, -1, -1):
-            if dict_list[i]["Key"][8 : 8 + len(table[0])] == table[0]:
-                if dict_list[i]["Size"] not in sizes_and_date_dict:
-                    key = dict_list[i]["Key"]
-                    response = s3.get_object(Bucket=bucket, Key=key)
-                    response_json = response["Body"].read().decode("utf-8")
-                    response_list = json.loads(response_json)
-                    if response_list:
-                        last_updated_date = response_list[-1]["last_updated"]
-                        sizes_and_date_dict[dict_list[i]["Size"]] = last_updated_date
-                else:
-                    key = dict_list[i]["Key"]
-                    response = s3.get_object(Bucket=bucket, Key=key)
-                    response_json = response["Body"].read().decode("utf-8")
-                    response_list = json.loads(response_json)
-                    if response_list:
-                        last_updated_date = response_list[-1]["last_updated"]
-                    if sizes_and_date_dict[dict_list[i]["Size"]] == last_updated_date:
-                        keys_to_be_deleted.append(key)
+            key = dict_list[i]["Key"]
+            response = s3.get_object(Bucket=bucket, Key=key)
+            response_json = response["Body"].read().decode("utf-8")
+            response_list = json.loads(response_json)
+            if response_list:
+                last_updated_date = response_list[-1]["last_updated"]
+                if dict_list[i]["Key"][8 : 8 + len(table[0])] == table[0]:
+                    if dict_list[i]["Size"] not in sizes_and_date_dict:
+                        sizes_and_date_dict[dict_list[i]["Size"]] = [last_updated_date]
+                    elif dict_list[i]["Size"] in sizes_and_date_dict:
+                        if last_updated_date not in sizes_and_date_dict[dict_list[i]["Size"]]:
+                            sizes_and_date_dict[dict_list[i]["Size"]].append(last_updated_date)
+                        else:
+                            keys_to_be_deleted.append(key)
     for obj_key in keys_to_be_deleted:
         s3.delete_object(Bucket=bucket, Key=obj_key)
 
@@ -388,5 +384,10 @@ def lambda_handler(event, context):
     pass
 
 
-# if __name__ == "__main__":
-#     delete_duplicates()
+if __name__ == "__main__":
+    delete_duplicates()
+
+# 311: 22/5/24 safe
+# 311: 22/5/24 safe
+
+# {311: [23/5/24, 22/5/24], 209: 23/6/24}
