@@ -556,6 +556,8 @@ class TestDeleteFilesFromUpdated:
             Bucket="de-team-orchid-totesys-ingestion", Prefix='updated')
         count_of_updated_before = updated_files['KeyCount']
         delete_files_from_updated_after_handling(s3)
+        updated_files = s3.list_objects_v2(
+            Bucket="de-team-orchid-totesys-ingestion", Prefix='updated')
         count_of_updated_after = updated_files['KeyCount']
         assert count_of_updated_before == 1
         assert count_of_updated_after == 0
