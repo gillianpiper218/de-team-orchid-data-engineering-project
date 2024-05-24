@@ -19,7 +19,7 @@ from src.processing_lambda import (
     process_dim_location,
     process_dim_staff,
     convert_to_parquet_put_in_s3,
-    move_processed_ingestion_data
+    # move_processed_ingestion_data
 )
 
 LOGGER = logging.getLogger(__name__)
