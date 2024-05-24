@@ -19,6 +19,7 @@ from src.processing_lambda import (
     process_dim_location,
     process_dim_staff,
     convert_to_parquet_put_in_s3,
+    move_processed_ingestion_data
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -170,7 +171,8 @@ class TestProcessFactSalesOrder:
             Bucket="test_bucket", Key="baseline/sales_order.json", Body=test_body
         )
 
-        result, key = process_fact_sales_order(bucket="test_bucket", prefix="baseline/")
+        result, key = process_fact_sales_order(
+            bucket="test_bucket", prefix="baseline/")
 
         assert "created_date" in result
         assert "created_time" in result
@@ -199,7 +201,8 @@ class TestProcessDimCounterparty:
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
-        result, key = process_dim_counterparty(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_counterparty(
+            bucket="test_bucket", prefix="baseline/")
 
         assert "counterparty_id" in result
         assert "counterparty_legal_name" in result
@@ -234,7 +237,8 @@ class TestProcessDimCounterparty:
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
 
-        result, key = process_dim_counterparty(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_counterparty(
+            bucket="test_bucket", prefix="baseline/")
 
         assert "commercial_contact" not in result
         assert "delivery_contact" not in result
@@ -261,7 +265,8 @@ class TestProcessDimCounterparty:
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
 
-        result, key = process_dim_counterparty(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_counterparty(
+            bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
@@ -279,7 +284,8 @@ class TestProcessDimCurrency:
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
         )
 
-        result, key = process_dim_currency(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_currency(
+            bucket="test_bucket", prefix="baseline/")
 
         assert "currency_name" in result
         assert key == "dimension/currency.parquet"
@@ -294,7 +300,8 @@ class TestProcessDimCurrency:
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
         )
 
-        result, key = process_dim_currency(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_currency(
+            bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
@@ -310,7 +317,8 @@ class TestProcessDimCurrency:
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
         )
 
-        result, key = process_dim_currency(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_currency(
+            bucket="test_bucket", prefix="baseline/")
         expected_columns = ["currency_id", "currency_code", "currency_name"]
         assert list(result.columns) == expected_columns
         assert key == "dimension/currency.parquet"
@@ -325,7 +333,8 @@ class TestProcessDimCurrency:
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
         )
 
-        result, key = process_dim_currency(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_currency(
+            bucket="test_bucket", prefix="baseline/")
 
         assert result["currency_id"].dtype == "int64"
         assert result["currency_code"].dtype == "object"
@@ -351,7 +360,8 @@ class TestProcessDimDate:
             Bucket="test_bucket", Key="baseline/'sales_order'.json", Body=test_body
         )
 
-        result, key = process_dim_date(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_date(
+            bucket="test_bucket", prefix="baseline/")
         expected_columns = [
             "date_id",
             "year",
@@ -383,7 +393,8 @@ class TestProcessDimDate:
             Bucket="test_bucket", Key="baseline/sales_order.json", Body=test_body
         )
 
-        result, key = process_dim_date(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_date(
+            bucket="test_bucket", prefix="baseline/")
 
         expected_column_dtypes = {
             "date_id": "object",
@@ -412,7 +423,8 @@ class TestProcessDimDesign:
             Bucket="test_bucket", Key="baseline/design.json", Body=test_body
         )
 
-        result, key = process_dim_design(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_design(
+            bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
@@ -428,7 +440,8 @@ class TestProcessDimLocation:
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
-        result, key = process_dim_location(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_location(
+            bucket="test_bucket", prefix="baseline/")
         assert "address_id" not in result
         assert "location_id" in result
         assert key == "dimension/location.parquet"
@@ -443,7 +456,8 @@ class TestProcessDimLocation:
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
         )
 
-        result, key = process_dim_location(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_location(
+            bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
@@ -461,7 +475,8 @@ class TestProcessDimStaff:
             Bucket="test_bucket", Key="baseline/staff.json", Body=test_body
         )
 
-        result, key = process_dim_staff(bucket="test_bucket", prefix="baseline/")
+        result, key = process_dim_staff(
+            bucket="test_bucket", prefix="baseline/")
 
         assert "created_at" not in result
         assert "last_updated" not in result
@@ -480,8 +495,39 @@ class TestConvertDateframeToParquet:
             Bucket="test_bucket", Key="baseline/staff.json", Body=test_body
         )
 
-        test_df, key = process_dim_staff(bucket="test_bucket", prefix="baseline/")
+        test_df, key = process_dim_staff(
+            bucket="test_bucket", prefix="baseline/")
 
         convert_to_parquet_put_in_s3(s3, test_df, key, bucket="process_bucket")
         response = s3.list_objects_v2(Bucket="process_bucket")
         assert response["Contents"][0]["Key"] == "dimension/staff.parquet"
+
+
+# class TestMoveProcessedIngestionData:
+#     @pytest.mark.it("Unit test: Updated files moved to new location")
+#     def test_updated_files_moved(self, s3):
+#         s3.create_bucket(Bucket='ingestion', CreateBucketConfiguration={
+#                          'LocationConstraint': 'eu-west-2', },)
+
+#         s3.put_object(
+#             Body='filetoupload',
+#             Bucket='ingestion',
+#             Key='updated/test.txt',
+#         )
+#         s3.put_object(
+#             Body='filetoupload',
+#             Bucket='ingestion',
+#             Key='updated/test1.txt',
+#         )
+#         before = s3.list_objects_v2(Bucket='ingestion', Prefix='updated')
+#         move_processed_ingestion_data()
+#         after = s3.list_objects_v2(Bucket='ingestion', Prefix='updated')
+#         new_location = s3.list_objects_v2(
+#             Bucket='ingestion', Prefix='processed_updated')
+#         assert before['KeyCount'] == 2
+#         assert after['KeyCount'] == 0
+#         assert new_location['Contents']['Key'] == 'test.txt'
+
+#     @pytest.mark.it("Unit test: can handle when there is no updated data")
+#     def test_no_updated_data(self):
+#         pass
