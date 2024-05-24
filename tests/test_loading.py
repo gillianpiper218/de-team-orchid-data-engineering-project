@@ -17,6 +17,9 @@ from src.loading_lambda import (
     retrieve_secret_credentials)
 
 
+LOGGER = logging.getLogger(__name__)
+
+
 @pytest.fixture(scope="function")
 def aws_credentials():
     """Mocked AWS Credentials for moto."""
@@ -58,3 +61,33 @@ class TestRetrieveSecretCredentials:
             result = retrieve_secret_credentials(secret_name="test_retrieve")
 
         assert result == expected
+
+
+class TestConnectToDatabase:
+    @pytest.mark.it("unit test: check connection to database")
+    def test_connect_to_datebase(self, caplog):
+        LOGGER.info("Testing now")
+        connect_to_dw()
+        assert "Connected to the database successfully" in caplog.text
+
+    @pytest.mark.it("unit test: check DatabaseError exception")
+    def test_database_error_exception(self, caplog):
+        LOGGER.info("Testing now")
+        with patch("pg8000.connect") as mock_connection:
+            mock_connection.side_effect = DatabaseError("Connection timed out")
+            with pytest.raises(DatabaseError):
+                connect_to_dw()
+        assert "Error connecting to database: Connection timed out" in caplog.text
+
+    @pytest.mark.it("unit test: check InterfaceError exception")
+    def test_interface_error_exception(self, caplog):
+        LOGGER.info("Testing now")
+        with patch("pg8000.connect") as mock_connection:
+            mock_connection.side_effect = InterfaceError("Connection timed out")
+            with pytest.raises(InterfaceError):
+                connect_to_dw()
+        assert "Error connecting to the database: Connection timed out" in caplog.text
+
+class TestGetLatestParquetFile:
+    def test_get_latest_files():
+        

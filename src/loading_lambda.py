@@ -71,3 +71,13 @@ def connect_to_dw(credentials=retrieve_secret_credentials()):
     except pg8000.exceptions.InterfaceError as e:
         logger.error(f"Error connecting to the database: {e}")
         raise
+
+
+def get_latest_parquet_file(bucket, prefix):
+    pass
+
+# - Multiple timestamped parquet files in fact/sales_order and dimension/{table_name}.
+
+# - Response = s3.list_object_v2(bucket, prefix).
+
+# - Logic to sort timestamped responses and get lastest file key.
