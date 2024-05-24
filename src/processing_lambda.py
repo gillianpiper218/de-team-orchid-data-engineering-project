@@ -98,18 +98,18 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
 def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     """
     Process the counterparty data with the address data from an s3 bucket and
-    create the required columns for counterparty by renaming existing columns 
-    from the address table convert to a DataFrame, then remove columns, 
-    "created_at", "last_updated", "commercial_contact", "delivery_contact" and 
+    create the required columns for counterparty by renaming existing columns
+    from the address table convert to a DataFrame, then remove columns,
+    "created_at", "last_updated", "commercial_contact", "delivery_contact" and
     "legal_address_id".
 
     Parameter:
-        bucket(str): The name of the s3 bucket where the address data is stored, 
+        bucket(str): The name of the s3 bucket where the address data is stored,
         the default value is INGESTION_S3_BUCKET_NAME.
         prefix(str): The file path of the s3 bucket, default value is None.
 
     Return:
-        (pandas.DataFrame): A DataFrame containing processed counterparty data, 
+        (pandas.DataFrame): A DataFrame containing processed counterparty data,
         with all required columns.
     """
 
@@ -314,10 +314,9 @@ def delete_duplicates(bucket=INGESTION_S3_BUCKET_NAME):
     keys_to_be_deleted = []
     sizes_and_date_dict = {}
     for table in table_names:
-        pprint(sizes_and_date_dict)
         sizes_and_date_dict = {}
-        for i in range(dict_list_len-1, -1, -1): 
-            if dict_list[i]["Key"][8:8+len(table[0])] == table[0]:
+        for i in range(dict_list_len - 1, -1, -1):
+            if dict_list[i]["Key"][8 : 8 + len(table[0])] == table[0]:
                 if dict_list[i]["Size"] not in sizes_and_date_dict:
                     key = dict_list[i]["Key"]
                     response = s3.get_object(Bucket=bucket, Key=key)
@@ -327,23 +326,17 @@ def delete_duplicates(bucket=INGESTION_S3_BUCKET_NAME):
                         last_updated_date = response_list[-1]["last_updated"]
                         sizes_and_date_dict[dict_list[i]["Size"]] = last_updated_date
                 else:
-                    # key = dict_list[i]["Key"]
-                    # response = s3.get_object(Bucket=bucket, Key=key)
-                    # response_json = response["Body"].read().decode("utf-8")
-                    # response_list = json.loads(response_json)
-                    pass
-                    
-
-        
-
-    
-                
-        
-    
-    # for dictionary in dict_list:
-    #     if dictionary["Key"]
-    # pass
+                    key = dict_list[i]["Key"]
+                    response = s3.get_object(Bucket=bucket, Key=key)
+                    response_json = response["Body"].read().decode("utf-8")
+                    response_list = json.loads(response_json)
+                    if response_list:
+                        last_updated_date = response_list[-1]["last_updated"]
+                    if sizes_and_date_dict[dict_list[i]["Size"]] == last_updated_date:
+                        keys_to_be_deleted.append(key)
+    for obj_key in keys_to_be_deleted:
+        s3.delete_object(Bucket=bucket, Key=obj_key)
 
 
-if __name__ == "__main__":
-    delete_duplicates()
+# if __name__ == "__main__":
+#     delete_duplicates()
