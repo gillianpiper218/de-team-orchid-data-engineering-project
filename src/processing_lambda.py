@@ -8,6 +8,7 @@ import boto3
 import pyarrow as pa
 import pyarrow.parquet as pq
 from io import BytesIO
+from src.ingestion_lambda import get_table_names
 
 
 logger = logging.getLogger(__name__)
@@ -306,8 +307,13 @@ def convert_to_parquet_put_in_s3(s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME):
 
 
 def delete_duplicates(bucket=INGESTION_S3_BUCKET_NAME):
+    table_names = get_table_names()
+    list_obj_response = s3.list_objects_v2(Bucket=bucket, Prefix="updated/")
+    dict_list = list_obj_response["Contents"]
+    for dictionary in dict_list:
+        dictionary["Key"]
     pass
 
 
-# if __name__ == "__main__":
-#     process_dim_date(bucket=INGESTION_S3_BUCKET_NAME)
+if __name__ == "__main__":
+    delete_duplicates()

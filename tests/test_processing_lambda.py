@@ -19,6 +19,7 @@ from src.processing_lambda import (
     process_dim_location,
     process_dim_staff,
     convert_to_parquet_put_in_s3,
+    delete_duplicates
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -487,6 +488,54 @@ class TestConvertDateframeToParquet:
         assert response["Contents"][0]["Key"] == "dimension/staff.parquet"
 
 class TestDeleteDuplicates:
+    @pytest.mark.it("Unit test: non-duplicate files of different size not deleted from ingestion s3 bucket in updated folder")
+    def test_non_duplicates_size(self, s3, bucket):
+        with open("data/test_data/staff.json", "r", encoding="utf-8") as json_file:
+            staff = json.load(json_file)
+            test_body = json.dumps(staff)
+        bucket.put_object(
+            Bucket="test_bucket", Key="updated/staff.json", Body=test_body
+        )
+
+        with open("data/test_data/staff_non_duplicate_size.json", "r", encoding="utf-8") as json_file:
+            staff = json.load(json_file)
+            test_body = json.dumps(staff)
+        bucket.put_object(
+            Bucket="test_bucket", Key="updated/staff_non_duplicate_size.json", Body=test_body
+        )
+
+        delete_duplicates(bucket="test_bucket")
+
+        response = bucket.list_objects_v2(Bucket="test_bucket")
+
+        assert response["KeyCount"] == 2
+        assert 4 == 3
+
+    @pytest.mark.it("Unit test: non-duplicate files of same size not deleted from ingestion s3 bucket in updated folder")
+    def test_non_duplicates(self, s3, bucket):
+        # with open("data/test_data/staff.json", "r", encoding="utf-8") as json_file:
+        #     staff = json.load(json_file)
+        #     test_body = json.dumps(staff)
+        # bucket.put_object(
+        #     Bucket="test_bucket", Key="updated/staff.json", Body=test_body
+        # )
+
+        # with open("data/test_data/staff_non_duplicate.json", "r", encoding="utf-8") as json_file:
+        #     staff = json.load(json_file)
+        #     test_body = json.dumps(staff)
+        # bucket.put_object(
+        #     Bucket="test_bucket", Key="updated/staff_non_duplicate.json", Body=test_body
+        # )
+
+        # delete_duplicates(bucket="test_bucket")
+
+        # response = bucket.list_objects_v2(Bucket="test_bucket")
+        # pprint(response)
+
+        # assert response["KeyCount"] == 2
+        # assert 4 == 3
+        pass
+
     @pytest.mark.it("Unit test: duplicate files deleted from ingestion s3 bucket in updated folder")
     def test_delete_duplicates(self, s3, bucket):
         pass
