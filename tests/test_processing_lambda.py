@@ -20,7 +20,8 @@ from src.processing_lambda import (
     process_dim_location,
     process_dim_staff,
     convert_to_parquet_put_in_s3,
-    move_processed_ingestion_data
+    move_processed_ingestion_data,
+    delete_files_from_updated_after_handling
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -537,3 +538,24 @@ class TestMoveProcessedIngestionData:
                          'LocationConstraint': 'eu-west-2', },)
         move_processed_ingestion_data(s3)
         assert 'No files were found in updated' in caplog.text
+
+
+class TestDeleteFilesFromUpdated:
+
+    @pytest.mark.it("unit test: files are deleted from updated")
+    def test_files_deleted_after_processing(self, s3):
+        s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
+                         'LocationConstraint': 'eu-west-2', },)
+
+        s3.put_object(
+            Body='filetoupload',
+            Bucket="de-team-orchid-totesys-ingestion",
+            Key='updated/test.txt',
+        )
+        updated_files = s3.list_objects_v2(
+            Bucket="de-team-orchid-totesys-ingestion", Prefix='updated')
+        count_of_updated_before = updated_files['KeyCount']
+        delete_files_from_updated_after_handling(s3)
+        count_of_updated_after = updated_files['KeyCount']
+        assert count_of_updated_before == 1
+        assert count_of_updated_after == 0

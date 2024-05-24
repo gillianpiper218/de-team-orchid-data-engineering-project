@@ -336,6 +336,21 @@ def move_processed_ingestion_data(s3, bucket=INGESTION_S3_BUCKET_NAME):
             raise
 
 
+def delete_files_from_updated_after_handling(s3, bucket_name=INGESTION_S3_BUCKET_NAME):
+    try:
+        response = s3.list_objects_v2(Bucket=bucket_name, Prefix="updated/")
+        if "Contents" in response:
+            for obj in response["Contents"]:
+                file_path = obj["Key"]
+                s3.delete_object(Bucket=bucket_name, Key=file_path)
+            logger.info(f"moved {response['KeyCount']} files")
+        else:
+            logger.info("No files to be moved")
+    except ClientError as ex:
+        if ex.response["Error"]["Code"] == "NoSuchBucket":
+            logger.info("No bucket found")
+            raise
+
 def lambda_handler(event, context):
     pass
 
