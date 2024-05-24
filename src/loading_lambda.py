@@ -77,9 +77,14 @@ def get_latest_parquet_file_key(prefix, bucket=S3_PROCESSED_BUCKET_NAME):
         #             content["LastModified"], "%Y-%m-%d %H:%M:%S"
         #         )
 
-        sorted_files = sorted(response["Contents"], key=lambda x: x["LastModified"])
-        latest_file_key = sorted_files[-1]["Key"]
-        return latest_file_key
+        # sorted_files = sorted(response["Contents"], key=lambda x: x["LastModified"])
+        # latest_file_key = sorted_files[-1]["Key"]
+        # return latest_file_key
+        else:
+            process_content_keys_list = []
+            for content in response["Contents"]:
+                process_content_keys_list.append(content["Key"])
+        return process_content_keys_list[-1]
     except FileNotFoundError as fnfe:
         logger.error(
             f"No files have been found from {bucket} for prefix: {prefix}: {fnfe}"
