@@ -574,3 +574,22 @@ class TestDeleteFilesFromUpdated:
                          'LocationConstraint': 'eu-west-2', },)
         delete_files_from_updated_after_handling(s3)
         assert "No files to be moved" in caplog.text
+
+
+
+# check if any contents in updated, & if there isn't:
+# info logger saying nothing to update
+# if there is updated data:
+# run the delete function first, to strip duplicate files from updated
+# for the remaining contents in updated
+# if there's a table called xyz then
+# run the function to access updated data for xyz
+# elif  abc, then run abc
+# elif  def, then run def etc etc
+# finally do the copy/delete to clean up updated
+# logger.info when all jobs done
+
+
+class TestProcessingLambdaHandler:
+
+    @pytest.mark.it
