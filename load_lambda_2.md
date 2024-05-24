@@ -25,7 +25,7 @@ def get_latest_parquet_file(bucket, prefix):
 
 - Logic to sort timestamped responses and get lastest file key.
 
-## Read parquet files from processed s3 and convert to df function
+## Read parquet files from processed s3 function
 ```python
 def read_parquet_from_s3(bucket, key)
 ```
@@ -34,7 +34,7 @@ def read_parquet_from_s3(bucket, key)
 
 - Response = s3.get_object(bucket, key).
 
-- Get response object body table data then convert to df for loading into warehouse.
+- Get response object body table data.
 
 ## Get processed dim tables from S3 bucket then load into warehouse function
 ```python
@@ -43,21 +43,21 @@ def load_dim_tables(bucket)
 
 - One function that loops over 'table_name' in defined list of mvp dimension tables and reads their parquet files from the processed s3 bucket.
 
-    - Should have three functions within this, it uses the `get_latest_parquet_file(bucket, prefix)` function, and `read_parquet_from_s3(bucket, key)` function to get a files key and its df to be passed into the `Load_to_warehouse(df, table_name)` function also being invoked within this function:
+    - Should have three functions within this, it uses the `get_latest_parquet_file(bucket, prefix)` function, and `read_parquet_from_s3(bucket, key)` function to get a files key and its df to be passed into the `Load_to_warehouse(table_data, table_name)` function also being invoked within this function:
         - Broken down further:
 
             - `get_latest_parquet_file(bucket, prefix)` outputs a **key**
 
-            - **key** for example = f’dimension/{table_name}.parquet’, to input into `read_parquet_from_s3(bucket, key)` to read the parquet file/obtain the dim table and do the conversion.
+            - **key** for example = f’dimension/{table_name}.parquet’, to input into `read_parquet_from_s3(bucket, key)` to read the parquet file/obtain the dim table.
 
-            - `read_parquet_from_s3(bucket, key)` outputs a **df** (this is the dim table parquet file converted to a DataFrame 'df' ready to be loaded into the data warehouse) it is inputted into `Load_to_warehouse(df, table_name)` to load into the dw.
+            - `read_parquet_from_s3(bucket, key)` outputs the dim table parquet file ready to be loaded into the data warehouse it is inputted into `Load_to_warehouse(table_data, table_name)` to load into the dw.
 
             - This is within a loop, so it should do this for each dim table. 
 
 
-- What `load_to_warehouse(df, table_name)`, function should do:
+- What `load_to_warehouse(table_data, table_name)`, function should do:
 
-    - A separate function that handles loading any DataFrame into the data warehouse, taking the DataFrame 'df' and 'table_name' as arguments.
+    - A separate function that handles loading any table_data into the data warehouse, taking the table_data and 'table_name' as arguments.
 
 
 ## Get processed fact table from S3 bucket then load into warehouse function
@@ -69,15 +69,12 @@ def load_fact_table(bucket)
 
 ## Load_to_warehouse general use function
 ```python
-def load_to_warehouse(df, table_name)
+def load_to_warehouse(table_data, table_name)
 ```
 
 - Connect to the database with `get_db_connection` function and set up a cursor.
 
-- Load any DataFrame into the data warehouse using something similar to:
-`df.to_sql(‘my_cool_table’, con=cnx, index=**False**)` or `df.to_sql(name='users', con=connection, if_exists='append')` Obtained from: https://blog.panoply.io/how-to-load-pandas-dataframes-into-sql and https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_sql.html
-
-- Or execute an INSERT INTO 'table_name' query, but would need to search how to create placeholders for the VALUES (column names) for each table, and how to go about obtaining this from the column names of the dim table / dim table DataFrame. Not sure at this stage which is most appropriate, the first option appears simpler.
+- Execute an INSERT INTO 'table_name' query, but would need to search how to create placeholders for the VALUES (column names) for each table, and how to go about obtaining this from the column names of the dim table.
 
 - conn.commit() needed to save changes by SQL queries: https://www.geeksforgeeks.org/python-postgresql-transaction-management-using-commit-and-rollback/
 
