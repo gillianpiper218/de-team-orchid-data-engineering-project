@@ -155,6 +155,10 @@ class TestGetLatestParquetFileKeyWithPatch:
 
         with pytest.raises(Exception, match="Test Exception"):
             get_latest_parquet_file_key(prefix=prefix, bucket=test_bucket)
+            assert (
+                "Error getting the latest parquet file from bucket test_bucket for prefix exceptiontest/"
+                in caplog.text
+            )
 
 
 class TestGetLatestParquetFileKeyWithMockAws:
