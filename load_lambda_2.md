@@ -72,7 +72,7 @@ def load_fact_table(bucket)
 def load_to_warehouse(df, table_name)
 ```
 
-- Connect to the database and set up a cursor.
+- Connect to the database with `get_db_connection` function and set up a cursor.
 
 - Load any DataFrame into the data warehouse using something similar to:
 `df.to_sql(‘my_cool_table’, con=cnx, index=**False**)` or `df.to_sql(name='users', con=connection, if_exists='append')` Obtained from: https://blog.panoply.io/how-to-load-pandas-dataframes-into-sql and https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_sql.html
