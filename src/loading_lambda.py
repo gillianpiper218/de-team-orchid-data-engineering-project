@@ -18,8 +18,6 @@ s3_client = boto3.client("s3")
 # secret manager client
 secret_manager_client = boto3.client("secretsmanager")
 
-# from ingestion
-
 
 def retrieve_secret_credentials(secret_name="totesys_environment"):
     response = secret_manager_client.get_secret_value(
@@ -32,6 +30,7 @@ def retrieve_secret_credentials(secret_name="totesys_environment"):
     DW_NAME = secret_string["dbname"]
     DW_USER = secret_string["username"]
     DW_PASSWORD = secret_string["password"]
+    #DW_SCHEMA?
     return DW_HOST, DW_PASSWORD, DW_NAME, DW_PORT, DW_USER
 
 
