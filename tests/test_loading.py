@@ -15,7 +15,7 @@ import pandas as pd
 from src.loading_lambda import (
     connect_to_dw,
     retrieve_secret_credentials,
-    get_latest_parquet_file,
+    get_latest_parquet_file_key,
 )
 
 
@@ -125,19 +125,19 @@ class TestGetLatestParquetFileWithPatch:
             "Contents": [
                 {
                     "Key": "dimension/file1-2024-05-24 14:35:22.parquet",
-                    "LastModified": datetime(2015, 1, 1),
+                    "LastModified": datetime(2024, 5, 24, 14, 35, 22),
                     "ETag": "string",
                 },
                 {
                     "Key": "dimension/file2-2024-05-25 16:35:22.parquet",
-                    "LastModified": datetime(2022, 1, 1),
+                    "LastModified": datetime(2024, 5, 25, 16, 35, 22),
                     "ETag": "string",
                 },
             ],
         }
         # two return values needed, mock boto client is a func call, then for list_obj method
         mock_boto_3_client.return_value.list_objects_v2.return_value = mock_response
-        result = get_latest_parquet_file(prefix, bucket=test_bucket)
+        result = get_latest_parquet_file_key(prefix, bucket=test_bucket)
         expected = "dimension/file2-2024-05-25 16:35:22.parquet"
         assert result == expected
 
@@ -150,13 +150,13 @@ class TestGetLatestParquetFileKeyWithMockAws:
     # using mock aws environment
     def test_get_latest_file_with_mock_aws(self, mock_s3_bucket):
         prefix = "dimension/"
-        latest_file_key = get_latest_parquet_file(bucket=test_bucket, prefix=prefix)
+        latest_file_key = get_latest_parquet_file_key(bucket=test_bucket, prefix=prefix)
         assert latest_file_key == "dimension/date-2024-05-24 14:35:22.parquet"
 
     def test_no_files_found_error(self, mock_s3_bucket):
         prefix = "nonexistent/"
         with pytest.raises(FileNotFoundError) as f_exc_info:
-            get_latest_parquet_file(prefix=prefix, bucket=test_bucket)
+            get_latest_parquet_file_key(prefix=prefix, bucket=test_bucket)
             assert (
                 str(f_exc_info)
                 == "No files have been found from test_bucket for prefix: nonexistent/"
@@ -166,7 +166,7 @@ class TestGetLatestParquetFileKeyWithMockAws:
         prefix = "nonexistent/"
         caplog.set_level(logging.ERROR)
         with pytest.raises(FileNotFoundError):
-            get_latest_parquet_file(prefix=prefix, bucket=test_bucket)
+            get_latest_parquet_file_key(prefix=prefix, bucket=test_bucket)
             assert (
                 "No files have been found from test_bucket for prefix: nonexistent/"
                 in caplog.text
@@ -176,11 +176,24 @@ class TestGetLatestParquetFileKeyWithMockAws:
         prefix = "exceptiontest/"
         caplog.set_level(logging.ERROR)
         with pytest.raises(FileNotFoundError):
-            get_latest_parquet_file(prefix=prefix, bucket=test_bucket)
+            get_latest_parquet_file_key(prefix=prefix, bucket=test_bucket)
             assert (
                 "Error getting the latest parquet file from test_bucket for prefix exceptiontest/"
                 in caplog.text
             )
+
+    def test_get_latest_file_with_new_file_added_to_bucket(self, mock_s3_bucket):
+        prefix = "dimension/"
+        mock_s3_bucket.put_object(
+            Bucket=test_bucket,
+            Key="dimension/date-2024-05-24 20:05:22.parquet",
+            Body="{}",
+        )
+        result = get_latest_parquet_file_key(prefix, bucket=test_bucket)
+        expected = "dimension/date-2024-05-24 20:05:22.parquet"
+        assert result == expected
+        # assert isinstance(mock_response["Contents"][0]["LastModified"], str)
+
 
 # class TestGetLatestParquetFile:
 #     @pytest.mark.it("Unit test: returns the latest parquet file in s3")
@@ -197,5 +210,5 @@ class TestGetLatestParquetFileKeyWithMockAws:
 #         ]
 #         for file in files:
 #             s3.put_object(Bucket=bucket, Key=file, Body=test_body)
-#         latest_file = get_latest_parquet_file(bucket, prefix)
+#         latest_file = get_latest_parquet_file_key(bucket, prefix)
 #         assert latest_file == ['fact/sales_order/file_20240103.parquet']

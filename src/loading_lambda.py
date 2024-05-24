@@ -63,7 +63,7 @@ def connect_to_dw(credentials=retrieve_secret_credentials()):
         raise
 
 
-def get_latest_parquet_file(prefix, bucket=S3_PROCESSED_BUCKET_NAME):
+def get_latest_parquet_file_key(prefix, bucket=S3_PROCESSED_BUCKET_NAME):
     try:
         s3_client = boto3.client("s3")
         response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
@@ -71,6 +71,12 @@ def get_latest_parquet_file(prefix, bucket=S3_PROCESSED_BUCKET_NAME):
             raise FileNotFoundError(
                 f"No files have been found from {bucket} for prefix: {prefix}"
             )
+        # if isinstance(response["Contents"], str):
+        #     for content in response["Contents"]:
+        #         content["LastModified"] = datetime.strptime(
+        #             content["LastModified"], "%Y-%m-%d %H:%M:%S"
+        #         )
+
         sorted_files = sorted(response["Contents"], key=lambda x: x["LastModified"])
         latest_file_key = sorted_files[-1]["Key"]
         return latest_file_key
@@ -91,8 +97,7 @@ def get_latest_parquet_file(prefix, bucket=S3_PROCESSED_BUCKET_NAME):
     #         files.append(obj['Key'])
     # Print(files)
     # return files
-    
-     
+
 
 # - Multiple timestamped parquet files in fact/sales_order and dimension/{table_name}.
 
