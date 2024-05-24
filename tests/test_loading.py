@@ -14,7 +14,8 @@ import json
 
 from src.loading_lambda import (
     connect_to_dw,
-    retrieve_secret_credentials)
+    retrieve_secret_credentials,
+    get_latest_parquet_file)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -88,6 +89,22 @@ class TestConnectToDatabase:
                 connect_to_dw()
         assert "Error connecting to the database: Connection timed out" in caplog.text
 
+
 class TestGetLatestParquetFile:
-    def test_get_latest_files():
-        
+    @pytest.mark.it("Unit test: returns the latest parquet file in s3")
+    def test_get_latest_files(self, s3):
+        test_body = "hello"
+        bucket = 'test-bucket'
+        prefix = 'fact/sales_order/'
+        s3 = boto3.client('s3', region_name='us-east-1')
+        s3.create_bucket(Bucket=bucket)
+        files = [
+            'fact/sales_order/file_20240101.parquet',
+            'fact/sales_order/file_20240102.parquet',
+            'fact/sales_order/file_20240103.parquet'
+        ]
+        for file in files:
+            s3.put_object(Bucket=bucket, Key=file, Body=test_body)
+        latest_file = get_latest_parquet_file(bucket, prefix)
+        assert latest_file == ['fact/sales_order/file_20240103.parquet']
+   

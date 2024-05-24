@@ -74,10 +74,23 @@ def connect_to_dw(credentials=retrieve_secret_credentials()):
 
 
 def get_latest_parquet_file(bucket, prefix):
-    pass
+    response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
+    print(response)
+    # files = []
+    # for obj in response['Contents']:
+    #     if obj['Key'].endswith('.parquet'):
+    #         files.append(obj['Key'])
+    # Print(files)
+    # return files
+    
+     
 
 # - Multiple timestamped parquet files in fact/sales_order and dimension/{table_name}.
 
 # - Response = s3.list_object_v2(bucket, prefix).
 
 # - Logic to sort timestamped responses and get lastest file key.
+
+
+if __name__ == "__main__":
+    get_latest_parquet_file(bucket="de-team-orchid-totesys-processed", prefix='fact/sales_order/')
