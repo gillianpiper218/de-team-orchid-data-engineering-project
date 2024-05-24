@@ -1,14 +1,12 @@
-import os
 import pandas as pd
 from datetime import datetime
 import logging
 import json
-from pprint import pprint
+# from pprint import pprint
 import boto3
-import pyarrow as pa
-import pyarrow.parquet as pq
 from io import BytesIO
 from src.ingestion_lambda import get_table_names
+from botocore.exceptions import ClientError
 
 
 logger = logging.getLogger(__name__)
@@ -68,8 +66,10 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         prefix(str): The file path of the s3 bucket, default value is None.
     Returns:
         (pandas.DataFrame): The DataFrame for the processed sales_order table.
+        (str): The key for the processed data in the s3 bucket.
     """
-    key = get_object_key(table_name="sales_order", prefix=prefix, bucket=bucket)
+    key = get_object_key(table_name="sales_order",
+                         prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     sales_order_json = obj["Body"].read().decode("utf-8")
     sales_order_list = json.loads(sales_order_json)
@@ -90,7 +90,8 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         dictionary["last_updated_time"] = formatted_time_l.time()
 
     fact_sales_order_df = pd.DataFrame(sales_order_list)
-    fact_sales_order_df = remove_created_at_and_last_updated(fact_sales_order_df)
+    fact_sales_order_df = remove_created_at_and_last_updated(
+        fact_sales_order_df)
     key = "fact/sales_order.parquet"
     return fact_sales_order_df, key
 
@@ -111,9 +112,11 @@ def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     Return:
         (pandas.DataFrame): A DataFrame containing processed counterparty data,
         with all required columns.
+        (str): The key for the processed data in the s3 bucket.
     """
 
-    key = get_object_key(table_name="counterparty", prefix=prefix, bucket=bucket)
+    key = get_object_key(table_name="counterparty",
+                         prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     counterparty_json = obj["Body"].read().decode("utf-8")
     counterparty_list = json.loads(counterparty_json)
@@ -147,7 +150,8 @@ def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
                 ]
 
     dim_counterparty_df = pd.DataFrame(counterparty_list)
-    dim_counterparty_df = remove_created_at_and_last_updated(dim_counterparty_df)
+    dim_counterparty_df = remove_created_at_and_last_updated(
+        dim_counterparty_df)
     dim_counterparty_df.drop(
         ["commercial_contact", "delivery_contact", "legal_address_id"],
         axis=1,
@@ -166,6 +170,7 @@ def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         prefix(str): The file path of the s3 bucket, default value is None.
     Returns:
         (pandas.DataFrame): The DataFrame for the processed currency data.
+        (str): The key for the processed data in the s3 bucket.
     """
     key = get_object_key(table_name="currency", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
@@ -173,7 +178,8 @@ def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     currency_list = json.loads(currency_json)
     dim_currency_df = pd.DataFrame(currency_list)
     remove_created_at_and_last_updated(dim_currency_df)
-    currency_names = {"GDP": "British Pound", "USD": "US Dollar", "EUR": "Euro"}
+    currency_names = {"GDP": "British Pound",
+                      "USD": "US Dollar", "EUR": "Euro"}
     dim_currency_df["currency_name"] = dim_currency_df["currency_code"].map(
         currency_names
     )
@@ -192,6 +198,7 @@ def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         prefix(str): The file path of the s3 bucket, default value is None.
     Returns:
         pandas.DataFrame: The DataFrame containing unique dates and the corresponding date-related columns.
+        (str): The key for the processed data in the s3 bucket.
     """
     fso_df, key = process_fact_sales_order(bucket=bucket, prefix=prefix)
     fso_dicts = fso_df.to_dict(orient="records")
@@ -235,6 +242,7 @@ def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         prefix(str): The file path of the s3 bucket, default value is None.
     Returns:
         (pandas.DataFrame): The DataFrame for the processed design data.
+        (str): The key for the processed data in the s3 bucket.
     """
     key = get_object_key(table_name="design", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
@@ -255,6 +263,7 @@ def process_dim_location(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         prefix(str): The file path of the s3 bucket, default value is None.
     Returns:
         (pandas.DataFrame): The DataFrame for the processed address data as the location data.
+        (str): The key for the processed data in the s3 bucket.
     """
 
     key = get_object_key(table_name="address", prefix=prefix, bucket=bucket)
@@ -278,6 +287,7 @@ def process_dim_staff(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         prefix(str): The file path of the s3 bucket, default value is None.
     Returns:
         (pandas.DataFrame): The DataFrame for the processed staff data.
+        (str): The key for the processed data in the s3 bucket.
     """
 
     key = get_object_key(table_name="staff", prefix=prefix, bucket=bucket)
@@ -336,6 +346,46 @@ def delete_duplicates(bucket=INGESTION_S3_BUCKET_NAME):
                         keys_to_be_deleted.append(key)
     for obj_key in keys_to_be_deleted:
         s3.delete_object(Bucket=bucket, Key=obj_key)
+
+        
+def move_processed_ingestion_data(s3, bucket=INGESTION_S3_BUCKET_NAME):
+    try:
+        list_of_files = s3.list_objects_v2(Bucket=bucket, Prefix='updated')
+        number_of_files = list_of_files['KeyCount']
+        if number_of_files > 0:
+            for i in range(number_of_files):
+                file = list_of_files['Contents'][i]['Key']
+                s3.copy_object(
+                    Bucket=bucket,
+                    CopySource={'Bucket': bucket, 'Key': file},
+                    Key=f'processed_updated/{file[8:]}'
+                )
+        else:
+            logger.info('No files were found in updated')
+
+    except ClientError as ex:
+        if ex.response["Error"]["Code"] == "NoSuchBucket":
+            logger.info("No bucket found")
+            raise
+
+
+def delete_files_from_updated_after_handling(s3, bucket_name=INGESTION_S3_BUCKET_NAME):
+    try:
+        response = s3.list_objects_v2(Bucket=bucket_name, Prefix="updated/")
+        if "Contents" in response:
+            for obj in response["Contents"]:
+                file_path = obj["Key"]
+                s3.delete_object(Bucket=bucket_name, Key=file_path)
+            logger.info(f"moved {response['KeyCount']} files")
+        else:
+            logger.info("No files to be moved")
+    except ClientError as ex:
+        if ex.response["Error"]["Code"] == "NoSuchBucket":
+            logger.info("No bucket found")
+            raise
+
+def lambda_handler(event, context):
+    pass
 
 
 # if __name__ == "__main__":
