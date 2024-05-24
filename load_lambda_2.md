@@ -68,6 +68,9 @@ def load_fact_table(bucket)
 - One function, same method as with the dim tables, but it won't need looping as we only have one fact table. 
 
 ## Load_to_warehouse general use function
+```python
+def load_to_warehouse(df, table_name)
+```
 
 - Connect to the database and set up a cursor.
 
