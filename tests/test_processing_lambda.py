@@ -2,6 +2,8 @@ import pytest
 from moto import mock_aws
 import os
 import boto3
+from unittest import mock
+from unittest.mock import patch
 from pg8000 import DatabaseError, InterfaceError
 from botocore.exceptions import ClientError
 from pprint import pprint
@@ -21,11 +23,14 @@ from src.processing_lambda import (
     process_dim_staff,
     convert_to_parquet_put_in_s3,
     move_processed_ingestion_data,
-    delete_files_from_updated_after_handling
+    delete_files_from_updated_after_handling,
+    lambda_handler
 )
 
 LOGGER = logging.getLogger(__name__)
 
+class DummyContext:
+    pass
 
 @pytest.fixture(scope="function")
 def aws_credentials():
@@ -592,4 +597,17 @@ class TestDeleteFilesFromUpdated:
 
 class TestProcessingLambdaHandler:
 
-    @pytest.mark.it
+    @pytest.mark.it("unit test: test that no updates gives correct log message")
+    def test_no_updates_exits_handler_with_correct_info(self, s3, caplog):
+        context = DummyContext()
+        event = {}
+        s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
+                         'LocationConstraint': 'eu-west-2', },)
+        folder_name = "updated"
+        s3.put_object(Bucket="de-team-orchid-totesys-ingestion", Key=(folder_name+'/'))
+
+        lambda_handler(event, context)
+        assert (
+                "No new updated data to process"
+                in caplog.text
+            )
