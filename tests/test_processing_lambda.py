@@ -589,8 +589,9 @@ class TestDeleteFilesFromUpdated:
 # run the delete function first, to strip duplicate files from updated
 # for the remaining contents in updated
 # if there's a table called xyz then
-# run the function to access updated data for xyz
-# elif  abc, then run abc
+#   run the function to access updated data for xyz
+#   run the convert to parquet and put in S3 processed function
+# elif  abc, then run abc, onvert to parquet, put in s3 processed
 # elif  def, then run def etc etc
 # finally do the copy/delete to clean up updated
 # logger.info when all jobs done
@@ -629,3 +630,20 @@ class TestProcessingLambdaHandler:
         #               Key=("updated/hello.txt"))
         # lambda_handler(event, context)
         # assert ("The Delete function has successfully been ran" in caplog.text)
+
+    @pytest.mark.it("unit test: test that correct function runs when there is updated data")
+    def test_correct_function_runs_for_updated_data(self, s3, caplog):
+        context = DummyContext()
+        event = {}
+        s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
+                         'LocationConstraint': 'eu-west-2', },)
+        s3.put_object(Bucket="de-team-orchid-totesys-ingestion",
+                      Key='updated/design-2024-05-21 14:40:09.122625.json')
+        
+        lambda_handler(event, context)
+        
+        assert ("Design table processed" in caplog.text)
+        contents = s3.list_objects_v2(
+            Bucket="de-team-orchid-totesys-processed", Prefix='dimension/')
+        print(contents)
+        assert contents['Contents']['Key'] == 'design.parquet'

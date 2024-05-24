@@ -6,6 +6,7 @@ import json
 import boto3
 from io import BytesIO
 from botocore.exceptions import ClientError
+import re
 
 
 logger = logging.getLogger(__name__)
@@ -357,9 +358,24 @@ def lambda_handler(event, context, bucket_name=INGESTION_S3_BUCKET_NAME):
 
     if response['KeyCount'] == 1:
         logger.info("No new updated data to process")
-    try:
-        # delete_duplicates()
-        # logger.info('The Delete function has successfully been ran')
+    else:    
+        try:
+            pass
+          
+            # delete_duplicates()
+            # logger.info('The Delete function has successfully been ran')
+            for item in response['key']
+            pattern = '^[A-Za-z]+'
+            re.match(pattern, response['Key'])
+            if response['Key']
+            
+        
+        except:
+            pass
 
-        # if __name__ == "__main__":
-        #     process_dim_date(bucket=INGESTION_S3_BUCKET_NAME)
+
+
+
+
+# if __name__ == "__main__":
+#     process_dim_date(bucket=INGESTION_S3_BUCKET_NAME)
