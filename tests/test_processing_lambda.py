@@ -29,8 +29,10 @@ from src.processing_lambda import (
 
 LOGGER = logging.getLogger(__name__)
 
+
 class DummyContext:
     pass
+
 
 @pytest.fixture(scope="function")
 def aws_credentials():
@@ -581,9 +583,8 @@ class TestDeleteFilesFromUpdated:
         assert "No files to be moved" in caplog.text
 
 
-
-# check if any contents in updated, & if there isn't:
-# info logger saying nothing to update
+# check if any contents in updated, & if there isn't: ✔️
+# info logger saying nothing to update ✔️
 # if there is updated data:
 # run the delete function first, to strip duplicate files from updated
 # for the remaining contents in updated
@@ -604,10 +605,27 @@ class TestProcessingLambdaHandler:
         s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
                          'LocationConstraint': 'eu-west-2', },)
         folder_name = "updated"
-        s3.put_object(Bucket="de-team-orchid-totesys-ingestion", Key=(folder_name+'/'))
+        s3.put_object(Bucket="de-team-orchid-totesys-ingestion",
+                      Key=(folder_name+'/'))
 
         lambda_handler(event, context)
         assert (
-                "No new updated data to process"
-                in caplog.text
-            )
+            "No new updated data to process"
+            in caplog.text
+        )
+
+    @pytest.mark.it("unit test: correct log info message after delete duplicates ran")
+    def test_delete_duplicates_info_message(self, s3, caplog):
+        pass
+        # context = DummyContext()
+        # event = {}
+
+        # s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
+        #                  'LocationConstraint': 'eu-west-2', },)
+        # folder_name = "updated"
+        # s3.put_object(Bucket="de-team-orchid-totesys-ingestion",
+        #               Key=(folder_name+'/'))
+        # s3.put_object(Bucket="de-team-orchid-totesys-ingestion",
+        #               Key=("updated/hello.txt"))
+        # lambda_handler(event, context)
+        # assert ("The Delete function has successfully been ran" in caplog.text)

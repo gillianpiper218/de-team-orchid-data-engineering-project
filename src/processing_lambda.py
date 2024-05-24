@@ -351,9 +351,15 @@ def delete_files_from_updated_after_handling(s3, bucket_name=INGESTION_S3_BUCKET
             logger.info("No bucket found")
             raise
 
-def lambda_handler(event, context):
-    pass
 
+def lambda_handler(event, context, bucket_name=INGESTION_S3_BUCKET_NAME):
+    response = s3.list_objects_v2(Bucket=bucket_name, Prefix='updated/')
 
-# if __name__ == "__main__":
-#     process_dim_date(bucket=INGESTION_S3_BUCKET_NAME)
+    if response['KeyCount'] == 1:
+        logger.info("No new updated data to process")
+    try:
+        # delete_duplicates()
+        # logger.info('The Delete function has successfully been ran')
+
+        # if __name__ == "__main__":
+        #     process_dim_date(bucket=INGESTION_S3_BUCKET_NAME)
