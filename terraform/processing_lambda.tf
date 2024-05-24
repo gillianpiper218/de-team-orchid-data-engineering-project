@@ -22,19 +22,27 @@ data "archive_file" "processing_lambda" {
   output_path = "${path.module}/../function_processing.zip"
 }
 
-resource "aws_s3_bucket_notification" "s3_ingestion_notification" {
-  bucket = aws_s3_bucket.ingestion_s3_bucket.bucket
+# resource "aws_s3_bucket_notification" "s3_ingestion_notification" {
+#   bucket = aws_s3_bucket.ingestion_s3_bucket.bucket
 
-  lambda_function {
-    lambda_function_arn = aws_lambda_function.processing_function.arn
-    events              = ["s3:ObjectCreated:*"] 
-}
-}
+#   lambda_function {
+#     lambda_function_arn = aws_lambda_function.processing_function.arn
+#     events              = ["s3:ObjectCreated:*"] 
+# }
+# }
 
-resource "aws_lambda_permission" "allow_s3_to_invoke_processing_lambda" {
-  statement_id  = "AllowS3InvokeLambda"
-  action        = "lambda:InvokeFunction"
+# resource "aws_lambda_permission" "allow_s3_to_invoke_processing_lambda" {
+#   statement_id  = "AllowS3InvokeLambda"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.processing_function.function_name
+#   principal     = "s3.amazonaws.com"
+#   source_arn    = aws_s3_bucket.ingestion_s3_bucket.arn 
+# }
+
+resource "aws_lambda_permission" "allow_eventbridge_processing" {
+  action = "lambda:InvokeFunction"
   function_name = aws_lambda_function.processing_function.function_name
-  principal     = "s3.amazonaws.com"
-  source_arn    = aws_s3_bucket.ingestion_s3_bucket.arn 
+  principal = "events.amazonaws.com"
+  source_arn = aws_cloudwatch_event_rule.processing_scheduler.arn
+  source_account = data.aws_caller_identity.current.account_id
 }
