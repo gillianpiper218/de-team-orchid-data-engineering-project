@@ -314,17 +314,22 @@ def convert_to_parquet_put_in_s3(s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME):
     s3.put_object(Bucket=bucket, Key=key, Body=out_buffer.getvalue())
 
 
-# def move_processed_ingestion_data(s3, bucket=INGESTION_S3_BUCKET_NAME):
+def move_processed_ingestion_data(s3, bucket=INGESTION_S3_BUCKET_NAME):
+    srcbucket = s3.bucket(bucket)
+    destbucket = s3.bucket(bucket)
+    for file in srcbucket.objects.all():
+        copy_source = {'Bucket': f'{bucket}', 'Key': file.key}
+        print(copy_source)
 
-#     list_of_files = s3.list_objects_v2(Bucket=bucket, Prefix='updated')
-#     number_of_files = list_of_files['KeyCount']
-#     for i in range(number_of_files):
-#         file = list_of_files['Contents'][i]['Key']
-#         s3.copy_object(
-#             Bucket=bucket, CopySource=f'/{file}', Key=f'processed_updated/{file[8:]}')
+    # list_of_files = s3.list_objects_v2(Bucket=bucket, Prefix='updated')
+    # number_of_files = list_of_files['KeyCount']
+    # for i in range(number_of_files):
+    #     file = list_of_files['Contents'][i]['Key']
+    #     s3.copy_object(
+    #         Bucket=bucket, CopySource=f'/{file}', Key=f'processed_updated/{file[8:]}')
 
 
-# move_processed_ingestion_data(s3)
+move_processed_ingestion_data(s3)
 
 
 def lambda_handler(event, context):
