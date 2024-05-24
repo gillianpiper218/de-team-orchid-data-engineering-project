@@ -8,7 +8,7 @@ resource "aws_cloudwatch_event_rule" "scheduler" {
 resource "aws_cloudwatch_event_rule" "processing_scheduler" {
     name = "processing_scheduler"
     description = "run processing lambda function every 7 minutes"
-    schedule_expression = "rate(2 minutes)"
+    schedule_expression = "rate(7 minutes)"
 }
 
 resource "aws_cloudwatch_event_target" "check_every_five_minutes" {
