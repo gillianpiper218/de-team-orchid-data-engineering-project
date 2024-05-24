@@ -585,7 +585,7 @@ class TestDeleteFilesFromUpdated:
 
 # check if any contents in updated, & if there isn't: ✔️
 # info logger saying nothing to update ✔️
-# if there is updated data:
+# if there is updated data: ✔️
 # run the delete function first, to strip duplicate files from updated
 # for the remaining contents in updated
 # if there's a table called xyz then
