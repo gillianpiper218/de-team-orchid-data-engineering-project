@@ -310,9 +310,39 @@ def delete_duplicates(bucket=INGESTION_S3_BUCKET_NAME):
     table_names = get_table_names()
     list_obj_response = s3.list_objects_v2(Bucket=bucket, Prefix="updated/")
     dict_list = list_obj_response["Contents"]
-    for dictionary in dict_list:
-        dictionary["Key"]
-    pass
+    dict_list_len = len(dict_list)
+    keys_to_be_deleted = []
+    sizes_and_date_dict = {}
+    for table in table_names:
+        pprint(sizes_and_date_dict)
+        sizes_and_date_dict = {}
+        for i in range(dict_list_len-1, -1, -1): 
+            if dict_list[i]["Key"][8:8+len(table[0])] == table[0]:
+                if dict_list[i]["Size"] not in sizes_and_date_dict:
+                    key = dict_list[i]["Key"]
+                    response = s3.get_object(Bucket=bucket, Key=key)
+                    response_json = response["Body"].read().decode("utf-8")
+                    response_list = json.loads(response_json)
+                    if response_list:
+                        last_updated_date = response_list[-1]["last_updated"]
+                        sizes_and_date_dict[dict_list[i]["Size"]] = last_updated_date
+                else:
+                    # key = dict_list[i]["Key"]
+                    # response = s3.get_object(Bucket=bucket, Key=key)
+                    # response_json = response["Body"].read().decode("utf-8")
+                    # response_list = json.loads(response_json)
+                    pass
+                    
+
+        
+
+    
+                
+        
+    
+    # for dictionary in dict_list:
+    #     if dictionary["Key"]
+    # pass
 
 
 if __name__ == "__main__":
