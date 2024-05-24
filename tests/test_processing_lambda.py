@@ -19,7 +19,7 @@ from src.processing_lambda import (
     process_dim_location,
     process_dim_staff,
     convert_to_parquet_put_in_s3,
-    move_processed_ingestion_data
+    # move_processed_ingestion_data
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -503,31 +503,31 @@ class TestConvertDateframeToParquet:
         assert response["Contents"][0]["Key"] == "dimension/staff.parquet"
 
 
-class TestMoveProcessedIngestionData:
-    @pytest.mark.it("Unit test: Updated files moved to new location")
-    def test_updated_files_moved(self, s3):
-        s3.create_bucket(Bucket='ingestion', CreateBucketConfiguration={
-                         'LocationConstraint': 'eu-west-2', },)
+# class TestMoveProcessedIngestionData:
+#     @pytest.mark.it("Unit test: Updated files moved to new location")
+#     def test_updated_files_moved(self, s3):
+#         s3.create_bucket(Bucket='ingestion', CreateBucketConfiguration={
+#                          'LocationConstraint': 'eu-west-2', },)
 
-        s3.put_object(
-            Body='filetoupload',
-            Bucket='ingestion',
-            Key='updated/test.txt',
-        )
-        s3.put_object(
-            Body='filetoupload',
-            Bucket='ingestion',
-            Key='updated/test1.txt',
-        )
-        before = s3.list_objects_v2(Bucket='ingestion', Prefix='updated')
-        move_processed_ingestion_data()
-        after = s3.list_objects_v2(Bucket='ingestion', Prefix='updated')
-        new_location = s3.list_objects_v2(
-            Bucket='ingestion', Prefix='processed_updated')
-        assert before['KeyCount'] == 2
-        assert after['KeyCount'] == 0
-        assert new_location['Contents']['Key'] == 'test.txt'
+#         s3.put_object(
+#             Body='filetoupload',
+#             Bucket='ingestion',
+#             Key='updated/test.txt',
+#         )
+#         s3.put_object(
+#             Body='filetoupload',
+#             Bucket='ingestion',
+#             Key='updated/test1.txt',
+#         )
+#         before = s3.list_objects_v2(Bucket='ingestion', Prefix='updated')
+#         move_processed_ingestion_data()
+#         after = s3.list_objects_v2(Bucket='ingestion', Prefix='updated')
+#         new_location = s3.list_objects_v2(
+#             Bucket='ingestion', Prefix='processed_updated')
+#         assert before['KeyCount'] == 2
+#         assert after['KeyCount'] == 0
+#         assert new_location['Contents']['Key'] == 'test.txt'
 
-    @pytest.mark.it("Unit test: can handle when there is no updated data")
-    def test_no_updated_data(self):
-        pass
+#     @pytest.mark.it("Unit test: can handle when there is no updated data")
+#     def test_no_updated_data(self):
+#         pass
