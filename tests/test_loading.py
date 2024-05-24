@@ -10,12 +10,13 @@ from pg8000 import DatabaseError, InterfaceError
 from datetime import datetime
 import logging
 import json
-
+import pandas as pd
 
 from src.loading_lambda import (
     connect_to_dw,
     retrieve_secret_credentials,
-    get_latest_parquet_file)
+    get_latest_parquet_file,
+)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ def aws_credentials():
 
 
 @pytest.fixture(scope="function")
-def s3(aws_credentials):
+def mock_s3(aws_credentials):
     with mock_aws():
         yield boto3.client("s3", region_name="eu-west-2")
 
@@ -41,6 +42,30 @@ def s3(aws_credentials):
 def secrets_manager_client(aws_credentials):
     with mock_aws():
         yield boto3.client("secretsmanager")
+
+
+# adding mock parquet file to put into a mock test bucket in mock aws/s3
+test_bucket = "test_bucket"
+
+
+@pytest.fixture(scope="function")
+def mock_s3_bucket(mock_s3):
+    mock_s3.create_bucket(
+        Bucket=test_bucket,
+        CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
+    )
+
+    data = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]}).to_parquet()
+    mock_s3.put_object(
+        Bucket=test_bucket,
+        Key="fact/sales_order-2024-05-24 14:35:22.parquet",
+        Body=data,
+    )
+    mock_s3.put_object(
+        Bucket=test_bucket, Key="dimension/date-2024-05-24 14:35:22.parquet", Body=data
+    )
+
+    yield mock_s3
 
 
 class TestRetrieveSecretCredentials:
@@ -90,21 +115,87 @@ class TestConnectToDatabase:
         assert "Error connecting to the database: Connection timed out" in caplog.text
 
 
-class TestGetLatestParquetFile:
-    @pytest.mark.it("Unit test: returns the latest parquet file in s3")
-    def test_get_latest_files(self, s3):
-        test_body = "hello"
-        bucket = 'test-bucket'
-        prefix = 'fact/sales_order/'
-        s3 = boto3.client('s3', region_name='us-east-1')
-        s3.create_bucket(Bucket=bucket)
-        files = [
-            'fact/sales_order/file_20240101.parquet',
-            'fact/sales_order/file_20240102.parquet',
-            'fact/sales_order/file_20240103.parquet'
-        ]
-        for file in files:
-            s3.put_object(Bucket=bucket, Key=file, Body=test_body)
-        latest_file = get_latest_parquet_file(bucket, prefix)
-        assert latest_file == ['fact/sales_order/file_20240103.parquet']
-   
+class TestGetLatestParquetFileWithPatch:
+    # using decorator patch on boto3 client
+    @patch("src.loading_lambda.boto3.client")
+    def test_get_latest_file_with_patch(self, mock_boto_3_client):
+        prefix = "dimension/"
+        mock_response = {
+            "IsTruncated": False,
+            "Contents": [
+                {
+                    "Key": "dimension/file1-2024-05-24 14:35:22.parquet",
+                    "LastModified": datetime(2015, 1, 1),
+                    "ETag": "string",
+                },
+                {
+                    "Key": "dimension/file2-2024-05-25 16:35:22.parquet",
+                    "LastModified": datetime(2022, 1, 1),
+                    "ETag": "string",
+                },
+            ],
+        }
+        # two return values needed, mock boto client is a func call, then for list_obj method
+        mock_boto_3_client.return_value.list_objects_v2.return_value = mock_response
+        result = get_latest_parquet_file(prefix, bucket=test_bucket)
+        expected = "dimension/file2-2024-05-25 16:35:22.parquet"
+        assert result == expected
+
+        mock_boto_3_client.return_value.list_objects_v2.assert_called_once_with(
+            Bucket=test_bucket, Prefix=prefix
+        )
+
+
+class TestGetLatestParquetFileKeyWithMockAws:
+    # using mock aws environment
+    def test_get_latest_file_with_mock_aws(self, mock_s3_bucket):
+        prefix = "dimension/"
+        latest_file_key = get_latest_parquet_file(bucket=test_bucket, prefix=prefix)
+        assert latest_file_key == "dimension/date-2024-05-24 14:35:22.parquet"
+
+    def test_no_files_found_error(self, mock_s3_bucket):
+        prefix = "nonexistent/"
+        with pytest.raises(FileNotFoundError) as f_exc_info:
+            get_latest_parquet_file(prefix=prefix, bucket=test_bucket)
+            assert (
+                str(f_exc_info)
+                == "No files have been found from test_bucket for prefix: nonexistent/"
+            )
+
+    def test_cw_logging_of_no_file_error(self, mock_s3_bucket, caplog):
+        prefix = "nonexistent/"
+        caplog.set_level(logging.ERROR)
+        with pytest.raises(FileNotFoundError):
+            get_latest_parquet_file(prefix=prefix, bucket=test_bucket)
+            assert (
+                "No files have been found from test_bucket for prefix: nonexistent/"
+                in caplog.text
+            )
+
+    def test_cw_logging_of_exception_error(self, mock_s3_bucket, caplog):
+        prefix = "exceptiontest/"
+        caplog.set_level(logging.ERROR)
+        with pytest.raises(FileNotFoundError):
+            get_latest_parquet_file(prefix=prefix, bucket=test_bucket)
+            assert (
+                "Error getting the latest parquet file from test_bucket for prefix exceptiontest/"
+                in caplog.text
+            )
+
+# class TestGetLatestParquetFile:
+#     @pytest.mark.it("Unit test: returns the latest parquet file in s3")
+#     def test_get_latest_files(self, s3):
+#         test_body = "hello"
+#         bucket = 'test-bucket'
+#         prefix = 'fact/sales_order/'
+#         s3 = boto3.client('s3', region_name='us-east-1')
+#         s3.create_bucket(Bucket=bucket)
+#         files = [
+#             'fact/sales_order/file_20240101.parquet',
+#             'fact/sales_order/file_20240102.parquet',
+#             'fact/sales_order/file_20240103.parquet'
+#         ]
+#         for file in files:
+#             s3.put_object(Bucket=bucket, Key=file, Body=test_body)
+#         latest_file = get_latest_parquet_file(bucket, prefix)
+#         assert latest_file == ['fact/sales_order/file_20240103.parquet']

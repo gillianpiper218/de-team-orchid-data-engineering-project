@@ -11,12 +11,14 @@ import boto3
 current_time = datetime.now()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-# S3 ingestion bucket
-S3_BUCKET_NAME = "de-team-orchid-totesys-processed"
+# S3 processed bucket
+S3_PROCESSED_BUCKET_NAME = "de-team-orchid-totesys-processed"
 # S3 client
-s3 = boto3.client("s3")
+s3_client = boto3.client("s3")
 # secret manager client
 secret_manager_client = boto3.client("secretsmanager")
+
+# from ingestion
 
 
 def retrieve_secret_credentials(secret_name="totesys_environment"):
@@ -34,18 +36,6 @@ def retrieve_secret_credentials(secret_name="totesys_environment"):
 
 
 def connect_to_dw(credentials=retrieve_secret_credentials()):
-    """Retrieves credentials from retrieve_secret_credentials(),
-    stores as new constants with the same variable names as within retrieve_secret_credentials(),
-    connects to the database,
-    logs the outcome of connection to the database when successfully or unsuccessfully connected.
-
-        Returns:
-                        conn (Connection): Connection to the database.
-
-        Errors:
-                        DatabaseError: pg8000 specific error which is related to the database itself, such as incorrect SQL or constraint violations. Logs failure in logger.
-                        InterfaceError: pg8000 specific error when connection failure with the database occurs. Logs failure in logger.
-    """
     DW_HOST = credentials[0]
     DW_PORT = credentials[3]
     DW_NAME = credentials[2]
@@ -73,9 +63,28 @@ def connect_to_dw(credentials=retrieve_secret_credentials()):
         raise
 
 
-def get_latest_parquet_file(bucket, prefix):
-    response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
-    print(response)
+def get_latest_parquet_file(prefix, bucket=S3_PROCESSED_BUCKET_NAME):
+    try:
+        s3_client = boto3.client("s3")
+        response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+        if "Contents" not in response:
+            raise FileNotFoundError(
+                f"No files have been found from {bucket} for prefix: {prefix}"
+            )
+        sorted_files = sorted(response["Contents"], key=lambda x: x["LastModified"])
+        latest_file_key = sorted_files[-1]["Key"]
+        return latest_file_key
+    except FileNotFoundError as fnfe:
+        logger.error(
+            f"No files have been found from {bucket} for prefix: {prefix}: {fnfe}"
+        )
+        raise
+    except Exception as e:
+        logger.error(
+            f"Error getting the latest parquet file from bucket {bucket} for prefix {prefix}: {e}"
+        )
+        raise
+
     # files = []
     # for obj in response['Contents']:
     #     if obj['Key'].endswith('.parquet'):
@@ -90,7 +99,3 @@ def get_latest_parquet_file(bucket, prefix):
 # - Response = s3.list_object_v2(bucket, prefix).
 
 # - Logic to sort timestamped responses and get lastest file key.
-
-
-if __name__ == "__main__":
-    get_latest_parquet_file(bucket="de-team-orchid-totesys-processed", prefix='fact/sales_order/')
