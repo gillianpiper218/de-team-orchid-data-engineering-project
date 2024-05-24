@@ -115,7 +115,7 @@ class TestConnectToDatabase:
         assert "Error connecting to the database: Connection timed out" in caplog.text
 
 
-class TestGetLatestParquetFileWithPatch:
+class TestGetLatestParquetFileKeyWithPatch:
     # using decorator patch on boto3 client
     @patch("src.loading_lambda.boto3.client")
     def test_get_latest_file_key_with_patch(self, mock_boto_3_client):
