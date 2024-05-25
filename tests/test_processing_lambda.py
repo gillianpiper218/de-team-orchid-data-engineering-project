@@ -601,12 +601,9 @@ class TestDeleteDuplicates:
         bucket.put_object(
             Bucket="test_bucket", Key="updated/payment.json", Body=test_body
         )
-        response = bucket.list_objects_v2(Bucket="test_bucket")
 
         delete_duplicates(bucket="test_bucket")
-
-        response = bucket.list_objects_v2(Bucket="test_bucket")
-
+        
         response = bucket.list_objects_v2(Bucket="test_bucket")
 
         assert response["KeyCount"] == 2
@@ -625,11 +622,9 @@ class TestMoveProcessedIngestionData:
         )
         updated_files = s3.list_objects_v2(
             Bucket="de-team-orchid-totesys-ingestion", Prefix='updated')
-        pprint(updated_files)
         move_processed_ingestion_data(s3)
         processed_files = s3.list_objects_v2(
             Bucket="de-team-orchid-totesys-ingestion", Prefix='processed_updated')
-        pprint(processed_files)
         assert updated_files['Contents'][0]['Key'][-8:
                                                    ] == processed_files['Contents'][0]['Key'][-8:]
 
