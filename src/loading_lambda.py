@@ -96,3 +96,12 @@ def read_parquet_from_s3(key, bucket=S3_PROCESSED_BUCKET_NAME):
     body_io = io.BytesIO(response["Body"].read())
     p_table = pq.read_table(body_io)
     return p_table
+
+#pseudocode for def load_dim_tables(): Accepts an argument, bucket, default value is the processing s3 bucket
+    #try and except block for client error
+        # create a list called dim_tables with names: dim_date, dim_staff, dim_counterparty, dim_currency, dim_design, dim_location.
+        # For each table_name in the dim_tables list:
+            # Create a variable prefix for 'f-stringing' with "dimension/" with the table_name.- CHECK IF THIS IS THE CORRECT PREFIX FOR PROCESSING BUCKET!
+            # Get the 'latest Parquet file key' using this prefix and the bucket name.
+            # 'Read the Parquet file from S3' assign to variable called p_dim_table.
+            # 'Load the p_dim_table into the data warehouse', called with the table_name and 2nd arg being p_table data
