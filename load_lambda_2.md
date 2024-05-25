@@ -59,6 +59,7 @@ def load_dim_tables(bucket)
 
     - A separate function that handles loading any table_data into the data warehouse, taking the table_data and 'table_name' as arguments.
 
+- Additonal note that may be needed: Check if the table file has been loaded with tagging, if yes, `continue` / skip that file, before invoking loading to dw function, then mark file as loaded.
 
 ## Get processed fact table from S3 bucket then load into warehouse function
 ```python
