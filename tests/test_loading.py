@@ -11,11 +11,14 @@ from datetime import datetime
 import logging
 import json
 import pandas as pd
+import pyarrow.parquet as pq
+import pyarrow as pa
 
 from src.loading_lambda import (
     connect_to_dw,
     retrieve_secret_credentials,
     get_latest_parquet_file_key,
+    read_parquet_from_s3,
 )
 
 
@@ -187,9 +190,11 @@ class TestGetLatestParquetFileKeyWithMockAws:
                 in caplog.text
             )
 
-    def test_get_latest_file_key_with_new_file_added_to_bucket(self, mock_s3_bucket):
+    def test_get_latest_file_key_with_new_file_added_to_bucket(
+        self, mock_s3, mock_s3_bucket
+    ):
         prefix = "dimension/"
-        mock_s3_bucket.put_object(
+        mock_s3.put_object(
             Bucket=test_bucket,
             Key="dimension/date-2024-05-24 20:05:22.parquet",
             Body="{}",
@@ -197,3 +202,19 @@ class TestGetLatestParquetFileKeyWithMockAws:
         result = get_latest_parquet_file_key(prefix, bucket=test_bucket)
         expected = "dimension/date-2024-05-24 20:05:22.parquet"
         assert result == expected
+
+
+class TestReadParquetFromS3:
+    @pytest.mark.it("unit test: check type of file in s3 is parquet")
+    def test_correct_file_type_of_objects_in_s3(self, mock_s3, mock_s3_bucket):
+        key = "fact/sales_order-2024-05-24 14:35:22.parquet"
+        # get obj metadata
+        response = mock_s3.head_object(Bucket=test_bucket, Key=key)
+        content_type = response["ContentType"]
+        assert content_type == "binary/octet-stream"
+
+    @pytest.mark.it("unit test: check correct file type after reading pq file from s3")
+    def test_pq_file_can_be_read_from_s3(self, mock_s3_bucket):
+        key = "fact/sales_order-2024-05-24 14:35:22.parquet"
+        result = read_parquet_from_s3(key, bucket=test_bucket)
+        assert isinstance(result, pa.Table)

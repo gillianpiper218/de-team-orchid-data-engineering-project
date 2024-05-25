@@ -6,6 +6,8 @@ import pg8000.native
 import logging
 import json
 import boto3
+import pyarrow.parquet as pq
+import io
 
 # timestamp for now
 current_time = datetime.now()
@@ -86,3 +88,11 @@ def get_latest_parquet_file_key(prefix, bucket=S3_PROCESSED_BUCKET_NAME):
             f"Error getting the latest parquet file from bucket {bucket} for prefix {prefix}: {e}"
         )
         raise
+
+
+def read_parquet_from_s3(key, bucket=S3_PROCESSED_BUCKET_NAME):
+    response = s3_client.get_object(Bucket=bucket, Key=key)
+    # read into bytesio object first
+    body_io = io.BytesIO(response["Body"].read())
+    p_table = pq.read_table(body_io)
+    return p_table
