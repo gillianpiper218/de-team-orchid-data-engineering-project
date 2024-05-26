@@ -266,3 +266,21 @@ class TestLoadFactTable:
         assert mock_get_latest_parquet_file_key.call_count == 1
         assert mock_read_parquet_from_s3.call_count == 1
         assert mock_load_to_data_warehouse.call_count == 1
+
+class TestLoadToDataWarehouse:
+    @pytest.mark.it("use patch to verify function calling")
+    def test_load_to_dw_func_calls(self):
+        pass
+
+    @pytest.mark.it("test correct logger messages are received")
+    def test_load_to_dw_logs(self):
+        pass
+
+class TestLambdaHandler:
+    @pytest.mark.it("use patch to verify function calling")
+    def test_lambda_handler_logs(self):
+        pass
+
+    @pytest.mark.it("test correct logger messages are received")
+    def test_lambda_handler_logs(self):
+        pass
