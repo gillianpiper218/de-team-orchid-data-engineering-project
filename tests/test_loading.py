@@ -278,7 +278,7 @@ class TestLoadToDataWarehouse:
 
 class TestLambdaHandler:
     @pytest.mark.it("use patch to verify function calling")
-    def test_lambda_handler_logs(self):
+    def test_lambda_handler_func_calls(self):
         pass
 
     @pytest.mark.it("test correct logger messages are received")
