@@ -51,6 +51,7 @@ def connect_to_dw(credentials=retrieve_secret_credentials()):
             database=DW_NAME,
             user=DW_USER,
             password=DW_PASSWORD,
+            # DW_SCHEMA?
         )
         logger.info("Connected to the database successfully")
 
@@ -97,11 +98,49 @@ def read_parquet_from_s3(key, bucket=S3_PROCESSED_BUCKET_NAME):
     p_table = pq.read_table(body_io)
     return p_table
 
-#pseudocode for def load_dim_tables(): Accepts an argument, bucket, default value is the processing s3 bucket
-    #try and except block for client error
-        # create a list called dim_tables with names: dim_date, dim_staff, dim_counterparty, dim_currency, dim_design, dim_location.
-        # For each table_name in the dim_tables list:
-            # Create a variable prefix for 'f-stringing' with "dimension/" with the table_name.- CHECK IF THIS IS THE CORRECT PREFIX FOR PROCESSING BUCKET!
-            # Get the 'latest Parquet file key' using this prefix and the bucket name.
-            # 'Read the Parquet file from S3' assign to variable called p_dim_table.
-            # 'Load the p_dim_table into the data warehouse', called with the table_name and 2nd arg being p_table data
+
+"""pseudocode for def load_dim_tables(): Accepts an argument, bucket, default value is the processing s3 bucket
+    try and except block for client error
+        create a list called dim_tables with names: dim_date, dim_staff, dim_counterparty, dim_currency, dim_design, dim_location.
+        For each table_name in the dim_tables list:
+            Create a variable prefix for 'f-stringing' with "dimension/" with the table_name.- CHECK IF THIS IS THE CORRECT PREFIX FOR PROCESSING BUCKET!
+            Get the 'latest Parquet file key' using this prefix and the bucket name.
+            'Read the Parquet file from S3' assign to variable called p_dim_table.
+            'Load the p_dim_table into the data warehouse', called with the table_name and 2nd arg being p_table data"""
+
+
+def load_dim_tables(bucket=S3_PROCESSED_BUCKET_NAME):
+
+    dimension_tables = [
+        "dim_date",
+        "dim_staff",
+        "dim_counterparty",
+        "dim_currency",
+        "dim_design",
+        "dim_location",
+    ]
+
+    for dim_table_name in dimension_tables:
+        dim_prefix = f"dimension/{dim_table_name}"  # confirm s3 processing bucket keys
+        dim_key = get_latest_parquet_file_key(dim_prefix, bucket=bucket)
+        p_dim_table_data = read_parquet_from_s3(dim_key, bucket=bucket)
+        load_to_data_warehouse(dim_table_name, p_dim_table_data)
+
+
+def load_fact_table(bucket=S3_PROCESSED_BUCKET_NAME):
+    fact_table_name = "fact_sales_order"
+    fact_prefix = "fact/fact_sales_order"  # confirm s3 processing bucket keys
+    fact_key = get_latest_parquet_file_key(fact_prefix, bucket=bucket)
+    p_fact_table_data = read_parquet_from_s3(fact_key, bucket=bucket)
+    load_to_data_warehouse(fact_table_name, p_fact_table_data)
+
+
+def load_to_data_warehouse(table_name, table_data):
+    pass
+
+
+# def lambda_handler(event, context):
+#     """load_dim_tables()
+#     load_fact_table()
+#     error handling"""
+#     pass

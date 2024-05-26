@@ -19,6 +19,8 @@ from src.loading_lambda import (
     retrieve_secret_credentials,
     get_latest_parquet_file_key,
     read_parquet_from_s3,
+    load_dim_tables,
+    load_fact_table,
 )
 
 
@@ -218,3 +220,49 @@ class TestReadParquetFromS3:
         key = "fact/sales_order-2024-05-24 14:35:22.parquet"
         result = read_parquet_from_s3(key, bucket=test_bucket)
         assert isinstance(result, pa.Table)
+
+
+class TestLoadDimTables:
+    @pytest.mark.it("use patches/mocking to check func is loading six dim tables")
+    @patch("src.loading_lambda.load_to_data_warehouse")
+    @patch("src.loading_lambda.read_parquet_from_s3")
+    @patch(
+        "src.loading_lambda.get_latest_parquet_file_key",
+        return_value="dimension/dim_date-2024-05-24 14:35:22.parquet",
+    )
+    def test_load_dim_tables(
+        self,
+        mock_get_latest_parquet_file_key,
+        mock_read_parquet_from_s3,
+        mock_load_to_data_warehouse,
+    ):
+
+        load_dim_tables(bucket=test_bucket)
+
+        # checking funcs called the expected no of times
+        assert mock_get_latest_parquet_file_key.call_count == 6
+        assert mock_read_parquet_from_s3.call_count == 6
+        assert mock_load_to_data_warehouse.call_count == 6
+
+
+class TestLoadFactTable:
+    @pytest.mark.it("use patches/mocking to check func is loading one fact tables")
+    @patch("src.loading_lambda.load_to_data_warehouse")
+    @patch("src.loading_lambda.read_parquet_from_s3")
+    @patch(
+        "src.loading_lambda.get_latest_parquet_file_key",
+        return_value="dimension/dim_design-2025-05-24 14:35:22.parquet",
+    )
+    def test_load_fact_table(
+        self,
+        mock_get_latest_parquet_file_key,
+        mock_read_parquet_from_s3,
+        mock_load_to_data_warehouse,
+    ):
+
+        load_fact_table(bucket=test_bucket)
+
+        # checking funcs called the expected no of times
+        assert mock_get_latest_parquet_file_key.call_count == 1
+        assert mock_read_parquet_from_s3.call_count == 1
+        assert mock_load_to_data_warehouse.call_count == 1
