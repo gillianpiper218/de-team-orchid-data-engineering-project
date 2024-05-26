@@ -121,7 +121,7 @@ def load_dim_tables(bucket=S3_PROCESSED_BUCKET_NAME):
     ]
 
     for dim_table_name in dimension_tables:
-        dim_prefix = f"dimension/{dim_table_name}"  # confirm s3 processing bucket keys
+        dim_prefix = f"dimension/{dim_table_name[4:]}"  # confirm s3 processing bucket keys
         dim_key = get_latest_parquet_file_key(dim_prefix, bucket=bucket)
         p_dim_table_data = read_parquet_from_s3(dim_key, bucket=bucket)
         load_to_data_warehouse(dim_table_name, p_dim_table_data)
@@ -129,7 +129,7 @@ def load_dim_tables(bucket=S3_PROCESSED_BUCKET_NAME):
 
 def load_fact_table(bucket=S3_PROCESSED_BUCKET_NAME):
     fact_table_name = "fact_sales_order"
-    fact_prefix = "fact/fact_sales_order"  # confirm s3 processing bucket keys
+    fact_prefix = "fact/sales_order"  # confirm s3 processing bucket keys
     fact_key = get_latest_parquet_file_key(fact_prefix, bucket=bucket)
     p_fact_table_data = read_parquet_from_s3(fact_key, bucket=bucket)
     load_to_data_warehouse(fact_table_name, p_fact_table_data)
