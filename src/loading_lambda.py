@@ -105,6 +105,11 @@ def read_parquet_from_s3(key, bucket=S3_PROCESSED_BUCKET_NAME):
         if ce.response["Error"]["Code"] == "NoSuchKey":
             logger.error(f"Key: {key} does not exist: {ce}")
             raise
+    except Exception as e:
+        logger.error(
+            f"Error reading parquet file from bucket {bucket} with key {key}: {e}"
+        )
+        raise
 
 
 """pseudocode for def load_dim_tables(): Accepts an argument, bucket, default value is the processing s3 bucket
