@@ -139,15 +139,11 @@ def load_fact_table(bucket=S3_PROCESSED_BUCKET_NAME):
 
 
 def load_to_data_warehouse(table_data, table_name):
-    """ try and except for dw connect
-            conn...
-            cursor...
-            try and excepts client error handling for:
-                sql querying to insert into dw
-                logger.info success
-                logger.info error
-
-        """
+    """
+    loads data into the data warehouse table.
+    - table_data: pyarrow table containing the data to load.
+    - table_name: name of the target table in the data warehouse.
+    """
     try:
         conn = connect_to_dw()
         cursor = conn.cursor()
@@ -155,13 +151,12 @@ def load_to_data_warehouse(table_data, table_name):
             with io.BytesIO() as buffer:
                 pq.write_table(table_data, buffer, version="2.6")
                 buffer.seek(0)
-                # pq.read_table(buffer)  # this makes the process hang
                 sql_copy_query = f"COPY {table_name} FROM STDIN WITH (FORMAT 'parquet')"
                 cursor.execute(sql_copy_query, stream=buffer)
                 sleep(2.0)
                 conn.commit()
-                logger.info(f" Successfully Loaded data into {table_name}")
-        except ClientError as c :
+                logger.info(f" Successfully loaded data into {table_name}")
+        except Exception as c :
             logger.error(f"Error during loading {table_name}: {c}")
             conn.rollback()
             raise

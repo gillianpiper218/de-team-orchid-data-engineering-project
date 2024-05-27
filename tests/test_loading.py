@@ -1,7 +1,7 @@
 import unittest
 from unittest import mock
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, Mock, MagicMock
 from moto import mock_aws
 import os
 import boto3
@@ -21,6 +21,7 @@ from src.loading_lambda import (
     read_parquet_from_s3,
     load_dim_tables,
     load_fact_table,
+    load_to_data_warehouse
 )
 
 
@@ -269,13 +270,64 @@ class TestLoadFactTable:
 
 class TestLoadToDataWarehouse:
     @pytest.mark.it("use patch to verify function calling")
-    @patch()
-    def test_load_to_dw_func_calls(self):
-        pass
+    @patch('src.loading_lambda.connect_to_dw')
+    def test_load_to_data_warehouse_func_calls(self, mock_connect_to_dw):
+        # create mocks for conn and cursor
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_connect_to_dw.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
 
-    @pytest.mark.it("test correct logger messages are received")
-    def test_load_to_dw_logs(self):
-        pass
+        # create mock pyarrow table
+        data = {'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']}
+        table_data = pa.table(data)
+
+        # call func with mock table_data and table_name
+        load_to_data_warehouse(table_data, "test_table_name")
+
+        mock_conn.commit.assert_called_once()
+        mock_cursor.close.assert_called_once()
+        mock_conn.close.assert_called_once()
+    
+    @pytest.mark.it("test correct logger info message received")
+    @patch('src.loading_lambda.connect_to_dw')
+    def test_load_to_dw_info_logs(self, mock_connect_to_dw, caplog):
+        # create mocks for conn and cursor
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_connect_to_dw.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+
+        # create mock pyarrow table
+        data = {'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']}
+        table_data = pa.table(data)
+
+        # call func with mock table_data and table_name
+        load_to_data_warehouse(table_data, "test_table_name")
+        expected = "Successfully loaded data into test_table_name"
+        assert expected in caplog.text
+
+    @pytest.mark.it("test correct logger error message received")
+    @patch('src.loading_lambda.connect_to_dw')
+    def test_load_to_dw_error_logs(self, mock_connect_to_dw, caplog):
+        # create mocks for conn and cursor
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_connect_to_dw.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+
+        # create mock pyarrow table
+        data = {'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']}
+        table_data = pa.table(data)
+
+        # mocks an error
+        mock_cursor.execute.side_effect = Exception("Test Exception")
+
+        # call func with mock table_data and table_name
+        with pytest.raises(Exception):
+            load_to_data_warehouse(table_data, "wrong_test_table_name")
+            err_msg = "Error during loading wrong_test_table_name"
+            assert err_msg in caplog.text
 
 class TestLambdaHandler:
     @pytest.mark.it("use patch to verify function calling")
