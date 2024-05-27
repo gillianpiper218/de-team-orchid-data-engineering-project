@@ -3,9 +3,10 @@ import pandas as pd
 from datetime import datetime
 import logging
 import json
-# from pprint import pprint
+from pprint import pprint
 import boto3
 from io import BytesIO
+from src.ingestion_lambda import get_table_names
 from botocore.exceptions import ClientError
 import re
 
@@ -317,6 +318,34 @@ def convert_to_parquet_put_in_s3(s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME):
     s3.put_object(Bucket=bucket, Key=key, Body=out_buffer.getvalue())
 
 
+def delete_duplicates(bucket=INGESTION_S3_BUCKET_NAME):
+    table_names = get_table_names()
+    list_obj_response = s3.list_objects_v2(Bucket=bucket, Prefix="updated/")
+    dict_list = list_obj_response["Contents"]
+    dict_list_len = len(dict_list)
+    keys_to_be_deleted = []
+    sizes_and_date_dict = {}
+    for table in table_names:
+        sizes_and_date_dict = {}
+        for i in range(dict_list_len - 1, -1, -1):
+            key = dict_list[i]["Key"]
+            response = s3.get_object(Bucket=bucket, Key=key)
+            response_json = response["Body"].read().decode("utf-8")
+            response_list = json.loads(response_json)
+            if response_list:
+                last_updated_date = response_list[-1]["last_updated"]
+                if dict_list[i]["Key"][8 : 8 + len(table[0])] == table[0]:
+                    if dict_list[i]["Size"] not in sizes_and_date_dict:
+                        sizes_and_date_dict[dict_list[i]["Size"]] = [last_updated_date]
+                    elif dict_list[i]["Size"] in sizes_and_date_dict:
+                        if last_updated_date not in sizes_and_date_dict[dict_list[i]["Size"]]:
+                            sizes_and_date_dict[dict_list[i]["Size"]].append(last_updated_date)
+                        else:
+                            keys_to_be_deleted.append(key)
+    for obj_key in keys_to_be_deleted:
+        s3.delete_object(Bucket=bucket, Key=obj_key)
+
+        
 def move_processed_ingestion_data(s3, bucket=INGESTION_S3_BUCKET_NAME):
     try:
         list_of_files = s3.list_objects_v2(Bucket=bucket, Prefix='updated')
@@ -417,3 +446,11 @@ if __name__ == "__main__":
     event = {}
     context = {}
     lambda_handler(event, context, bucket_name=INGESTION_S3_BUCKET_NAME)
+
+if __name__ == "__main__":
+    delete_duplicates()
+
+# 311: 22/5/24 safe
+# 311: 22/5/24 safe
+
+# {311: [23/5/24, 22/5/24], 209: 23/6/24}
