@@ -386,7 +386,8 @@ def delete_files_from_updated_after_handling(s3, bucket_name=INGESTION_S3_BUCKET
 def lambda_handler(event, context, bucket_name=INGESTION_S3_BUCKET_NAME):
     response = s3.list_objects_v2(Bucket=bucket_name, Prefix='updated/')
 
-    if response['KeyCount'] == 1:
+    if not response:
+        # print(response)
         logger.info("No new updated data to process")
     if response['KeyCount'] > 1:
         try:
@@ -405,42 +406,48 @@ def lambda_handler(event, context, bucket_name=INGESTION_S3_BUCKET_NAME):
                         bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
                     convert_to_parquet_put_in_s3(
                         s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
+                    logger.info("sales_order data processed")
                 if match == ['counterparty']:
                     df, key = process_dim_counterparty(
                         bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
                     convert_to_parquet_put_in_s3(
                         s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
+                    logger.info("counterparty data processed")
                 if match == ['currency']:
                     df, key = process_dim_currency(
                         bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
                     convert_to_parquet_put_in_s3(
                         s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
+                    logger.info("currency data processed")
                 if match == ['date']:
                     df, key = process_dim_date(
                         bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
                     convert_to_parquet_put_in_s3(
                         s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
+                    logger.info("date data processed")
                 if match == ['design']:
                     df, key = process_dim_design(
                         bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
                     convert_to_parquet_put_in_s3(
                         s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
+                    logger.info("design data processed")
                 if match == ['location']:
                     df, key = process_dim_location(
                         bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
                     convert_to_parquet_put_in_s3(
                         s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
+                    logger.info("location data processed")
                 if match == ['staff']:
                     df, key = process_dim_staff(
                         bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
                     convert_to_parquet_put_in_s3(
                         s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
-        
+                    logger.info("staff data processed")
                 move_processed_ingestion_data(s3, bucket=INGESTION_S3_BUCKET_NAME)
                 delete_files_from_updated_after_handling(s3, bucket_name=INGESTION_S3_BUCKET_NAME)
-        except Exception:
-            raise
-            # logger.error(f"Error in Lambda execution: {e}")
+        except Exception as e:
+            
+            logger.error(f"Error in Lambda execution: {e}")
     else:
         logger.info('No files to be processed')
 
