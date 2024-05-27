@@ -2,6 +2,8 @@ import pytest
 from moto import mock_aws
 import os
 import boto3
+from unittest import mock
+from unittest.mock import patch
 from pg8000 import DatabaseError, InterfaceError
 from botocore.exceptions import ClientError
 from pprint import pprint
@@ -22,10 +24,15 @@ from src.processing_lambda import (
     convert_to_parquet_put_in_s3,
     delete_duplicates,
     move_processed_ingestion_data,
-    delete_files_from_updated_after_handling
+    delete_files_from_updated_after_handling,
+    lambda_handler
 )
 
 LOGGER = logging.getLogger(__name__)
+
+
+class DummyContext:
+    pass
 
 
 @pytest.fixture(scope="function")
@@ -676,3 +683,69 @@ class TestDeleteFilesFromUpdated:
                          'LocationConstraint': 'eu-west-2', },)
         delete_files_from_updated_after_handling(s3)
         assert "No files to be moved" in caplog.text
+
+
+# check if any contents in updated, & if there isn't: ✔️
+# info logger saying nothing to update ✔️
+# if there is updated data: ✔️
+# run the delete function first, to strip duplicate files from updated
+# for the remaining contents in updated
+# if there's a table called xyz then
+#   run the function to access updated data for xyz
+#   run the convert to parquet and put in S3 processed function
+# elif  abc, then run abc, onvert to parquet, put in s3 processed
+# elif  def, then run def etc etc
+# finally do the copy/delete to clean up updated
+# logger.info when all jobs done
+
+
+class TestProcessingLambdaHandler:
+
+    @pytest.mark.it("unit test: test that no updates gives correct log message")
+    def test_no_updates_exits_handler_with_correct_info(self, s3, caplog):
+        context = DummyContext()
+        event = {}
+        s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
+                         'LocationConstraint': 'eu-west-2', },)
+        folder_name = "updated"
+        s3.put_object(Bucket="de-team-orchid-totesys-ingestion",
+                      Key=(folder_name+'/'))
+
+        lambda_handler(event, context)
+        assert (
+            "No new updated data to process"
+            in caplog.text
+        )
+
+    @pytest.mark.it("unit test: correct log info message after delete duplicates ran")
+    def test_delete_duplicates_info_message(self, s3, caplog):
+        pass
+        # context = DummyContext()
+        # event = {}
+
+        # s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
+        #                  'LocationConstraint': 'eu-west-2', },)
+        # folder_name = "updated"
+        # s3.put_object(Bucket="de-team-orchid-totesys-ingestion",
+        #               Key=(folder_name+'/'))
+        # s3.put_object(Bucket="de-team-orchid-totesys-ingestion",
+        #               Key=("updated/hello.txt"))
+        # lambda_handler(event, context)
+        # assert ("The Delete function has successfully been ran" in caplog.text)
+
+    @pytest.mark.it("unit test: test that correct function runs when there is updated data")
+    def test_correct_function_runs_for_updated_data(self, s3, caplog):
+        context = DummyContext()
+        event = {}
+        s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
+                         'LocationConstraint': 'eu-west-2', },)
+        s3.put_object(Bucket="de-team-orchid-totesys-ingestion",
+                      Key='updated/design-2024-05-21 14:40:09.122625.json')
+        
+        lambda_handler(event, context)
+        
+        assert ("Design table processed" in caplog.text)
+        contents = s3.list_objects_v2(
+            Bucket="de-team-orchid-totesys-processed", Prefix='dimension/')
+        print(contents)
+        assert contents['Contents']['Key'] == 'design.parquet'
