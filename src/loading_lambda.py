@@ -95,11 +95,16 @@ def get_latest_parquet_file_key(prefix, bucket=S3_PROCESSED_BUCKET_NAME):
 
 
 def read_parquet_from_s3(key, bucket=S3_PROCESSED_BUCKET_NAME):
-    response = s3_client.get_object(Bucket=bucket, Key=key)
-    # read into bytesio object first
-    body_io = io.BytesIO(response["Body"].read())
-    p_table = pq.read_table(body_io)
-    return p_table
+    try:
+        response = s3_client.get_object(Bucket=bucket, Key=key)
+        # read into bytesio object first
+        body_io = io.BytesIO(response["Body"].read())
+        p_table = pq.read_table(body_io)
+        return p_table
+    except ClientError as ce:
+        if ce.response["Error"]["Code"] == "NoSuchKey":
+            logger.error(f"Key: {key} does not exist: {ce}")
+            raise
 
 
 """pseudocode for def load_dim_tables(): Accepts an argument, bucket, default value is the processing s3 bucket
@@ -158,15 +163,15 @@ def load_to_data_warehouse(table_data, table_name):
                 sleep(2.0)
                 conn.commit()
                 logger.info(f" Successfully loaded data into {table_name}")
-        except Exception as c:
-            logger.error(f"Error during loading {table_name}: {c}")
+        except Exception as e:
+            logger.error(f"Error during loading {table_name}: {e}")
             conn.rollback()
             raise
         finally:
             cursor.close()
             conn.close()
-    except Exception as e:
-        logger.error(f"Failed to connect to dw and load into {table_name}: {e}")
+    except Exception as ex:
+        logger.error(f"Failed to connect to dw and load into {table_name}: {ex}")
         raise
 
 
