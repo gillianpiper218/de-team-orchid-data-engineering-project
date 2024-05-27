@@ -269,6 +269,7 @@ class TestLoadFactTable:
 
 class TestLoadToDataWarehouse:
     @pytest.mark.it("use patch to verify function calling")
+    @patch()
     def test_load_to_dw_func_calls(self):
         pass
 
