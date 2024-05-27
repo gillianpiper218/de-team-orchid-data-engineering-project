@@ -21,11 +21,16 @@ from src.loading_lambda import (
     read_parquet_from_s3,
     load_dim_tables,
     load_fact_table,
-    load_to_data_warehouse
+    load_to_data_warehouse,
+    lambda_handler,
 )
 
 
 LOGGER = logging.getLogger(__name__)
+
+
+class DummyContext:
+    pass
 
 
 @pytest.fixture(scope="function")
@@ -268,9 +273,10 @@ class TestLoadFactTable:
         assert mock_read_parquet_from_s3.call_count == 1
         assert mock_load_to_data_warehouse.call_count == 1
 
+
 class TestLoadToDataWarehouse:
     @pytest.mark.it("use patch to verify function calling")
-    @patch('src.loading_lambda.connect_to_dw')
+    @patch("src.loading_lambda.connect_to_dw")
     def test_load_to_data_warehouse_func_calls(self, mock_connect_to_dw):
         # create mocks for conn and cursor
         mock_conn = MagicMock()
@@ -279,7 +285,7 @@ class TestLoadToDataWarehouse:
         mock_conn.cursor.return_value = mock_cursor
 
         # create mock pyarrow table
-        data = {'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']}
+        data = {"col1": [1, 2, 3], "col2": ["a", "b", "c"]}
         table_data = pa.table(data)
 
         # call func with mock table_data and table_name
@@ -288,9 +294,9 @@ class TestLoadToDataWarehouse:
         mock_conn.commit.assert_called_once()
         mock_cursor.close.assert_called_once()
         mock_conn.close.assert_called_once()
-    
+
     @pytest.mark.it("test correct logger info message received")
-    @patch('src.loading_lambda.connect_to_dw')
+    @patch("src.loading_lambda.connect_to_dw")
     def test_load_to_dw_info_logs(self, mock_connect_to_dw, caplog):
         # create mocks for conn and cursor
         mock_conn = MagicMock()
@@ -299,7 +305,7 @@ class TestLoadToDataWarehouse:
         mock_conn.cursor.return_value = mock_cursor
 
         # create mock pyarrow table
-        data = {'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']}
+        data = {"col1": [1, 2, 3], "col2": ["a", "b", "c"]}
         table_data = pa.table(data)
 
         # call func with mock table_data and table_name
@@ -308,7 +314,7 @@ class TestLoadToDataWarehouse:
         assert expected in caplog.text
 
     @pytest.mark.it("test correct logger error message received")
-    @patch('src.loading_lambda.connect_to_dw')
+    @patch("src.loading_lambda.connect_to_dw")
     def test_load_to_dw_error_logs(self, mock_connect_to_dw, caplog):
         # create mocks for conn and cursor
         mock_conn = MagicMock()
@@ -317,7 +323,7 @@ class TestLoadToDataWarehouse:
         mock_conn.cursor.return_value = mock_cursor
 
         # create mock pyarrow table
-        data = {'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']}
+        data = {"col1": [1, 2, 3], "col2": ["a", "b", "c"]}
         table_data = pa.table(data)
 
         # mocks an error
@@ -325,15 +331,31 @@ class TestLoadToDataWarehouse:
 
         # call func with mock table_data and table_name
         with pytest.raises(Exception):
-            load_to_data_warehouse(table_data, "wrong_test_table_name")
-            err_msg = "Error during loading wrong_test_table_name"
+            load_to_data_warehouse(table_data, "test_table_name")
+            err_msg = "Error during loading test_table_name"
             assert err_msg in caplog.text
+
 
 class TestLambdaHandler:
     @pytest.mark.it("use patch to verify function calling")
-    def test_lambda_handler_func_calls(self):
-        pass
+    @patch("src.loading_lambda.load_fact_table")
+    @patch("src.loading_lambda.load_dim_tables")
+    def test_lambda_handler_func_calls(self, mock_dim_tables, mock_fact_table):
+        event = {}
+        context = DummyContext()
+        lambda_handler(event, context)
+
+        mock_dim_tables.assert_called_once()
+        mock_fact_table.assert_called_once()
 
     @pytest.mark.it("test correct logger messages are received")
-    def test_lambda_handler_logs(self):
-        pass
+    def test_lambda_handler_logs(self, caplog):
+        with patch(
+            "src.loading_lambda.load_dim_tables",
+            side_effect=Exception("Test Exception"),
+        ):
+            context = DummyContext()
+            event = {}
+            with pytest.raises(Exception):
+                lambda_handler(event, context)
+                assert "Error in loading lambda execution" in caplog.text

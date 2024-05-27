@@ -124,7 +124,9 @@ def load_dim_tables(bucket=S3_PROCESSED_BUCKET_NAME):
     ]
 
     for dim_table_name in dimension_tables:
-        dim_prefix = f"dimension/{dim_table_name[4:]}"  # confirm s3 processing bucket keys
+        dim_prefix = (
+            f"dimension/{dim_table_name[4:]}"  # confirm s3 processing bucket keys
+        )
         dim_key = get_latest_parquet_file_key(dim_prefix, bucket=bucket)
         p_dim_table_data = read_parquet_from_s3(dim_key, bucket=bucket)
         load_to_data_warehouse(p_dim_table_data, dim_table_name)
@@ -156,7 +158,7 @@ def load_to_data_warehouse(table_data, table_name):
                 sleep(2.0)
                 conn.commit()
                 logger.info(f" Successfully loaded data into {table_name}")
-        except Exception as c :
+        except Exception as c:
             logger.error(f"Error during loading {table_name}: {c}")
             conn.rollback()
             raise
@@ -169,7 +171,9 @@ def load_to_data_warehouse(table_data, table_name):
 
 
 def lambda_handler(event, context):
-    """load_dim_tables()
-    load_fact_table()
-    error handling"""
-    pass
+    try:
+        load_dim_tables()
+        load_fact_table()
+    except Exception as e:
+        logger.error(f"Error in loading lambda execution: {e}")
+        raise
