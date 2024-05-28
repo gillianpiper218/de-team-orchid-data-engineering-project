@@ -520,7 +520,7 @@ class TestDeleteDuplicates:
     def test_non_duplicates_size(self, s3, bucket):
         with open("data/test_data/staff.json", "r", encoding="utf-8") as json_file:
             staff = json.load(json_file)
-            test_body = json.dumps(staff["staff"])
+            test_body = json.dumps(staff)
         bucket.put_object(
             Bucket="test_bucket", Key="updated/staff.json", Body=test_body
         )
@@ -555,7 +555,7 @@ class TestDeleteDuplicates:
     def test_non_duplicates(self, s3, bucket):
         with open("data/test_data/staff.json", "r", encoding="utf-8") as json_file:
             staff = json.load(json_file)
-            test_body = json.dumps(staff["staff"])
+            test_body = json.dumps(staff)
         bucket.put_object(
             Bucket="test_bucket", Key="updated/staff.json", Body=test_body
         )
@@ -588,7 +588,7 @@ class TestDeleteDuplicates:
     def test_delete_duplicates(self, s3, bucket):
         with open("data/test_data/staff.json", "r", encoding="utf-8") as json_file:
             staff = json.load(json_file)
-            test_body = json.dumps(staff["staff"])
+            test_body = json.dumps(staff)
         bucket.put_object(
             Bucket="test_bucket", Key="updated/staff.json", Body=test_body
         )
@@ -685,18 +685,7 @@ class TestDeleteFilesFromUpdated:
         assert "No files to be moved" in caplog.text
 
 
-# check if any contents in updated, & if there isn't: ✔️
-# info logger saying nothing to update ✔️
-# if there is updated data: ✔️
-# run the delete function first, to strip duplicate files from updated
-# for the remaining contents in updated
-# if there's a table called xyz then
-#   run the function to access updated data for xyz
-#   run the convert to parquet and put in S3 processed function
-# elif  abc, then run abc, onvert to parquet, put in s3 processed
-# elif  def, then run def etc etc
-# finally do the copy/delete to clean up updated
-# logger.info when all jobs done
+
 
 
 class TestProcessingLambdaHandler:
@@ -707,13 +696,13 @@ class TestProcessingLambdaHandler:
         event = {}
         s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
                          'LocationConstraint': 'eu-west-2', },)
-        folder_name = "updated"
-        s3.put_object(Bucket="de-team-orchid-totesys-ingestion",
-                      Key=(folder_name+'/'))
+        s3.put_object(Bucket="de-team-orchid-totesys-ingestion", Key='baseline/')
 
+        response = s3.list_objects_v2(Bucket="de-team-orchid-totesys-ingestion")
         lambda_handler(event, context)
+        assert 'updated/' not in response['Contents'][0]['Key']
         assert (
-            "No new updated data to process"
+            'No files to be processed'
             in caplog.text
         )
 
@@ -739,12 +728,18 @@ class TestProcessingLambdaHandler:
         event = {}
         s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
                          'LocationConstraint': 'eu-west-2', },)
+        
+        with open("data/test_data/design.json", "r", encoding="utf-8") as json_file:
+            design = json.load(json_file)
+            test_body = json.dumps(design)
+            print(test_body)
         s3.put_object(Bucket="de-team-orchid-totesys-ingestion",
-                      Key='updated/design-2024-05-21 14:40:09.122625.json')
+                      Key='updated/design-2024-05-21 14:40:09.122625.json',
+                      Body=test_body)
         
         lambda_handler(event, context)
         
-        assert ("Design table processed" in caplog.text)
+        assert "design data processed" in caplog.text
         contents = s3.list_objects_v2(
             Bucket="de-team-orchid-totesys-processed", Prefix='dimension/')
         print(contents)

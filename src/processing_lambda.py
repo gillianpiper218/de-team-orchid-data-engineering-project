@@ -249,7 +249,7 @@ def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     key = get_object_key(table_name="design", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     design_json = obj["Body"].read().decode("utf-8")
-    design_list = json.loads(design_json)["design"]
+    design_list = json.loads(design_json)
     df = pd.DataFrame(design_list)
     return_df = remove_created_at_and_last_updated(df)
     key = "dimension/design.parquet"
@@ -295,7 +295,7 @@ def process_dim_staff(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     key = get_object_key(table_name="staff", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     staff_json = obj["Body"].read().decode("utf-8")
-    staff_list = json.loads(staff_json)["staff"]
+    staff_list = json.loads(staff_json)
     df = pd.DataFrame(staff_list)
     return_df = remove_created_at_and_last_updated(df)
     key = "dimension/staff.parquet"
@@ -386,71 +386,82 @@ def delete_files_from_updated_after_handling(s3, bucket_name=INGESTION_S3_BUCKET
 def lambda_handler(event, context, bucket_name=INGESTION_S3_BUCKET_NAME):
     response = s3.list_objects_v2(Bucket=bucket_name, Prefix='updated/')
 
-    if response['KeyCount'] == 1:
+    if not response:
+        # print(response)
         logger.info("No new updated data to process")
     if response['KeyCount'] > 1:
         try:
 
-            # delete_duplicates()
-            # logger.info('The Delete function has successfully been ran')
+            delete_duplicates()
+            logger.info('The delete function ran successfully')
             list_of_files = s3.list_objects_v2(
                 Bucket=bucket_name, Prefix='updated')
             number_of_files = list_of_files['KeyCount']
-            if number_of_files > 0:
-                for i in range(number_of_files):
-                    key_name = list_of_files['Contents'][i]['Key'][8:]
-                    pattern = re.compile(r'^[A-Za-z]+')
-                    match = pattern.findall(key_name)
-                    if match == ['sales']:
-                        df, key = process_fact_sales_order(
-                            bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
-                        convert_to_parquet_put_in_s3(
-                            s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
-                    if match == ['counterparty']:
-                        df, key = process_dim_counterparty(
-                            bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
-                        convert_to_parquet_put_in_s3(
-                            s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
-                    if match == ['currency']:
-                        df, key = process_dim_currency(
-                            bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
-                        convert_to_parquet_put_in_s3(
-                            s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
-                    if match == ['date']:
-                        df, key = process_dim_date(
-                            bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
-                        convert_to_parquet_put_in_s3(
-                            s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
-                    if match == ['design']:
-                        df, key = process_dim_design(
-                            bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
-                        convert_to_parquet_put_in_s3(
-                            s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
-                    if match == ['location']:
-                        df, key = process_dim_location(
-                            bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
-                        convert_to_parquet_put_in_s3(
-                            s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
-                    if match == ['staff']:
-                        df, key = process_dim_staff(
-                            bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
-                        convert_to_parquet_put_in_s3(
-                            s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
+            for i in range(number_of_files):
+                key_name = list_of_files['Contents'][i]['Key'][8:]
+                pattern = re.compile(r'^[A-Za-z]+')
+                match = pattern.findall(key_name)
+                if match == ['sales']:
+                    df, key = process_fact_sales_order(
+                        bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
+                    convert_to_parquet_put_in_s3(
+                        s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
+                    logger.info("sales_order data processed")
+                if match == ['counterparty']:
+                    df, key = process_dim_counterparty(
+                        bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
+                    convert_to_parquet_put_in_s3(
+                        s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
+                    logger.info("counterparty data processed")
+                if match == ['currency']:
+                    df, key = process_dim_currency(
+                        bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
+                    convert_to_parquet_put_in_s3(
+                        s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
+                    logger.info("currency data processed")
+                if match == ['date']:
+                    df, key = process_dim_date(
+                        bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
+                    convert_to_parquet_put_in_s3(
+                        s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
+                    logger.info("date data processed")
+                if match == ['design']:
+                    df, key = process_dim_design(
+                        bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
+                    convert_to_parquet_put_in_s3(
+                        s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
+                    logger.info("design data processed")
+                if match == ['location']:
+                    df, key = process_dim_location(
+                        bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
+                    convert_to_parquet_put_in_s3(
+                        s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
+                    logger.info("location data processed")
+                if match == ['staff']:
+                    df, key = process_dim_staff(
+                        bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
+                    convert_to_parquet_put_in_s3(
+                        s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
+                    logger.info("staff data processed")
+                move_processed_ingestion_data(s3, bucket=INGESTION_S3_BUCKET_NAME)
+                delete_files_from_updated_after_handling(s3, bucket_name=INGESTION_S3_BUCKET_NAME)
         except Exception as e:
+            
             logger.error(f"Error in Lambda execution: {e}")
     else:
         logger.info('No files to be processed')
 
 
-if __name__ == "__main__":
-    event = {}
-    context = {}
-    lambda_handler(event, context, bucket_name=INGESTION_S3_BUCKET_NAME)
+# if __name__ == "__main__":
+    # df, key = process_dim_design(bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
+    # convert_to_parquet_put_in_s3(s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
+    # event = {}
+    # context = {}
+    # lambda_handler(event, context, bucket_name=INGESTION_S3_BUCKET_NAME)
+    # df, key = process_dim_design(
+    #                     bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
+    # convert_to_parquet_put_in_s3(
+    #                     s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
 
-if __name__ == "__main__":
-    delete_duplicates()
-
-# 311: 22/5/24 safe
-# 311: 22/5/24 safe
-
-# {311: [23/5/24, 22/5/24], 209: 23/6/24}
+# if __name__ == "__main__":
+#     process_dim_design(prefix='baseline/')
