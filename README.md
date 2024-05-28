@@ -16,6 +16,9 @@ The aim of this project is to extract operational sales data of totebag designs 
 1. Make requirements, make dev-setup, make run checks:
 
 2. Set up AWS credentials:
+- export AWS_ACCESS_KEY_ID=
+- export AWS_SECRET_ACCESS_KEY=
+- export AWS_DEFAULT_REGION=
 
 3. Navigate to the Terraform directory:
 - to clear terraform cache, in case of errors eg creating zip file 
