@@ -84,7 +84,7 @@ class TestRetrieveSecretCredentials:
     def test_retieve_secret(self, secrets_manager_client):
         secrets_manager_client.create_secret(
             Name="test_retrieve",
-            SecretString='{"host": "test_host", "password": "test_password", "dbname": "test_db", "port": "test_port", "username": "test_username"}',
+            SecretString='{"host": "test_host", "password": "test_password", "dbname": "test_db", "port": "test_port", "username": "test_username", "dwschema": "test_schema"}'
         )
         expected = (
             "test_host",
@@ -92,6 +92,7 @@ class TestRetrieveSecretCredentials:
             "test_db",
             "test_port",
             "test_username",
+            "test_schema"
         )
 
         with mock.patch("builtins.input", return_value="test_retrieve"):

@@ -24,7 +24,7 @@ s3_client = boto3.client("s3")
 secret_manager_client = boto3.client("secretsmanager")
 
 
-def retrieve_secret_credentials(secret_name="totesys_environment"):
+def retrieve_secret_credentials(secret_name="dw_environment"):
     response = secret_manager_client.get_secret_value(
         SecretId=secret_name,
     )
@@ -35,8 +35,8 @@ def retrieve_secret_credentials(secret_name="totesys_environment"):
     DW_NAME = secret_string["dbname"]
     DW_USER = secret_string["username"]
     DW_PASSWORD = secret_string["password"]
-    # DW_SCHEMA?
-    return DW_HOST, DW_PASSWORD, DW_NAME, DW_PORT, DW_USER
+    DW_SCHEMA = secret_string["dwschema"]
+    return DW_HOST, DW_PASSWORD, DW_NAME, DW_PORT, DW_USER, DW_SCHEMA
 
 
 def connect_to_dw(credentials=retrieve_secret_credentials()):
@@ -45,6 +45,7 @@ def connect_to_dw(credentials=retrieve_secret_credentials()):
     DW_NAME = credentials[2]
     DW_USER = credentials[4]
     DW_PASSWORD = credentials[1]
+    DW_SCHEMA = credentials[5]
 
     try:
         logger.info(f"Connecting to the database {DW_NAME}")
@@ -53,8 +54,7 @@ def connect_to_dw(credentials=retrieve_secret_credentials()):
             port=DW_PORT,
             database=DW_NAME,
             user=DW_USER,
-            password=DW_PASSWORD,
-            # DW_SCHEMA?
+            password=DW_PASSWORD
         )
         logger.info("Connected to the database successfully")
 
@@ -161,9 +161,9 @@ def load_to_data_warehouse(table_data, table_name):
         cursor = conn.cursor()
         try:
             with io.BytesIO() as buffer:
-                pq.write_table(table_data, buffer, version="2.6")
+                pq.write_table(table_data, buffer)
                 buffer.seek(0)
-                sql_copy_query = f"COPY {table_name} FROM STDIN WITH (FORMAT 'parquet')"
+                sql_copy_query = f"COPY project_team_1.{table_name} FROM STDIN WITH (FORMAT 'parquet')"
                 cursor.execute(sql_copy_query, stream=buffer)
                 sleep(2.0)
                 conn.commit()
