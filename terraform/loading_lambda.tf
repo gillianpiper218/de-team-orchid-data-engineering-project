@@ -58,8 +58,8 @@ resource "aws_cloudwatch_log_metric_filter" "loading_lambda_error_filter" {
 
 resource "aws_cloudwatch_event_rule" "loading_scheduler" {
     name = "loading_scheduler"
-    description = "run loading lambda function every 10 minutes"
-    schedule_expression = "rate(10 minutes)"
+    description = "run loading lambda function every 9 minutes"
+    schedule_expression = "rate(9 minutes)"
 }
 
 resource "aws_cloudwatch_event_target" "trigger_on_ten" {
