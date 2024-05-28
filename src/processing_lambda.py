@@ -452,21 +452,16 @@ def lambda_handler(event, context, bucket_name=INGESTION_S3_BUCKET_NAME):
         logger.info('No files to be processed')
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     # df, key = process_dim_design(bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
     # convert_to_parquet_put_in_s3(s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
-    event = {}
-    context = {}
-    lambda_handler(event, context, bucket_name=INGESTION_S3_BUCKET_NAME)
+    # event = {}
+    # context = {}
+    # lambda_handler(event, context, bucket_name=INGESTION_S3_BUCKET_NAME)
     # df, key = process_dim_design(
     #                     bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
     # convert_to_parquet_put_in_s3(
     #                     s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
 
 # if __name__ == "__main__":
-#     delete_duplicates()
-
-# 311: 22/5/24 safe
-# 311: 22/5/24 safe
-
-# {311: [23/5/24, 22/5/24], 209: 23/6/24}
+#     process_dim_design(prefix='baseline/')

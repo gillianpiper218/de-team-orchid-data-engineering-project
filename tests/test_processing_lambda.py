@@ -520,7 +520,7 @@ class TestDeleteDuplicates:
     def test_non_duplicates_size(self, s3, bucket):
         with open("data/test_data/staff.json", "r", encoding="utf-8") as json_file:
             staff = json.load(json_file)
-            test_body = json.dumps(staff["staff"])
+            test_body = json.dumps(staff)
         bucket.put_object(
             Bucket="test_bucket", Key="updated/staff.json", Body=test_body
         )
@@ -555,7 +555,7 @@ class TestDeleteDuplicates:
     def test_non_duplicates(self, s3, bucket):
         with open("data/test_data/staff.json", "r", encoding="utf-8") as json_file:
             staff = json.load(json_file)
-            test_body = json.dumps(staff["staff"])
+            test_body = json.dumps(staff)
         bucket.put_object(
             Bucket="test_bucket", Key="updated/staff.json", Body=test_body
         )
@@ -588,7 +588,7 @@ class TestDeleteDuplicates:
     def test_delete_duplicates(self, s3, bucket):
         with open("data/test_data/staff.json", "r", encoding="utf-8") as json_file:
             staff = json.load(json_file)
-            test_body = json.dumps(staff["staff"])
+            test_body = json.dumps(staff)
         bucket.put_object(
             Bucket="test_bucket", Key="updated/staff.json", Body=test_body
         )
@@ -699,7 +699,6 @@ class TestProcessingLambdaHandler:
         s3.put_object(Bucket="de-team-orchid-totesys-ingestion", Key='baseline/')
 
         response = s3.list_objects_v2(Bucket="de-team-orchid-totesys-ingestion")
-        print(response)
         lambda_handler(event, context)
         assert 'updated/' not in response['Contents'][0]['Key']
         assert (
@@ -740,7 +739,7 @@ class TestProcessingLambdaHandler:
         
         lambda_handler(event, context)
         
-        assert ("design data processed" in caplog.text)
+        assert "design data processed" in caplog.text
         contents = s3.list_objects_v2(
             Bucket="de-team-orchid-totesys-processed", Prefix='dimension/')
         print(contents)
