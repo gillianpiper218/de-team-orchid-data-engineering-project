@@ -1,9 +1,8 @@
-{
-    "address":[
+[
         {"address_id": 1, "address_line_1": "1 something street", "address_line_2": "somewhereshire", "district": "somewhere", "city":"London", "postal_code": "S12AB", "country": "France", "phone": "07123456789", "created_at": "2022-11-03 14:20:49.962", "last_updated": "2022-11-03 14:30:41.962"},
         {"address_id": 2, "address_line_1": "2 something street", "address_line_2": "somethingshire", "district": "something", "city":"Birmingham", "postal_code": "S22AB", "country": "UK", "phone": "07223456789", "created_at": "2022-11-03 14:20:49.962", "last_updated": "2022-11-03 14:30:41.962"},
         {"address_id": 3, "address_line_1": "3 something street", "address_line_2": "somehowshire", "district": "somehow", "city":"Newcastle", "postal_code": "S32AB", "country": "Germany", "phone": "07323456789", "created_at": "2022-11-03 14:20:49.962", "last_updated": "2022-11-03 14:30:41.962"},
         {"address_id": 4, "address_line_1": "4 something street", "address_line_2": "someoneshire", "district": "someone", "city":"Leeds", "postal_code": "S42AB", "country": "France", "phone": "07423456789", "created_at": "2022-11-03 14:20:49.962", "last_updated": "2022-11-03 14:30:41.962"},
         {"address_id": 5, "address_line_1": "5 something street", "address_line_2": "somewhereshire", "district": "somewhere", "city":"Leeds", "postal_code": "S52AB", "country": "France", "phone": "07523456789", "created_at": "2022-11-03 14:20:49.962", "last_updated": "2022-11-03 14:30:41.962"}
     ]
-    }
+    
