@@ -10,6 +10,7 @@ import pyarrow.parquet as pq
 import io
 from time import sleep
 import pyarrow as pa
+import pyarrow.csv as pcsv
 
 
 # timestamp for now
@@ -124,14 +125,16 @@ def read_parquet_from_s3(key, bucket=S3_PROCESSED_BUCKET_NAME):
 
 def load_dim_tables(bucket=S3_PROCESSED_BUCKET_NAME):
 
-    dimension_tables = [
-        "dim_date",
-        "dim_staff",
-        "dim_counterparty",
-        "dim_currency",
-        "dim_design",
-        "dim_location",
-    ]
+    dimension_tables = ["dim_date"] #temporary
+
+    # dimension_tables = [
+    #     "dim_date",
+    #     "dim_staff",
+    #     "dim_counterparty",
+    #     "dim_currency",
+    #     "dim_design",
+    #     "dim_location",
+    # ]
 
     for dim_table_name in dimension_tables:
         dim_prefix = (
@@ -160,12 +163,20 @@ def load_to_data_warehouse(table_data, table_name):
         conn = connect_to_dw()
         cursor = conn.cursor()
         try:
-            with io.BytesIO() as buffer:
-                pq.write_table(table_data, buffer)
+            #df = table_data.to_pandas()
+            # with io.BytesIO() as buffer:
+            #     pq.write_table(table_data, buffer)
+            #     buffer.seek(0)
+            #     sql_copy_query = f"INSERT INTO project_team_1.{table_name} FROM STDIN WITH (FORMAT 'parquet')"
+            #     cursor.execute(sql_copy_query, stream=buffer)
+            #     sleep(2.0)
+            #     conn.commit()
+            with io.BytesIO() as buffer: 
+                pcsv.write_csv(table_data, buffer)
                 buffer.seek(0)
-                sql_copy_query = f"COPY project_team_1.{table_name} FROM STDIN WITH (FORMAT 'parquet')"
-                cursor.execute(sql_copy_query, stream=buffer)
-                sleep(2.0)
+                #sql_copy_query = f"COPY project_team_1.{table_name} FROM STDIN WITH (FORMAT 'CSV')"
+                #cursor.execute(sql_copy_query, stream=buffer)
+                cursor.execute(f"COPY project_team_1.{table_name} FROM STDIN WITH CSV HEADER", stream=buffer)
                 conn.commit()
                 logger.info(f" Successfully loaded data into {table_name}")
         except Exception as e:
@@ -182,8 +193,13 @@ def load_to_data_warehouse(table_data, table_name):
 
 def lambda_handler(event, context):
     try:
-        load_dim_tables()
         load_fact_table()
+        load_dim_tables()
+        #load_fact_table()
     except Exception as e:
         logger.error(f"Error in loading lambda execution: {e}")
         raise
+
+
+if __name__ == "__main__":
+    lambda_handler({},{})
