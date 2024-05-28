@@ -97,7 +97,7 @@ def get_latest_parquet_file_key(prefix, bucket=S3_PROCESSED_BUCKET_NAME):
 def read_parquet_from_s3(key, bucket=S3_PROCESSED_BUCKET_NAME):
     try:
         response = s3_client.get_object(Bucket=bucket, Key=key)
-        # read into bytesio object first
+        # read into bytesio object first .
         body_io = io.BytesIO(response["Body"].read())
         p_table = pq.read_table(body_io)
         return p_table
@@ -135,7 +135,8 @@ def load_dim_tables(bucket=S3_PROCESSED_BUCKET_NAME):
 
     for dim_table_name in dimension_tables:
         dim_prefix = (
-            f"dimension/{dim_table_name[4:]}"  # confirm s3 processing bucket keys
+            # confirm s3 processing bucket keys
+            f"dimension/{dim_table_name[4:]}"
         )
         dim_key = get_latest_parquet_file_key(dim_prefix, bucket=bucket)
         p_dim_table_data = read_parquet_from_s3(dim_key, bucket=bucket)
@@ -176,7 +177,8 @@ def load_to_data_warehouse(table_data, table_name):
             cursor.close()
             conn.close()
     except Exception as ex:
-        logger.error(f"Failed to connect to dw and load into {table_name}: {ex}")
+        logger.error(
+            f"Failed to connect to dw and load into {table_name}: {ex}")
         raise
 
 

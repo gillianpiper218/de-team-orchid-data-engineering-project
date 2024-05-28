@@ -10,7 +10,6 @@ resource "aws_lambda_function" "processing_function" {
     "arn:aws:lambda:eu-west-2:770693421928:layer:Klayers-p311-boto3:10",
     "arn:aws:lambda:eu-west-2:770693421928:layer:Klayers-p311-numpy:6",
     "arn:aws:lambda:eu-west-2:770693421928:layer:Klayers-p311-pandas:10",
-    "arn:aws:lambda:us-east-2:770693421928:layer:Klayers-p38-pyarrow:5",
     aws_lambda_layer_version.modules.arn
 ]
 
