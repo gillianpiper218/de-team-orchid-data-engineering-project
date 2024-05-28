@@ -94,7 +94,7 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     fact_sales_order_df = pd.DataFrame(sales_order_list)
     fact_sales_order_df = remove_created_at_and_last_updated(
         fact_sales_order_df)
-    key = "fact/sales_order.parquet"
+    key = f"fact/sales_order-{current_time}.parquet"
     return fact_sales_order_df, key
 
 
@@ -159,7 +159,7 @@ def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         axis=1,
         inplace=True,
     )
-    key = "dimension/counterparty.parquet"
+    key = f"dimension/counterparty-{current_time}.parquet"
     return dim_counterparty_df, key
 
 
@@ -185,7 +185,7 @@ def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     dim_currency_df["currency_name"] = dim_currency_df["currency_code"].map(
         currency_names
     )
-    key = "dimension/currency.parquet"
+    key = f"dimension/currency-{current_time}.parquet"
     return dim_currency_df, key
 
 
@@ -232,7 +232,7 @@ def process_dim_date(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
             dim_date.append(dim_date_item)
     dim_date_df = pd.DataFrame(dim_date)
     dim_date_df = dim_date_df.drop_duplicates(subset=["date_id"])
-    key = "dimension/date.parquet"
+    key = f"dimension/date-{current_time}.parquet"
     return dim_date_df, key
 
 
@@ -252,7 +252,7 @@ def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     design_list = json.loads(design_json)
     df = pd.DataFrame(design_list)
     return_df = remove_created_at_and_last_updated(df)
-    key = "dimension/design.parquet"
+    key = f"dimension/design-{current_time}.parquet"
     return return_df, key
 
 
@@ -277,7 +277,7 @@ def process_dim_location(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         del location_dict["address_id"]
     df = pd.DataFrame(location_list)
     return_df = remove_created_at_and_last_updated(df)
-    key = "dimension/location.parquet"
+    key = f"dimension/location-{current_time}.parquet"
     return return_df, key
 
 
@@ -298,7 +298,7 @@ def process_dim_staff(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     staff_list = json.loads(staff_json)
     df = pd.DataFrame(staff_list)
     return_df = remove_created_at_and_last_updated(df)
-    key = "dimension/staff.parquet"
+    key = f"dimension/staff-{current_time}.parquet"
     return return_df, key
 
 
