@@ -38,4 +38,3 @@ resource "aws_cloudwatch_log_group" "processing_function_log_group" {
     prevent_destroy = false
   }
 }
-# re-run
