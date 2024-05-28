@@ -97,11 +97,9 @@ def get_latest_parquet_file_key(prefix, bucket=S3_PROCESSED_BUCKET_NAME):
 
 def read_parquet_from_s3(key, bucket=S3_PROCESSED_BUCKET_NAME):
     try:
-        response = s3_client.get_object(Bucket=bucket, Key=key)
-        # read into bytesio object first
-        body_io = io.BytesIO(response["Body"].read())
-        p_table = pq.read_table(body_io)
-        return p_table
+        key = get_latest_parquet_file_key()
+        df = pd.read_parquet(path=f's3://{bucket}/{key}')
+        return df
     except ClientError as ce:
         if ce.response["Error"]["Code"] == "NoSuchKey":
             logger.error(f"Key: {key} does not exist: {ce}")
@@ -113,93 +111,97 @@ def read_parquet_from_s3(key, bucket=S3_PROCESSED_BUCKET_NAME):
         raise
 
 
-"""pseudocode for def load_dim_tables(): Accepts an argument, bucket, default value is the processing s3 bucket
+# """pseudocode for def load_dim_tables(): Accepts an argument, bucket, default value is the processing s3 bucket
    
-    create a list called dim_tables with names: dim_date, dim_staff, dim_counterparty, dim_currency, dim_design, dim_location.
-    For each table_name in the dim_tables list:
-        Create a variable prefix for 'f-stringing' with "dimension/" with the table_name.- CHECK IF THIS IS THE CORRECT PREFIX FOR PROCESSING BUCKET!
-        Get the 'latest Parquet file key' using this prefix and the bucket name.
-        'Read the Parquet file from S3' assign to variable called p_dim_table.
-        'Load the p_dim_table into the data warehouse', called with  and p_table data and 2nd arg table_name"""
+#     create a list called dim_tables with names: dim_date, dim_staff, dim_counterparty, dim_currency, dim_design, dim_location.
+#     For each table_name in the dim_tables list:
+#         Create a variable prefix for 'f-stringing' with "dimension/" with the table_name.- CHECK IF THIS IS THE CORRECT PREFIX FOR PROCESSING BUCKET!
+#         Get the 'latest Parquet file key' using this prefix and the bucket name.
+#         'Read the Parquet file from S3' assign to variable called p_dim_table.
+#         'Load the p_dim_table into the data warehouse', called with  and p_table data and 2nd arg table_name"""
 
 
-def load_dim_tables(bucket=S3_PROCESSED_BUCKET_NAME):
+# def load_dim_tables(bucket=S3_PROCESSED_BUCKET_NAME):
 
-    dimension_tables = ["dim_date"] #temporary
+#     dimension_tables = ["dim_date"] #temporary
 
-    # dimension_tables = [
-    #     "dim_date",
-    #     "dim_staff",
-    #     "dim_counterparty",
-    #     "dim_currency",
-    #     "dim_design",
-    #     "dim_location",
-    # ]
+#     # dimension_tables = [
+#     #     "dim_date",
+#     #     "dim_staff",
+#     #     "dim_counterparty",
+#     #     "dim_currency",
+#     #     "dim_design",
+#     #     "dim_location",
+#     # ]
 
-    for dim_table_name in dimension_tables:
-        dim_prefix = (
-            f"dimension/{dim_table_name[4:]}"  # confirm s3 processing bucket keys
-        )
-        dim_key = get_latest_parquet_file_key(dim_prefix, bucket=bucket)
-        p_dim_table_data = read_parquet_from_s3(dim_key, bucket=bucket)
-        load_to_data_warehouse(p_dim_table_data, dim_table_name)
-
-
-def load_fact_table(bucket=S3_PROCESSED_BUCKET_NAME):
-    fact_table_name = "fact_sales_order"
-    fact_prefix = "fact/sales_order"  # confirm s3 processing bucket keys
-    fact_key = get_latest_parquet_file_key(fact_prefix, bucket=bucket)
-    p_fact_table_data = read_parquet_from_s3(fact_key, bucket=bucket)
-    load_to_data_warehouse(p_fact_table_data, fact_table_name)
+#     for dim_table_name in dimension_tables:
+#         dim_prefix = (
+#             f"dimension/{dim_table_name[4:]}"  # confirm s3 processing bucket keys
+#         )
+#         dim_key = get_latest_parquet_file_key(dim_prefix, bucket=bucket)
+#         p_dim_table_data = read_parquet_from_s3(dim_key, bucket=bucket)
+#         load_to_data_warehouse(p_dim_table_data, dim_table_name)
 
 
-def load_to_data_warehouse(table_data, table_name):
-    """
-    loads data into the data warehouse table.
-    - table_data: pyarrow table containing the data to load.
-    - table_name: name of the target table in the data warehouse.
-    """
-    try:
-        conn = connect_to_dw()
-        cursor = conn.cursor()
-        try:
-            #df = table_data.to_pandas()
-            # with io.BytesIO() as buffer:
-            #     pq.write_table(table_data, buffer)
-            #     buffer.seek(0)
-            #     sql_copy_query = f"INSERT INTO project_team_1.{table_name} FROM STDIN WITH (FORMAT 'parquet')"
-            #     cursor.execute(sql_copy_query, stream=buffer)
-            #     sleep(2.0)
-            #     conn.commit()
-            with io.BytesIO() as buffer: 
-                pcsv.write_csv(table_data, buffer)
-                buffer.seek(0)
-                #sql_copy_query = f"COPY project_team_1.{table_name} FROM STDIN WITH (FORMAT 'CSV')"
-                #cursor.execute(sql_copy_query, stream=buffer)
-                cursor.execute(f"COPY project_team_1.{table_name} FROM STDIN WITH CSV HEADER", stream=buffer)
-                conn.commit()
-                logger.info(f" Successfully loaded data into {table_name}")
-        except Exception as e:
-            logger.error(f"Error during loading {table_name}: {e}")
-            conn.rollback()
-            raise
-        finally:
-            cursor.close()
-            conn.close()
-    except Exception as ex:
-        logger.error(f"Failed to connect to dw and load into {table_name}: {ex}")
-        raise
+# def load_fact_table(bucket=S3_PROCESSED_BUCKET_NAME):
+#     fact_table_name = "fact_sales_order"
+#     fact_prefix = "fact/sales_order"  # confirm s3 processing bucket keys
+#     fact_key = get_latest_parquet_file_key(fact_prefix, bucket=bucket)
+#     p_fact_table_data = read_parquet_from_s3(fact_key, bucket=bucket)
+#     load_to_data_warehouse(p_fact_table_data, fact_table_name)
+
+
+# def load_to_data_warehouse(table_data, table_name):
+#     """
+#     loads data into the data warehouse table.
+#     - table_data: pyarrow table containing the data to load.
+#     - table_name: name of the target table in the data warehouse.
+#     """
+#     try:
+#         conn = connect_to_dw()
+#         cursor = conn.cursor()
+#         try:
+#             #df = table_data.to_pandas()
+#             # with io.BytesIO() as buffer:
+#             #     pq.write_table(table_data, buffer)
+#             #     buffer.seek(0)
+#             #     sql_copy_query = f"INSERT INTO project_team_1.{table_name} FROM STDIN WITH (FORMAT 'parquet')"
+#             #     cursor.execute(sql_copy_query, stream=buffer)
+#             #     sleep(2.0)
+#             #     conn.commit()
+#             with io.BytesIO() as buffer: 
+#                 pcsv.write_csv(table_data, buffer)
+#                 buffer.seek(0)
+#                 #sql_copy_query = f"COPY project_team_1.{table_name} FROM STDIN WITH (FORMAT 'CSV')"
+#                 #cursor.execute(sql_copy_query, stream=buffer)
+#                 cursor.execute(f"COPY project_team_1.{table_name} FROM STDIN WITH CSV HEADER", stream=buffer)
+#                 conn.commit()
+#                 logger.info(f" Successfully loaded data into {table_name}")
+#         except Exception as e:
+#             logger.error(f"Error during loading {table_name}: {e}")
+#             conn.rollback()
+#             raise
+#         finally:
+#             cursor.close()
+#             conn.close()
+#     except Exception as ex:
+#         logger.error(f"Failed to connect to dw and load into {table_name}: {ex}")
+#         raise
 
 
 def lambda_handler(event, context):
     try:
-        load_fact_table()
-        load_dim_tables()
-        #load_fact_table()
+        conn = connect_to_dw()
+        cursor = conn.cursor()
+       
+    except FileNotFoundError as e:
+            logger.warning(f"No data to process for {dim_table_name}: {e}")
+            continue
     except Exception as e:
         logger.error(f"Error in loading lambda execution: {e}")
         raise
 
 
-if __name__ == "__main__":
-    lambda_handler({},{})
+
+# if __name__ == "__main__":
+#     lambda_handler({},{})
