@@ -227,6 +227,26 @@ class TestReadParquetFromS3:
         result = read_parquet_from_s3(key, bucket=test_bucket)
         assert isinstance(result, pa.Table)
 
+    @pytest.mark.it("unit test: test object not found error using wrong key")
+    def test_obj_not_found_wrong_key(self, mock_s3_bucket):
+        key = "wrong_key_fact/sales_order-2024-05-24 14:35:22.parquet"
+        with pytest.raises(ClientError) as ce:
+            read_parquet_from_s3(key, bucket=test_bucket)
+            assert (
+                "Key: wrong_key_fact/sales_order-2024-05-24 14:35:22.parquet does not exist"
+                in str(ce.value)
+            )
+
+    @pytest.mark.it("unit test: check read parquet from s3 func general exception")
+    def test_obj_not_found_general_exc_wrong_bucket_name(self, caplog, mock_s3_bucket):
+        key = "key_fact/sales_order-2024-05-24 14:35:22.parquet"
+        with pytest.raises(Exception):
+            read_parquet_from_s3(key, bucket="should be test_bucket")
+            assert (
+                "Error reading parquet file from bucket should be test_bucket with key key_fact/sales_order-2024-05-24 14:35:22.parquet"
+                in caplog.text
+            )
+
 
 class TestLoadDimTables:
     @pytest.mark.it("use patches/mocking to check func is loading six dim tables")
