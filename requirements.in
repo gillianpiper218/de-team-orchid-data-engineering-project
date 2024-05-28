@@ -8,4 +8,3 @@ pytest-testdox
 pandas
 pyarrow
 numpy
-pyarrow.lib
