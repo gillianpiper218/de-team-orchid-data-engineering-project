@@ -19,6 +19,7 @@ from src.ingestion_lambda import (
     retrieve_secret_credentials,
     check_baseline_exists,
     lambda_handler,
+    copy_baseline_to_updated
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -48,6 +49,15 @@ def s3(aws_credentials):
 def secrets_manager_client(aws_credentials):
     with mock_aws():
         yield boto3.client("secretsmanager")
+
+
+@pytest.fixture
+def bucket(s3):
+    s3.create_bucket(
+        Bucket="test_bucket",
+        CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
+    )
+    return s3
 
 
 class TestRetrieveSecretCredentials:
@@ -269,3 +279,43 @@ class TestLambdaHandler:
             event = {}
             lambda_handler(event, context)
             assert "Baseline exists. Running updated data extraction."
+
+
+class TestCopyBaselineToUpdated:
+    @pytest.mark.it("Unit test: all files in one folder copied to another folder")
+    def test_copy_all_files(self, s3, bucket):
+        with open(
+            "data/test_data/sales_order.json", "r", encoding="utf-8"
+        ) as json_file:
+            sales_order = json.load(json_file)
+            test_body = json.dumps(sales_order)
+            bucket.put_object(
+                Bucket="test_bucket",
+                Key="baseline/sales_order-2022-11-03 14:20:49.962.json",
+                Body=test_body,
+            )
+        
+        with open(
+            "data/test_data/currency.json", "r", encoding="utf-8"
+        ) as json_file:
+            sales_order = json.load(json_file)
+            test_body = json.dumps(sales_order)
+            bucket.put_object(
+                Bucket="test_bucket",
+                Key="baseline/currency-2022-11-03 14:20:49.962.json",
+                Body=test_body,
+            )
+
+        response = bucket.list_objects_v2(Bucket="test_bucket", Prefix="updated/")
+        assert response["KeyCount"] == 0
+
+        response = bucket.list_objects_v2(Bucket="test_bucket", Prefix="baseline/")
+        assert response["KeyCount"] == 2
+
+        copy_baseline_to_updated(bucket_name="test_bucket")
+
+        response = bucket.list_objects_v2(Bucket="test_bucket", Prefix="updated/")
+        assert response["KeyCount"] == 2
+
+        response = bucket.list_objects_v2(Bucket="test_bucket", Prefix="baseline/")
+        assert response["KeyCount"] == 2

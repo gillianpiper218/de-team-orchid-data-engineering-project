@@ -294,3 +294,13 @@ def check_baseline_exists():
     """checks to see if baseline exists by returning non-empty "Contents" in response list"""
     response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix="baseline/")
     return "Contents" in response
+
+
+def copy_baseline_to_updated(bucket_name=S3_BUCKET_NAME):
+    response = s3.list_objects_v2(Bucket=bucket_name, Prefix="baseline/")
+    items_to_copy_list = []
+    for item in response["Contents"]:
+        items_to_copy_list.append(item["Key"])
+    for item_key in items_to_copy_list:
+        new_key = f"updated/{item_key[9:]}"
+        s3.copy_object(Bucket=bucket_name, CopySource=f"/{bucket_name}/{item_key}", Key=new_key)
