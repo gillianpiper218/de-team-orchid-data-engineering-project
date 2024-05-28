@@ -6,5 +6,5 @@ python-dotenv
 pg8000
 pytest-testdox
 pandas
-pyarrow==5.0.0
+pyarrow==14.0.0
 numpy
