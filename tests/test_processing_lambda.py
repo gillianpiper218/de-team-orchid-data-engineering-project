@@ -135,7 +135,7 @@ class TestProcessFactSalesOrder:
             "data/test_data_unix_ts/sales_order_unix.json", "r", encoding="utf-8"
         ) as json_file:
             sales_order = json.load(json_file)
-            test_body = json.dumps(sales_order["sales_order"])
+            test_body = json.dumps(sales_order)
 
             bucket.put_object(
                 Bucket="test_bucket",
@@ -155,7 +155,7 @@ class TestProcessFactSalesOrder:
             "data/test_data_unix_ts/sales_order_unix.json", "r", encoding="utf-8"
         ) as json_file:
             sales_order = json.load(json_file)
-            test_body = json.dumps(sales_order["sales_order"])
+            test_body = json.dumps(sales_order)
 
             bucket.put_object(
                 Bucket="test_bucket",
@@ -175,7 +175,7 @@ class TestProcessFactSalesOrder:
             "data/test_data_unix_ts/sales_order_unix.json", "r", encoding="utf-8"
         ) as json_file:
             sales_order = json.load(json_file)
-            test_body = json.dumps(sales_order["sales_order"])
+            test_body = json.dumps(sales_order)
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/sales_order.json", Body=test_body
@@ -198,7 +198,7 @@ class TestProcessDimCounterparty:
             "data/test_data/counterparty.json", "r", encoding="utf-8"
         ) as json_file:
             counterparty = json.load(json_file)
-            test_body = json.dumps(counterparty["counterparty"])
+            test_body = json.dumps(counterparty)
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/counterparty.json", Body=test_body
@@ -206,7 +206,7 @@ class TestProcessDimCounterparty:
 
         with open("data/test_data/address.json", "r", encoding="utf-8") as json_file:
             address = json.load(json_file)
-            test_body = json.dumps(address["address"])
+            test_body = json.dumps(address)
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
@@ -233,7 +233,7 @@ class TestProcessDimCounterparty:
             "data/test_data/counterparty.json", "r", encoding="utf-8"
         ) as json_file:
             counterparty = json.load(json_file)
-            test_body = json.dumps(counterparty["counterparty"])
+            test_body = json.dumps(counterparty)
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/counterparty.json", Body=test_body
@@ -241,7 +241,7 @@ class TestProcessDimCounterparty:
 
         with open("data/test_data/address.json", "r", encoding="utf-8") as json_file:
             address = json.load(json_file)
-            test_body = json.dumps(address["address"])
+            test_body = json.dumps(address)
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
@@ -261,7 +261,7 @@ class TestProcessDimCounterparty:
             "data/test_data/counterparty.json", "r", encoding="utf-8"
         ) as json_file:
             counterparty = json.load(json_file)
-            test_body = json.dumps(counterparty["counterparty"])
+            test_body = json.dumps(counterparty)
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/counterparty.json", Body=test_body
@@ -269,7 +269,7 @@ class TestProcessDimCounterparty:
 
         with open("data/test_data/address.json", "r", encoding="utf-8") as json_file:
             address = json.load(json_file)
-            test_body = json.dumps(address["address"])
+            test_body = json.dumps(address)
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/address.json", Body=test_body
@@ -360,7 +360,7 @@ class TestProcessDimDate:
         ) as json_file:
             sales_order = json.load(json_file)
             # add columns fact sales order should also have
-            model_f_s_o = sales_order["sales_order"]
+            model_f_s_o = sales_order
             for s_o in model_f_s_o:
                 s_o["agreed_payment_date"] = "2024-05-23"
                 s_o["agreed_delivery_date"] = "2024-05-24"
@@ -391,9 +391,9 @@ class TestProcessDimDate:
             "data/test_data_unix_ts/sales_order_unix.json", "r", encoding="utf-8"
         ) as json_file:
             sales_order = json.load(json_file)
-            test_body = json.dumps(sales_order["sales_order"])
+            test_body = json.dumps(sales_order)
             # add columns fact sales order should also have
-            model_f_s_o = sales_order["sales_order"]
+            model_f_s_o = sales_order
             for s_o in model_f_s_o:
                 s_o["agreed_payment_date"] = "2024-05-23"
                 s_o["agreed_delivery_date"] = "2024-05-24"
@@ -706,21 +706,18 @@ class TestProcessingLambdaHandler:
             in caplog.text
         )
 
-    @pytest.mark.it("unit test: correct log info message after delete duplicates ran")
-    def test_delete_duplicates_info_message(self, s3, caplog):
-        pass
-        # context = DummyContext()
-        # event = {}
+    # @pytest.mark.it("unit test: correct log info message after delete duplicates ran")
+    # def test_delete_duplicates_info_message(self, s3, caplog):
+    #     context = DummyContext()
+    #     event = {}
 
-        # s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
-        #                  'LocationConstraint': 'eu-west-2', },)
-        # folder_name = "updated"
-        # s3.put_object(Bucket="de-team-orchid-totesys-ingestion",
-        #               Key=(folder_name+'/'))
-        # s3.put_object(Bucket="de-team-orchid-totesys-ingestion",
-        #               Key=("updated/hello.txt"))
-        # lambda_handler(event, context)
-        # assert ("The Delete function has successfully been ran" in caplog.text)
+    #     s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
+    #                      'LocationConstraint': 'eu-west-2', },)
+    #     # folder_name = "updated"
+    #     s3.put_object(Bucket="de-team-orchid-totesys-ingestion",
+    #                   Key=("updated/hello.txt"))
+    #     lambda_handler(event, context)
+    #     assert 'The delete function ran successfully' in caplog.text
 
     @pytest.mark.it("unit test: test that correct function runs when there is updated data")
     def test_correct_function_runs_for_updated_data(self, s3, caplog):

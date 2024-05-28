@@ -274,7 +274,7 @@ def process_dim_location(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     key = get_object_key(table_name="address", prefix=prefix, bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     location_json = obj["Body"].read().decode("utf-8")
-    location_list = json.loads(location_json)["address"]
+    location_list = json.loads(location_json)
     for location_dict in location_list:
         location_dict["location_id"] = location_dict["address_id"]
         del location_dict["address_id"]
