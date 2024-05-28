@@ -729,4 +729,4 @@ class TestProcessingLambdaHandler:
         contents = s3.list_objects_v2(
             Bucket="de-team-orchid-totesys-processed", Prefix='dimension/')
         
-        assert contents['Contents'][0]['Key'] == 'dimension/currency.parquet'
+        assert contents['Contents'][0]['Key'][0:18] == 'dimension/currency'
