@@ -2,7 +2,7 @@ name: lambda-deployment
 on:
   push:
     branches:
-      - create-processing-lambda
+      - main
 jobs:
   run-tests:
     name: run-tests
@@ -13,7 +13,7 @@ jobs:
       - name: Python Setup
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.8'
       - name: Install Make
         run: sudo apt install make -y
       - name: Run Requirements
