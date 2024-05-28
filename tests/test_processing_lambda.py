@@ -288,7 +288,7 @@ class TestProcessDimCurrency:
     def test_currency_name_created(self, s3, bucket):
         with open("data/test_data/currency.json", "r", encoding="utf-8") as json_file:
             currency = json.load(json_file)
-            test_body = json.dumps(currency["currency"])
+            test_body = json.dumps(currency)
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
@@ -304,7 +304,7 @@ class TestProcessDimCurrency:
     def test_remove_created_at(self, s3, bucket):
         with open("data/test_data/currency.json", "r", encoding="utf-8") as json_file:
             currency = json.load(json_file)
-            test_body = json.dumps(currency["currency"])
+            test_body = json.dumps(currency)
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
@@ -321,7 +321,7 @@ class TestProcessDimCurrency:
     def test_check_correct_columns_names(self, s3, bucket):
         with open("data/test_data/currency.json", "r", encoding="utf-8") as json_file:
             currency = json.load(json_file)
-            test_body = json.dumps(currency["currency"])
+            test_body = json.dumps(currency)
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
@@ -337,7 +337,7 @@ class TestProcessDimCurrency:
     def test_check_correct_data_type(self, s3, bucket):
         with open("data/test_data/currency.json", "r", encoding="utf-8") as json_file:
             currency = json.load(json_file)
-            test_body = json.dumps(currency["currency"])
+            test_body = json.dumps(currency)
 
         bucket.put_object(
             Bucket="test_bucket", Key="baseline/currency.json", Body=test_body
@@ -728,19 +728,21 @@ class TestProcessingLambdaHandler:
         event = {}
         s3.create_bucket(Bucket="de-team-orchid-totesys-ingestion", CreateBucketConfiguration={
                          'LocationConstraint': 'eu-west-2', },)
-        
-        with open("data/test_data/design.json", "r", encoding="utf-8") as json_file:
-            design = json.load(json_file)
-            test_body = json.dumps(design)
-            print(test_body)
+        s3.create_bucket(Bucket="de-team-orchid-totesys-processed", CreateBucketConfiguration={
+                         'LocationConstraint': 'eu-west-2', },)
+
+        with open("data/test_data/currency.json", "r", encoding="utf-8") as json_file:
+            currency = json.load(json_file)
+            test_body = json.dumps(currency)
+         
         s3.put_object(Bucket="de-team-orchid-totesys-ingestion",
-                      Key='updated/design-2024-05-21 14:40:09.122625.json',
-                      Body=test_body)
+                      Key='updated/currency-2024-05-21 14:40:09.122625.json',
+                      Body=test_body,)
         
         lambda_handler(event, context)
         
-        assert "design data processed" in caplog.text
+        assert "currency data processed" in caplog.text
         contents = s3.list_objects_v2(
             Bucket="de-team-orchid-totesys-processed", Prefix='dimension/')
-        print(contents)
-        assert contents['Contents']['Key'] == 'design.parquet'
+        
+        assert contents['Contents'][0]['Key'] == 'dimension/currency.parquet'

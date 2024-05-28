@@ -178,13 +178,16 @@ def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     obj = s3.get_object(Bucket=bucket, Key=key)
     currency_json = obj["Body"].read().decode("utf-8")
     currency_list = json.loads(currency_json)
+   
     dim_currency_df = pd.DataFrame(currency_list)
+   
     remove_created_at_and_last_updated(dim_currency_df)
     currency_names = {"GDP": "British Pound",
                       "USD": "US Dollar", "EUR": "Euro"}
     dim_currency_df["currency_name"] = dim_currency_df["currency_code"].map(
         currency_names
     )
+    
     key = "dimension/currency.parquet"
     return dim_currency_df, key
 
@@ -321,29 +324,32 @@ def convert_to_parquet_put_in_s3(s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME):
 def delete_duplicates(bucket=INGESTION_S3_BUCKET_NAME):
     table_names = get_table_names()
     list_obj_response = s3.list_objects_v2(Bucket=bucket, Prefix="updated/")
-    dict_list = list_obj_response["Contents"]
-    dict_list_len = len(dict_list)
-    keys_to_be_deleted = []
-    sizes_and_date_dict = {}
-    for table in table_names:
+    if not list_obj_response:
+        logger.info("no files found")
+    else:
+        dict_list = list_obj_response["Contents"]
+        dict_list_len = len(dict_list)
+        keys_to_be_deleted = []
         sizes_and_date_dict = {}
-        for i in range(dict_list_len - 1, -1, -1):
-            key = dict_list[i]["Key"]
-            response = s3.get_object(Bucket=bucket, Key=key)
-            response_json = response["Body"].read().decode("utf-8")
-            response_list = json.loads(response_json)
-            if response_list:
-                last_updated_date = response_list[-1]["last_updated"]
-                if dict_list[i]["Key"][8 : 8 + len(table[0])] == table[0]:
-                    if dict_list[i]["Size"] not in sizes_and_date_dict:
-                        sizes_and_date_dict[dict_list[i]["Size"]] = [last_updated_date]
-                    elif dict_list[i]["Size"] in sizes_and_date_dict:
-                        if last_updated_date not in sizes_and_date_dict[dict_list[i]["Size"]]:
-                            sizes_and_date_dict[dict_list[i]["Size"]].append(last_updated_date)
-                        else:
-                            keys_to_be_deleted.append(key)
-    for obj_key in keys_to_be_deleted:
-        s3.delete_object(Bucket=bucket, Key=obj_key)
+        for table in table_names:
+            sizes_and_date_dict = {}
+            for i in range(dict_list_len - 1, -1, -1):
+                key = dict_list[i]["Key"]
+                response = s3.get_object(Bucket=bucket, Key=key)
+                response_json = response["Body"].read().decode("utf-8")
+                response_list = json.loads(response_json)
+                if response_list:
+                    last_updated_date = response_list[-1]["last_updated"]
+                    if dict_list[i]["Key"][8 : 8 + len(table[0])] == table[0]:
+                        if dict_list[i]["Size"] not in sizes_and_date_dict:
+                            sizes_and_date_dict[dict_list[i]["Size"]] = [last_updated_date]
+                        elif dict_list[i]["Size"] in sizes_and_date_dict:
+                            if last_updated_date not in sizes_and_date_dict[dict_list[i]["Size"]]:
+                                sizes_and_date_dict[dict_list[i]["Size"]].append(last_updated_date)
+                            else:
+                                keys_to_be_deleted.append(key)
+        for obj_key in keys_to_be_deleted:
+            s3.delete_object(Bucket=bucket, Key=obj_key)
 
         
 def move_processed_ingestion_data(s3, bucket=INGESTION_S3_BUCKET_NAME):
@@ -385,22 +391,24 @@ def delete_files_from_updated_after_handling(s3, bucket_name=INGESTION_S3_BUCKET
 
 def lambda_handler(event, context, bucket_name=INGESTION_S3_BUCKET_NAME):
     response = s3.list_objects_v2(Bucket=bucket_name, Prefix='updated/')
-
-    if not response:
-        # print(response)
+  
+    if response['KeyCount'] == 0:
+        
         logger.info("No new updated data to process")
-    if response['KeyCount'] > 1:
+    if response['KeyCount'] >= 1:
         try:
 
             delete_duplicates()
             logger.info('The delete function ran successfully')
             list_of_files = s3.list_objects_v2(
                 Bucket=bucket_name, Prefix='updated')
+           
             number_of_files = list_of_files['KeyCount']
             for i in range(number_of_files):
                 key_name = list_of_files['Contents'][i]['Key'][8:]
                 pattern = re.compile(r'^[A-Za-z]+')
                 match = pattern.findall(key_name)
+               
                 if match == ['sales']:
                     df, key = process_fact_sales_order(
                         bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
@@ -414,18 +422,20 @@ def lambda_handler(event, context, bucket_name=INGESTION_S3_BUCKET_NAME):
                         s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
                     logger.info("counterparty data processed")
                 if match == ['currency']:
+                    
                     df, key = process_dim_currency(
                         bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
                     convert_to_parquet_put_in_s3(
-                        s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
+                        s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
                     logger.info("currency data processed")
                 if match == ['date']:
                     df, key = process_dim_date(
                         bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
                     convert_to_parquet_put_in_s3(
-                        s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
+                        s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
                     logger.info("date data processed")
                 if match == ['design']:
+                    print('a match for design')
                     df, key = process_dim_design(
                         bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
                     convert_to_parquet_put_in_s3(
@@ -435,13 +445,13 @@ def lambda_handler(event, context, bucket_name=INGESTION_S3_BUCKET_NAME):
                     df, key = process_dim_location(
                         bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
                     convert_to_parquet_put_in_s3(
-                        s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
+                        s3, df, key,bucket=PROCESSED_S3_BUCKET_NAME)
                     logger.info("location data processed")
                 if match == ['staff']:
                     df, key = process_dim_staff(
                         bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
                     convert_to_parquet_put_in_s3(
-                        s3, key, df, bucket=PROCESSED_S3_BUCKET_NAME)
+                        s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
                     logger.info("staff data processed")
                 move_processed_ingestion_data(s3, bucket=INGESTION_S3_BUCKET_NAME)
                 delete_files_from_updated_after_handling(s3, bucket_name=INGESTION_S3_BUCKET_NAME)
