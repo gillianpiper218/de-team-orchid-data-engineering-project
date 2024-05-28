@@ -26,3 +26,8 @@ variable "sns_alert_topic_name" {
     type = string
     default = "sns-alert-topic"
 }
+
+variable "loading_function_name" {
+    type = string
+    default = "processing_lambda"
+}
