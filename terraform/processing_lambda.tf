@@ -31,7 +31,7 @@ resource "aws_lambda_permission" "allow_eventbridge_processing" {
   source_account = data.aws_caller_identity.current.account_id
 }
 
-resource "aws_iam_role_policy_attachment" "secret_manager_policy_attachment" {
+resource "aws_iam_role_policy_attachment" "secret_manager_policy_attachment_processing" {
   role       = aws_iam_role.processing_function_role.name
   policy_arn = aws_iam_policy.secret_manager_policy.arn
 }
