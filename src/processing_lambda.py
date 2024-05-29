@@ -109,6 +109,7 @@ def get_table_names():
         )
         table_names = list(table_names)
         table_names = sorted(table_names)
+        print(table_names)
         return table_names
     except pg8000.exceptions.DatabaseError as e:
         logger.error(f"Error connecting to database: {e}")
@@ -123,7 +124,7 @@ def get_table_names():
 
 
 def get_object_key(
-    table_name: str, prefix: str = None, bucket=INGESTION_S3_BUCKET_NAME
+    table_name: str,  bucket=INGESTION_S3_BUCKET_NAME
 ) -> str:
     """Retrieves the s3 object key for the specifed prefix table name and bucket
     Parameters:
@@ -135,17 +136,29 @@ def get_object_key(
     Errors:
         FileNotFoundError: If no objects are found that matches the table name.
     """
-    response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
-    all_objects = response.get("Contents", [])
+    response = s3.list_objects_v2(Bucket=bucket, Prefix="updated/")
+    # print(response)
     table_files = []
-    for obj in all_objects:
-        if table_name in obj["Key"]:
-            table_files.append(obj["Key"])
+    number_of_files = response['KeyCount']
+    for i in range(number_of_files):
+        key = response['Contents'][i]['Key']
+        table_files.append(key)
+    
+    
+    # for obj in all_objects:
+    #     if table_name in obj["Key"]:
+    #         table_files.append(obj["Key"])
+        
+    if len(table_files) > 0:
+        return table_files[-1]
 
-    if not table_files:
-        logger.error(f"No files found for table {table_name}")
-        raise FileNotFoundError(f"No files found for table {table_name}")
-    return table_files[-1]
+    else:
+        logger.info(f"No files found for table {table_name}")
+
+    
+    # raise FileNotFoundError(f"No files found for table {table_name}")
+    # print(table_files)
+    
 
 
 def remove_created_at_and_last_updated(df):
@@ -173,7 +186,7 @@ def process_fact_sales_order(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         (str): The key for the processed data in the s3 bucket.
     """
     key = get_object_key(table_name="sales_order",
-                         prefix=prefix, bucket=bucket)
+                          bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     sales_order_json = obj["Body"].read().decode("utf-8")
     sales_order_list = json.loads(sales_order_json)
@@ -220,8 +233,10 @@ def process_dim_counterparty(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
     """
 
     key = get_object_key(table_name="counterparty",
-                         prefix=prefix, bucket=bucket)
+                          bucket=bucket)
+    print(key, "key")
     obj = s3.get_object(Bucket=bucket, Key=key)
+    print(obj, "obj")
     counterparty_json = obj["Body"].read().decode("utf-8")
     counterparty_list = json.loads(counterparty_json)
 
@@ -276,7 +291,7 @@ def process_dim_currency(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         (pandas.DataFrame): The DataFrame for the processed currency data.
         (str): The key for the processed data in the s3 bucket.
     """
-    key = get_object_key(table_name="currency", prefix=prefix, bucket=bucket)
+    key = get_object_key(table_name="currency", bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     currency_json = obj["Body"].read().decode("utf-8")
     currency_list = json.loads(currency_json)
@@ -352,7 +367,7 @@ def process_dim_design(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         (pandas.DataFrame): The DataFrame for the processed design data.
         (str): The key for the processed data in the s3 bucket.
     """
-    key = get_object_key(table_name="design", prefix=prefix, bucket=bucket)
+    key = get_object_key(table_name="design", bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     design_json = obj["Body"].read().decode("utf-8")
     design_list = json.loads(design_json)
@@ -374,7 +389,7 @@ def process_dim_location(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         (str): The key for the processed data in the s3 bucket.
     """
 
-    key = get_object_key(table_name="address", prefix=prefix, bucket=bucket)
+    key = get_object_key(table_name="address", bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     location_json = obj["Body"].read().decode("utf-8")
     location_list = json.loads(location_json)
@@ -398,7 +413,7 @@ def process_dim_staff(bucket=INGESTION_S3_BUCKET_NAME, prefix=None):
         (str): The key for the processed data in the s3 bucket.
     """
 
-    key = get_object_key(table_name="staff", prefix=prefix, bucket=bucket)
+    key = get_object_key(table_name="staff", bucket=bucket)
     obj = s3.get_object(Bucket=bucket, Key=key)
     staff_json = obj["Body"].read().decode("utf-8")
     staff_list = json.loads(staff_json)
@@ -494,73 +509,84 @@ def delete_files_from_updated_after_handling(s3, bucket_name=INGESTION_S3_BUCKET
 
 def lambda_handler(event, context, bucket_name=INGESTION_S3_BUCKET_NAME):
     response = s3.list_objects_v2(Bucket=bucket_name, Prefix='updated/')
+    # print(response)
   
     if response['KeyCount'] == 0:
-        
+        print('hi')
         logger.info("No new updated data to process")
     if response['KeyCount'] >= 1:
-        try:
+        print('processing')
+        # try:
 
-            delete_duplicates()
-            logger.info('The delete function ran successfully')
-            list_of_files = s3.list_objects_v2(
-                Bucket=bucket_name, Prefix='updated')
-           
-            number_of_files = list_of_files['KeyCount']
-            for i in range(number_of_files):
-                key_name = list_of_files['Contents'][i]['Key'][8:]
-                pattern = re.compile(r'^[A-Za-z]+')
-                match = pattern.findall(key_name)
-               
-                if match == ['sales']:
-                    df, key = process_fact_sales_order(
-                        bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
-                    convert_to_parquet_put_in_s3(
-                        s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
-                    logger.info("sales_order data processed")
-                if match == ['counterparty']:
-                    df, key = process_dim_counterparty(
-                        bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
-                    convert_to_parquet_put_in_s3(
-                        s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
-                    logger.info("counterparty data processed")
-                if match == ['currency']:
-                    
-                    df, key = process_dim_currency(
-                        bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
-                    convert_to_parquet_put_in_s3(
-                        s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
-                    logger.info("currency data processed")
-                if match == ['date']:
-                    df, key = process_dim_date(
-                        bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
-                    convert_to_parquet_put_in_s3(
-                        s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
-                    logger.info("date data processed")
-                if match == ['design']:
-                    print('a match for design')
-                    df, key = process_dim_design(
-                        bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
-                    convert_to_parquet_put_in_s3(
-                        s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
-                    logger.info("design data processed")
-                if match == ['location']:
-                    df, key = process_dim_location(
-                        bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
-                    convert_to_parquet_put_in_s3(
-                        s3, df, key,bucket=PROCESSED_S3_BUCKET_NAME)
-                    logger.info("location data processed")
-                if match == ['staff']:
-                    df, key = process_dim_staff(
-                        bucket=INGESTION_S3_BUCKET_NAME, prefix='updated/')
-                    convert_to_parquet_put_in_s3(
-                        s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
-                    logger.info("staff data processed")
-                move_processed_ingestion_data(s3, bucket=INGESTION_S3_BUCKET_NAME)
-                delete_files_from_updated_after_handling(s3, bucket_name=INGESTION_S3_BUCKET_NAME)
-        except Exception as e:
+        # delete_duplicates()
+        print('dealt with duplicates')
+        logger.info('The delete function ran successfully')
+        list_of_files = s3.list_objects_v2(
+            Bucket=bucket_name, Prefix='updated/')
+        
+        number_of_files = list_of_files['KeyCount']
+        for i in range(number_of_files):
+            key_name = list_of_files['Contents'][i]['Key'][8:]
+            pattern = re.compile(r'^[A-Za-z]+')
+            match = pattern.findall(key_name)
             
-            logger.error(f"Error in Lambda execution: {e}")
+            if match == ['sales']:
+                df, key = process_fact_sales_order(
+                    bucket=INGESTION_S3_BUCKET_NAME)
+                convert_to_parquet_put_in_s3(
+                    s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
+                logger.info("sales_order data processed")
+                print("processed sales_order")
+            if match == ['counterparty']:
+                df, key = process_dim_counterparty(
+                    bucket=INGESTION_S3_BUCKET_NAME)
+                convert_to_parquet_put_in_s3(
+                    s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
+                logger.info("counterparty data processed")
+                print("processed counterparty")
+            if match == ['currency']:
+                
+                df, key = process_dim_currency(
+                    bucket=INGESTION_S3_BUCKET_NAME)
+                convert_to_parquet_put_in_s3(
+                    s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
+                logger.info("currency data processed")
+                print("processed currency")
+            if match == ['date']:
+                df, key = process_dim_date(
+                    bucket=INGESTION_S3_BUCKET_NAME)
+                convert_to_parquet_put_in_s3(
+                    s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
+                logger.info("date data processed")
+                print("processed date")
+            if match == ['design']:
+                print('a match for design')
+                df, key = process_dim_design(
+                    bucket=INGESTION_S3_BUCKET_NAME)
+                convert_to_parquet_put_in_s3(
+                    s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
+                logger.info("design data processed")
+                print("processed design")
+            if match == ['location']:
+                df, key = process_dim_location(
+                    bucket=INGESTION_S3_BUCKET_NAME)
+                convert_to_parquet_put_in_s3(
+                    s3, df, key,bucket=PROCESSED_S3_BUCKET_NAME)
+                logger.info("location data processed")
+                print("processed location")
+            if match == ['staff']:
+                df, key = process_dim_staff(
+                    bucket=INGESTION_S3_BUCKET_NAME)
+                convert_to_parquet_put_in_s3(
+                    s3, df, key, bucket=PROCESSED_S3_BUCKET_NAME)
+                logger.info("staff data processed")
+                print("processed staff")
+            move_processed_ingestion_data(s3, bucket=INGESTION_S3_BUCKET_NAME)
+            print("moved data to processed")
+            delete_files_from_updated_after_handling(s3, bucket_name=INGESTION_S3_BUCKET_NAME)
+        # except Exception as e:
+            
+        #     logger.error(f"Error in Lambda execution: {e}")
     else:
         logger.info('No files to be processed')
 
@@ -578,3 +604,7 @@ def lambda_handler(event, context, bucket_name=INGESTION_S3_BUCKET_NAME):
 
 # if __name__ == "__main__":
 #     process_dim_design(prefix='baseline/')
+
+get_table_names()
+get_object_key(table_name="counterparty",
+                         bucket=INGESTION_S3_BUCKET_NAME)

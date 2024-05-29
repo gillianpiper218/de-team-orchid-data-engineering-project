@@ -304,3 +304,6 @@ def copy_baseline_to_updated(bucket_name=S3_BUCKET_NAME):
     for item_key in items_to_copy_list:
         new_key = f"updated/{item_key[9:]}"
         s3.copy_object(Bucket=bucket_name, CopySource=f"/{bucket_name}/{item_key}", Key=new_key)
+
+
+copy_baseline_to_updated()
