@@ -15,9 +15,34 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 s3 = boto3.client("s3")
 current_time = datetime.now()
+secret_manager_client = boto3.client("secretsmanager")
 
 INGESTION_S3_BUCKET_NAME = "de-team-orchid-totesys-ingestion"
 PROCESSED_S3_BUCKET_NAME = "de-team-orchid-totesys-processed"
+
+def retrieve_secret_credentials(secret_name="totesys_environment"):
+    """Uses the boto3 module with the AWS secrets manager to store and
+    retrieve AWS credentials securely.
+
+      Parameters:
+              secret_name (str):
+                  keyword argument with the database environment as a default value.
+
+      Returns:
+                      DB_HOST, DB_PASSWORD, DB_NAME, DB_PORT, DB_USER (Tuple): Credentials needed for AWS.
+
+    """
+    response = secret_manager_client.get_secret_value(
+        SecretId=secret_name,
+    )
+
+    secret_string = json.loads(response["SecretString"])
+    DB_HOST = secret_string["host"]
+    DB_PORT = secret_string["port"]
+    DB_NAME = secret_string["dbname"]
+    DB_USER = secret_string["username"]
+    DB_PASSWORD = secret_string["password"]
+    return DB_HOST, DB_PASSWORD, DB_NAME, DB_PORT, DB_USER
 
 def connect_to_db(credentials=retrieve_secret_credentials()):
     """Retrieves credentials from retrieve_secret_credentials(),
