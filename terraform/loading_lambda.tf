@@ -76,7 +76,7 @@ resource "aws_cloudwatch_log_group" "loading_function_log_group" {
   }
 }
 
-resource "aws_iam_role_policy_attachment" "secret_manager_policy_attachment" {
+resource "aws_iam_role_policy_attachment" "secret_manager_policy_attachment_loading" {
   role       = aws_iam_role.loading_function_role.name
   policy_arn = aws_iam_policy.secret_manager_policy.arn
 }
