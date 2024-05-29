@@ -30,3 +30,8 @@ resource "aws_lambda_permission" "allow_eventbridge_processing" {
   source_arn = aws_cloudwatch_event_rule.processing_scheduler.arn
   source_account = data.aws_caller_identity.current.account_id
 }
+
+resource "aws_iam_role_policy_attachment" "secret_manager_policy_attachment" {
+  role       = aws_iam_role.processing_function_role.name
+  policy_arn = aws_iam_policy.secret_manager_policy.arn
+}
