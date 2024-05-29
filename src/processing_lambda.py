@@ -6,10 +6,10 @@ import json
 from pprint import pprint
 import boto3
 from io import BytesIO
-from src.ingestion_lambda import get_table_names
+# from src.ingestion_lambda import get_table_names
 from botocore.exceptions import ClientError
 import re
-
+import pg8000
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -18,6 +18,83 @@ current_time = datetime.now()
 
 INGESTION_S3_BUCKET_NAME = "de-team-orchid-totesys-ingestion"
 PROCESSED_S3_BUCKET_NAME = "de-team-orchid-totesys-processed"
+
+def connect_to_db(credentials=retrieve_secret_credentials()):
+    """Retrieves credentials from retrieve_secret_credentials(),
+    stores as new constants with the same variable names as within retrieve_secret_credentials(),
+    connects to the database,
+    logs the outcome of connection to the database when successfully or unsuccessfully connected.
+
+        Returns:
+                        conn (Connection): Connection to the database.
+
+        Errors:
+                        DatabaseError: pg8000 specific error which is related to the database itself, such as incorrect SQL or constraint violations. Logs failure in logger.
+                        InterfaceError: pg8000 specific error when connection failure with the database occurs. Logs failure in logger.
+    """
+    DB_HOST = credentials[0]
+    DB_PORT = credentials[3]
+    DB_NAME = credentials[2]
+    DB_USER = credentials[4]
+    DB_PASSWORD = credentials[1]
+
+    try:
+        logger.info(f"Connecting to the database {DB_NAME}")
+        conn = pg8000.connect(
+            host=DB_HOST,
+            port=DB_PORT,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+        )
+        logger.info("Connected to the database successfully")
+
+        return conn
+    except pg8000.DatabaseError as e:
+        logger.error(f"Error connecting to database: {e}")
+        raise
+
+    except pg8000.exceptions.InterfaceError as e:
+        logger.error(f"Error connecting to the database: {e}")
+        raise
+
+
+def get_table_names():
+    """Opens a connection to the database and runs an SQL query to get all relevant table names,
+    list them and then sort them alphabetically.
+    Ensures that a connection to the database is closed.
+
+    Returns:
+                    table_names (list): Sorted list of table names from database.
+
+    Errors:
+                    DatabaseError: pg8000 specific error which is related to the database itself, such as incorrect SQL or constraint violations. Logs failure in logger.
+                    InterfaceError: pg8000 specific error when connection failure with the database occurs. Logs failure in logger.
+    """
+    db = None
+    try:
+        db = connect_to_db()
+        table_names = db.run(
+            """SELECT table_name
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE table_type = 'BASE TABLE'
+        AND table_name NOT LIKE 'pg_%'
+        AND table_name NOT LIKE 'sql_%'
+        AND table_name NOT LIKE '_prisma_migrations%';"""
+        )
+        table_names = list(table_names)
+        table_names = sorted(table_names)
+        return table_names
+    except pg8000.exceptions.DatabaseError as e:
+        logger.error(f"Error connecting to database: {e}")
+        raise
+    except pg8000.exceptions.InterfaceError as e:
+        logger.error(f"Error connecting to the database: {e}")
+    finally:
+        if db:
+            db.close()
+
+
 
 
 def get_object_key(
